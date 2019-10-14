@@ -3,7 +3,7 @@
 EventInterface::EventInterface()
 {
 }
-  
+
 EventInterface::~EventInterface()
 {
 }

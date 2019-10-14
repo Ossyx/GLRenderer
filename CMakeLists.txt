@@ -40,3 +40,12 @@ ${Glad_LIBRARIES}
 ${CMAKE_DL_LIBS}
 ${MESHLIB_LIBRARY}
 ${CImg_LIBRARIES})
+
+
+file(GLOB_RECURSE srcs
+  ${CMAKE_SOURCE_DIR}/src/*.cxx
+  ${CMAKE_SOURCE_DIR}/include/*.hxx)
+add_custom_target(VeraStyle ALL
+  vera++
+  --warning
+  ${srcs})

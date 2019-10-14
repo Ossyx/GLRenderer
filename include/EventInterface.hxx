@@ -3,8 +3,9 @@
 
 #include <GLFW/glfw3.h>
 
-enum  KeyFlag {
-  eKeyA = 0x1,  
+enum KeyFlag
+{
+  eKeyA = 0x1,
   eKeyZ = 0x2,
   eKeyE = 0x4,
   eKeyQ = 0x8,
@@ -19,12 +20,13 @@ class EventInterface
 {
 public:
   EventInterface();
-  
+
   ~EventInterface();
-    
+
   virtual void HandleKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods) = 0;
-  
-  virtual void HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY) = 0;
-  
+
+  virtual void HandleCursorEvent(double p_xpos, double p_ypos,
+    double p_deltaX, double p_deltaY) = 0;
+
 };
 #endif

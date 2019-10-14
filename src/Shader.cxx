@@ -65,14 +65,14 @@ unsigned int Shader::CompileShader(unsigned int p_shaderType, std::string const&
 
   glGetShaderiv(shaderId, GL_COMPILE_STATUS, &isCompiled);
 
-  if( isCompiled == 0 )
+  if ( isCompiled == 0 )
   {
     glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &InfoLogLength);
     std::cout<<"Shader compilation failed with following log :"<<std::endl;
     char* rawLog = new char[InfoLogLength+1];
     glGetShaderInfoLog(shaderId, InfoLogLength, &InfoLogLength, rawLog);
     std::cout<<rawLog<<std::endl;
-    delete[] rawLog;
+    delete [] rawLog;
     return -1;
   }
   return shaderId;
@@ -83,7 +83,7 @@ bool Shader::LinkProgram()
   m_vertexShader = CompileShader(GL_VERTEX_SHADER, m_verterShaderSrc);
   m_fragmentShader = CompileShader(GL_FRAGMENT_SHADER, m_fragmentShaderSrc);
 
-  if(m_vertexShader == -1 || m_fragmentShader == -1)
+  if (m_vertexShader == -1 || m_fragmentShader == -1)
   {
     std::cout<<"An error occured while compiling one or several shaders."<<std::endl;
     assert(false);
@@ -99,12 +99,13 @@ bool Shader::LinkProgram()
   glGetProgramInterfaceiv(m_program, GL_UNIFORM, GL_ACTIVE_RESOURCES, &activeUniforms);
 
   std::vector<GLchar> nameData(256);
-  for(int uniformIdx = 0; uniformIdx < activeUniforms; ++uniformIdx)
+  for (int uniformIdx = 0; uniformIdx < activeUniforms; ++uniformIdx)
   {
     GLint arraySize = 0;
     GLenum type = 0;
     GLsizei actualLength = 0;
-    glGetActiveUniform(m_program, uniformIdx, nameData.size(), &actualLength, &arraySize, &type, &nameData[0]);
+    glGetActiveUniform(m_program, uniformIdx, nameData.size(),
+      &actualLength, &arraySize, &type, &nameData[0]);
     std::string name((char*)&nameData[0], actualLength);
     std::cout<<"Found uniform "<< name <<" of type "<< type <<std::endl;
     m_uniforms[name] = type;

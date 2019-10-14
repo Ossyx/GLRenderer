@@ -10,29 +10,29 @@ class EventDispatcher
 {
 public:
   static void HandleKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
-  
+
   static void HandleCursorEvent(GLFWwindow* window, double xpos, double ypos);
-  
+
   ~EventDispatcher();
-  
+
   static EventDispatcher* Get();
-  
+
   void AddEventListener(std::string p_key, EventInterface* p_listener);
-  
+
   EventInterface* RemoveEventListener(std::string p_key);
 private:
-  
+
   EventDispatcher();
-  
+
   static EventDispatcher* m_singleton;
-  
-  typedef std::unordered_map<std::string, EventInterface*> EventInterfaceMap; 
+
+  typedef std::unordered_map<std::string, EventInterface*> EventInterfaceMap;
   static EventInterfaceMap m_registeredInterface;
-  
+
   static double m_cursorX;
-  
+
   static double m_cursorY;
-  
+
 };
 
 #endif

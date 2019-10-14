@@ -84,41 +84,41 @@ void Camera::SmoothMovement(float p_deltaT)
 void Camera::ReadDirectionFromKeys()
 {
   bool keyPressed = false;
-  if(m_keyPressed & eKeyD)
+  if (m_keyPressed & eKeyD)
   {
-    m_direction += glm::vec3(-1.0,0.0,0.0);
+    m_direction += glm::vec3(-1.0, 0.0, 0.0);
     keyPressed =  true;
   }
-  if(m_keyPressed & eKeyA)
+  if (m_keyPressed & eKeyA)
   {
-    m_direction += glm::vec3(1.0,0.0,0.0);
+    m_direction += glm::vec3(1.0, 0.0, 0.0);
     keyPressed =  true;
   }
-  if(m_keyPressed & eKeyW)
+  if (m_keyPressed & eKeyW)
   {
-    m_direction += glm::vec3(0.0,0.0,1.0);
+    m_direction += glm::vec3(0.0, 0.0, 1.0);
     keyPressed =  true;
   }
-  if(m_keyPressed & eKeyS)
+  if (m_keyPressed & eKeyS)
   {
-    m_direction += glm::vec3(0.0,0.0,-1.0);
+    m_direction += glm::vec3(0.0, 0.0, -1.0);
     keyPressed =  true;
   }
-  if(m_keyPressed & eKeyQ)
+  if (m_keyPressed & eKeyQ)
   {
-    m_direction += glm::vec3(0.0,1.0,0.0);
+    m_direction += glm::vec3(0.0, 1.0, 0.0);
     keyPressed =  true;
   }
-  if(m_keyPressed & eKeyZ)
+  if (m_keyPressed & eKeyZ)
   {
-    m_direction += glm::vec3(0.0,-1.0,0.0);
+    m_direction += glm::vec3(0.0, -1.0, 0.0);
     keyPressed =  true;
   }
 
-  if(keyPressed)
+  if (keyPressed)
   {
     m_translationAcceleration = 10.0f;
-    if(glm::length(m_direction) != 0)
+    if (glm::length(m_direction) != 0)
     {
       m_direction = glm::normalize(m_direction);
     }
@@ -135,11 +135,11 @@ void Camera::HandleKeyEvent(GLFWwindow* window, int key, int scancode, int actio
   {
     if (p_key == p_glfwKeyFlag)
     {
-      if(p_action == GLFW_PRESS)
+      if (p_action == GLFW_PRESS)
       {
         m_keyPressed |= p_keyFlag;
       }
-      else if(p_action == GLFW_RELEASE)
+      else if (p_action == GLFW_RELEASE)
       {
         m_keyPressed &= ~p_keyFlag;
       }
@@ -159,25 +159,23 @@ void Camera::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, do
   //std::cout<<"X "<<p_xpos<<" Y "<<p_ypos<<" dX "<<p_deltaX<<" dY "<<p_deltaY<<std::endl;
 
   m_azimuth += (p_deltaX / 360.0) * 2.0 * M_PI;
-  if(m_azimuth >= M_PI)
+  if (m_azimuth >= M_PI)
   {
     m_azimuth = -M_PI + (m_azimuth - M_PI);
   }
-  if(m_azimuth <= -M_PI)
+  if (m_azimuth <= -M_PI)
   {
     m_azimuth = M_PI + (m_azimuth + M_PI);
   }
 
   m_elevation += (p_deltaY / 360.0) * 2.0 * M_PI;
   float epsilon = M_PI/180.0;
-  if(m_elevation > (M_PI/2.0 - epsilon))
+  if (m_elevation > (M_PI/2.0 - epsilon))
   {
     m_elevation = M_PI/2.0 - epsilon;
   }
-  if(m_elevation < (-M_PI/2.0 + epsilon))
+  if (m_elevation < (-M_PI/2.0 + epsilon))
   {
     m_elevation = (-M_PI/2.0 + epsilon);
   }
-
-  //std::cout<<"Az "<<m_azimuth<<" El "<<m_elevation<<std::endl;
 }

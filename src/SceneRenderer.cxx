@@ -49,13 +49,14 @@ m_mainCamera()
   glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+    GL_RENDERBUFFER, depthrenderbuffer);
 
   GLenum completeness = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
 
-  if(completeness != GL_FRAMEBUFFER_COMPLETE)
+  if (completeness != GL_FRAMEBUFFER_COMPLETE)
   {
-    std::cout<<"Framebuffer incomplete ! "<< std::endl;
+    std::cout<< "Framebuffer incomplete ! " << std::endl;
     assert(false);
   }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -104,7 +105,7 @@ void SceneRenderer::AddModel()
   loader.LoadOBJModel("/home/bertrand/Work/models/sponza", "sponza.obj", "sponza");
   Model* myModel = loader.FindModel("sponza");
 
-  for(unsigned int i = 0; i < myModel->GetMeshCount(); ++i)
+  for (unsigned int i = 0; i < myModel->GetMeshCount(); ++i)
   {
     DrawableItem item;
     Mesh* meshPtr = myModel->GetMesh(i);
@@ -114,7 +115,7 @@ void SceneRenderer::AddModel()
     //find the shader for this mesh
     GenerateGBufferShader(meshPtr, materialPtr);
     UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
-    if(itShaderId != m_shaderForMaterial.end())
+    if (itShaderId != m_shaderForMaterial.end())
     {
       GBufferShaderMap::iterator itShader = m_gbufferShaders.find(itShaderId->second);
       assert(itShader != m_gbufferShaders.end());
@@ -124,7 +125,8 @@ void SceneRenderer::AddModel()
     }
     else
     {
-       std::cout<<"No shader \""<<materialPtr->GetShaderName()<<"\" found for material of mesh "<<i<<std::endl;
+       std::cout<<"No shader "<< materialPtr->GetShaderName()
+         <<" found for material of mesh "<<i<<std::endl;
        assert(false);
     }
   }
@@ -135,7 +137,8 @@ void SceneRenderer::Render(GLFWwindow* p_window)
   auto theTime = std::chrono::steady_clock::now();
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
-  glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 1.0f, 3000.f);
+  glm::mat4 projection = glm::perspective(glm::radians(45.0f),
+    (float)width / (float)height, 1.0f, 3000.f);
 
   float time = glfwGetTime();
   glm::mat4 identity = glm::mat4(1.0f);
@@ -152,7 +155,7 @@ void SceneRenderer::Render(GLFWwindow* p_window)
   glDrawBuffers(3, buffers);
 
   glViewport(0, 0, width, height);
-  glClearColor(0.25,0.5,1.0,1.0);
+  glClearColor(0.25, 0.5, 1.0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -166,16 +169,17 @@ void SceneRenderer::Render(GLFWwindow* p_window)
   glm::vec3 light(1.0, 1.0, 1.0);
   light = glm::vec3(rotYMat * glm::vec4(light, 1.0f));
 
-  for(unsigned int i = 0; i < m_drawableItems.size(); ++i)
+  for (unsigned int i = 0; i < m_drawableItems.size(); ++i)
   {
     Material* materialPtr = m_materialPtrs[i];
     UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
-    if(itShaderId != m_shaderForMaterial.end())
+    if (itShaderId != m_shaderForMaterial.end())
     {
       Shader const& shader = m_gbufferShaders[itShaderId->second];
       glUseProgram(shader.GetProgram());
       m_drawableItems[i].SetTransform(model);
-      m_drawableItems[i].Draw(shader, VP, *materialPtr, view, projection, model, light, m_mainCamera.GetPosition());
+      m_drawableItems[i].Draw(shader, VP, *materialPtr, view, projection,
+        model, light, m_mainCamera.GetPosition());
     }
 
   }
@@ -255,27 +259,27 @@ void SceneRenderer::GenerateGBufferShader(Mesh* p_mesh, Material* p_material)
 
   Material::StringMap const& uniforms = p_material->GetUniforms();
 
-  if(uniforms.find("texture1") != uniforms.cend())
+  if (uniforms.find("texture1") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::albedoTexture;
   }
-  if(uniforms.find("texture3") != uniforms.cend())
+  if (uniforms.find("texture3") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::specularTexture;
   }
-  if(uniforms.find("texture6") != uniforms.cend())
+  if (uniforms.find("texture6") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::normalTexture;
   }
-  if(uniforms.find("diffuse_color") != uniforms.cend())
+  if (uniforms.find("diffuse_color") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::albedoColor;
   }
-  if(uniforms.find("specular_color") != uniforms.cend())
+  if (uniforms.find("specular_color") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::specularColor;
   }
-  if(p_mesh->HasUVCoords())
+  if (p_mesh->HasUVCoords())
   {
     gBufferFlags |= GBufferShaderFlag::uvCoords;
   }
@@ -283,7 +287,7 @@ void SceneRenderer::GenerateGBufferShader(Mesh* p_mesh, Material* p_material)
   std::string preprocSrc = GeneratePreprocessorDefine(gBufferFlags);
   GBufferShaderMap::iterator itShader = m_gbufferShaders.find(gBufferFlags);
   //Do not generate a new shader for a configuration that already exists
-  if(itShader == m_gbufferShaders.end())
+  if (itShader == m_gbufferShaders.end())
   {
     Shader& shaderGBuffer = m_gbufferShaders[gBufferFlags];
     shaderGBuffer.SetName("GBufferGenerationShader");
@@ -299,29 +303,29 @@ void SceneRenderer::GenerateGBufferShader(Mesh* p_mesh, Material* p_material)
 std::string SceneRenderer::GeneratePreprocessorDefine(unsigned int p_gBufferFlags)
 {
   std::stringstream result;
-  if(p_gBufferFlags & GBufferShaderFlag::albedoColor
+  if (p_gBufferFlags & GBufferShaderFlag::albedoColor
     && !(p_gBufferFlags & GBufferShaderFlag::albedoTexture))
   {
     result << "#define ALBEDO_COLOR" <<std::endl;
   }
-  if(p_gBufferFlags & GBufferShaderFlag::albedoTexture )
+  if (p_gBufferFlags & GBufferShaderFlag::albedoTexture )
   {
     result << "#define ALBEDO_TEXTURE" <<std::endl;
   }
-  if(p_gBufferFlags & GBufferShaderFlag::specularColor
+  if (p_gBufferFlags & GBufferShaderFlag::specularColor
     && !(p_gBufferFlags & GBufferShaderFlag::specularTexture))
   {
     result << "#define SPECULAR_COLOR" <<std::endl;
   }
-  if(p_gBufferFlags & GBufferShaderFlag::specularTexture )
+  if (p_gBufferFlags & GBufferShaderFlag::specularTexture )
   {
     result << "#define SPECULAR_TEXTURE" <<std::endl;
   }
-  if(p_gBufferFlags & GBufferShaderFlag::normalTexture )
+  if (p_gBufferFlags & GBufferShaderFlag::normalTexture )
   {
     result << "#define NORMAL_TEXTURE" <<std::endl;
   }
-  if(p_gBufferFlags & GBufferShaderFlag::uvCoords )
+  if (p_gBufferFlags & GBufferShaderFlag::uvCoords )
   {
     result << "#define HAS_UVCOORDS" <<std::endl;
   }

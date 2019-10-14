@@ -41,7 +41,8 @@ void DrawableItem::SetTransform(glm::mat4 const& p_transform)
   m_transform = p_transform;
 }
 
-int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material, Shader const& p_shader)
+int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
+  Shader const& p_shader)
 {
   unsigned int vpos_location = p_shader.GetAttributeLocation("vPos");
   unsigned int normal_location = p_shader.GetAttributeLocation("normal");
@@ -60,7 +61,7 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material, 
   glBufferData(GL_ARRAY_BUFFER, p_mesh.GetNormalCount()*3*sizeof(float),
     p_mesh.GetNormals(), GL_STATIC_DRAW);
 
-  if(p_mesh.HasTangents())
+  if (p_mesh.HasTangents())
   {
     glGenBuffers(1, &m_tangentBufferId);
     glBindBuffer(GL_ARRAY_BUFFER, m_tangentBufferId);
@@ -68,7 +69,7 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material, 
     p_mesh.GetTangents(), GL_STATIC_DRAW);
   }
 
-  if(p_mesh.HasBitangents())
+  if (p_mesh.HasBitangents())
   {
     glGenBuffers(1, &m_bitangentBufferId);
     glBindBuffer(GL_ARRAY_BUFFER, m_bitangentBufferId);
@@ -97,7 +98,7 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material, 
   glBindBuffer(GL_ARRAY_BUFFER, m_normalBufferId);
   glVertexAttribPointer(normal_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-  if(p_mesh.HasTangents())
+  if (p_mesh.HasTangents())
   {
     unsigned int tangent_location = p_shader.GetAttributeLocation("tangent");
     glEnableVertexAttribArray(tangent_location);
@@ -105,7 +106,7 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material, 
     glVertexAttribPointer(tangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
   }
 
-  if(p_mesh.HasBitangents())
+  if (p_mesh.HasBitangents())
   {
     unsigned int bitangent_location = p_shader.GetAttributeLocation("bitangent");
     glEnableVertexAttribArray(bitangent_location);
@@ -124,30 +125,33 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material, 
 
   Shader::UniformMap::const_iterator it = shaderUniforms.begin();
 
-  for(; it != shaderUniforms.end(); ++it)
+  for (; it != shaderUniforms.end(); ++it)
   {
-    MeshLibLog("Linking uniform "<<it->first<<" to material.");
+    MeshLibLog("Linking uniform "<< it->first <<" to material.");
     std::string uniformName = it->first;
     std::string attributeKey;
     bool exists = p_material.GetUniformData(it->first, attributeKey);
 
-    if(exists == true)
+    if (exists == true)
     {
       //Handle various uniform types
       GLenum type = it->second;
-      if(type == GL_FLOAT)
+      if (type == GL_FLOAT)
       {
-        MeshLibLog("Uniform "<<uniformName<<" is attribute "<<attributeKey<<" of type GL_FLOAT");
+        MeshLibLog("Uniform "<< uniformName <<" is attribute "
+          << attributeKey <<" of type GL_FLOAT");
       }
-      else if(type == GL_FLOAT_VEC3)
+      else if (type == GL_FLOAT_VEC3)
       {
-        MeshLibLog("Uniform "<<uniformName<<" is attribute "<<attributeKey<<" of type GL_FLOAT_VEC3");
+        MeshLibLog("Uniform "<< uniformName <<" is attribute "
+          << attributeKey <<" of type GL_FLOAT_VEC3");
       }
-      else if(type == GL_SAMPLER_2D)
+      else if (type == GL_SAMPLER_2D)
       {
-        MeshLibLog("Uniform "<<uniformName<<" is attribute "<<attributeKey<<" of type GL_SAMPLER_2D");
+        MeshLibLog("Uniform "<< uniformName <<" is attribute "
+          <<attributeKey<<" of type GL_SAMPLER_2D");
         //Setup the textures
-        if(p_material.HasUCharTexData(attributeKey))
+        if (p_material.HasUCharTexData(attributeKey))
         {
           glGenTextures(1, &m_textureId);
           glBindTexture(GL_TEXTURE_2D, m_textureId);
@@ -159,13 +163,15 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material, 
           MeshLibLog("Texture id : "<<m_textureId);
 
           Material::ByteTexture const& tex = p_material.GetByteTexture(attributeKey);
-          if(tex.m_channelCount == 3)
+          if (tex.m_channelCount == 3)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex.m_width, tex.m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex.m_width,
+              tex.m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex.m_data);
           }
-          else if(tex.m_channelCount == 1)
+          else if (tex.m_channelCount == 1)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex.m_width, tex.m_height, 0, GL_RED, GL_UNSIGNED_BYTE, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex.m_width,
+              tex.m_height, 0, GL_RED, GL_UNSIGNED_BYTE, tex.m_data);
           }
           else
           {
@@ -173,9 +179,9 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material, 
             assert(false);
           }
           glGenerateMipmap(GL_TEXTURE_2D);
-          MeshLibLog("tex.m_width "<<tex.m_width);
-          MeshLibLog("tex.m_height "<<tex.m_height);
-          MeshLibLog("tex.m_channelCount "<<tex.m_channelCount);
+          MeshLibLog("tex.m_width " << tex.m_width);
+          MeshLibLog("tex.m_height " << tex.m_height);
+          MeshLibLog("tex.m_channelCount " << tex.m_channelCount);
 
           m_textureIdsLocation[m_textureId] = p_shader.GetUniformLocation(uniformName);
         }
@@ -208,29 +214,29 @@ int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat, Materia
   //Set up the uniforms from material that are not textures
   Shader::UniformMap const& shaderUniforms = p_shader.GetUniformMap();
   Shader::UniformMap::const_iterator itUniformMat = shaderUniforms.begin();
-  for(; itUniformMat != shaderUniforms.end(); ++itUniformMat)
+  for (; itUniformMat != shaderUniforms.end(); ++itUniformMat)
   {
     std::string uniformName = itUniformMat->first;
     std::string attributeKey;
     bool exists = p_material.GetUniformData(itUniformMat->first, attributeKey);
-    if(exists == true)
+    if (exists == true)
     {
       //Handle various uniform types
       GLenum type = itUniformMat->second;
-      if(type == GL_FLOAT)
+      if (type == GL_FLOAT)
       {
         float unif;
-        if(p_material.GetData(attributeKey, unif))
+        if (p_material.GetData(attributeKey, unif))
         {
           unsigned int loc = p_shader.GetUniformLocation(uniformName);
           glUniform1f(loc, unif);
         }
 
       }
-      else if(type == GL_FLOAT_VEC3)
+      else if (type == GL_FLOAT_VEC3)
       {
         glm::vec3 univec3f;
-        if(p_material.GetData(attributeKey, univec3f))
+        if (p_material.GetData(attributeKey, univec3f))
         {
           unsigned int loc = p_shader.GetUniformLocation(uniformName);
           glUniform3fv(loc, 1,  glm::value_ptr(univec3f));
@@ -242,7 +248,7 @@ int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat, Materia
   //Bind our textures
   IntIntMap::iterator it = m_textureIdsLocation.begin();
   unsigned int idTex = 0;
-  for(; it != m_textureIdsLocation.end(); ++it, ++idTex)
+  for (; it != m_textureIdsLocation.end(); ++it, ++idTex)
   {
     glActiveTexture(GL_TEXTURE0 + idTex);
     glBindTexture(GL_TEXTURE_2D, it->first);
