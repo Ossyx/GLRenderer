@@ -125,8 +125,8 @@ void SceneRenderer::AddModel()
     }
     else
     {
-       std::cout<<"No shader "<< materialPtr->GetShaderName()
-         <<" found for material of mesh "<<i<<std::endl;
+       rxLogError("No shader "<< materialPtr->GetShaderName()
+         <<" found for material of mesh " << i);
        assert(false);
     }
   }

@@ -48,9 +48,9 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
   unsigned int normal_location = p_shader.GetAttributeLocation("normal");
   unsigned int uv_location = p_shader.GetAttributeLocation("uvcoords");
 
-  std::cout<<"PrepareBuffer with "<<std::endl;
-  std::cout<<"Triangle Count : "<<p_mesh.GetTriangleCount()<<std::endl;
-  std::cout<<"Vertex Count : "<<p_mesh.GetVertexCount()<<std::endl;
+  rxLogInfo("PrepareBuffer with ");
+  rxLogInfo("Triangle Count : "<< p_mesh.GetTriangleCount());
+  rxLogInfo("Vertex Count : "<< p_mesh.GetVertexCount());
   glGenBuffers(1, &m_vertexBufferId);
   glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
   glBufferData(GL_ARRAY_BUFFER, p_mesh.GetVertexCount()*3*sizeof(float),
@@ -127,7 +127,7 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
 
   for (; it != shaderUniforms.end(); ++it)
   {
-    MeshLibLog("Linking uniform "<< it->first <<" to material.");
+    rxLogInfo("Linking uniform "<< it->first <<" to material.");
     std::string uniformName = it->first;
     std::string attributeKey;
     bool exists = p_material.GetUniformData(it->first, attributeKey);
@@ -138,17 +138,17 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
       GLenum type = it->second;
       if (type == GL_FLOAT)
       {
-        MeshLibLog("Uniform "<< uniformName <<" is attribute "
+        rxLogInfo("Uniform "<< uniformName <<" is attribute "
           << attributeKey <<" of type GL_FLOAT");
       }
       else if (type == GL_FLOAT_VEC3)
       {
-        MeshLibLog("Uniform "<< uniformName <<" is attribute "
+        rxLogInfo("Uniform "<< uniformName <<" is attribute "
           << attributeKey <<" of type GL_FLOAT_VEC3");
       }
       else if (type == GL_SAMPLER_2D)
       {
-        MeshLibLog("Uniform "<< uniformName <<" is attribute "
+        rxLogInfo("Uniform "<< uniformName <<" is attribute "
           <<attributeKey<<" of type GL_SAMPLER_2D");
         //Setup the textures
         if (p_material.HasUCharTexData(attributeKey))
@@ -160,7 +160,7 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-          MeshLibLog("Texture id : "<<m_textureId);
+          rxLogInfo("Texture id : "<<m_textureId);
 
           Material::ByteTexture const& tex = p_material.GetByteTexture(attributeKey);
           if (tex.m_channelCount == 3)
@@ -175,13 +175,13 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
           }
           else
           {
-            MeshLibLog("Texture channel count unsupported");
+            rxLogInfo("Texture channel count unsupported");
             assert(false);
           }
           glGenerateMipmap(GL_TEXTURE_2D);
-          MeshLibLog("tex.m_width " << tex.m_width);
-          MeshLibLog("tex.m_height " << tex.m_height);
-          MeshLibLog("tex.m_channelCount " << tex.m_channelCount);
+          rxLogInfo("tex.m_width " << tex.m_width);
+          rxLogInfo("tex.m_height " << tex.m_height);
+          rxLogInfo("tex.m_channelCount " << tex.m_channelCount);
 
           m_textureIdsLocation[m_textureId] = p_shader.GetUniformLocation(uniformName);
         }

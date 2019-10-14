@@ -24,7 +24,7 @@ void error_callback(int error, const char* description);
 
 int main()
 {
-  std::cout<<" Hello Space War 2 !"<<std::endl;
+  rxLogDebug(" Hello Space War 2 !");
 
   if (!glfwInit())
   {
@@ -40,7 +40,7 @@ int main()
 
   if (window == NULL)
   {
-    std::cout<<"Error : GLFW Windows fails to create."<<std::endl;
+    rxLogDebug("Error : GLFW Windows fails to create.");
     return 1;
   }
 
@@ -73,5 +73,5 @@ int main()
 
 void error_callback(int error, const char* description)
 {
-  std::cout<<"Error "<<error<<" : "<<description<<std::endl;
+  rxLogDebug("Error " << error << " : " <<description);
 }
