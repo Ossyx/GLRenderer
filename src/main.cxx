@@ -28,7 +28,7 @@ int main()
 
   if (!glfwInit())
   {
-    std::cout<<"Error : GLFW fails to initialize."<<std::endl;
+    rxLogError("Error : GLFW fails to initialize.");
     return 1;
   }
 

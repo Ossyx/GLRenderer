@@ -156,8 +156,6 @@ void Camera::HandleKeyEvent(GLFWwindow* window, int key, int scancode, int actio
 
 void Camera::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY)
 {
-  //std::cout<<"X "<<p_xpos<<" Y "<<p_ypos<<" dX "<<p_deltaX<<" dY "<<p_deltaY<<std::endl;
-
   m_azimuth += (p_deltaX / 360.0) * 2.0 * M_PI;
   if (m_azimuth >= M_PI)
   {

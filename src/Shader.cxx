@@ -1,4 +1,5 @@
 #include "Shader.hxx"
+#include "Common.hxx"
 
 #include <fstream>
 #include <sstream>
@@ -68,10 +69,10 @@ unsigned int Shader::CompileShader(unsigned int p_shaderType, std::string const&
   if ( isCompiled == 0 )
   {
     glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    std::cout<<"Shader compilation failed with following log :"<<std::endl;
+    rxLogError("Shader compilation failed with following log :");
     char* rawLog = new char[InfoLogLength+1];
     glGetShaderInfoLog(shaderId, InfoLogLength, &InfoLogLength, rawLog);
-    std::cout<<rawLog<<std::endl;
+    rxLogError(rawLog);
     delete [] rawLog;
     return -1;
   }
@@ -85,7 +86,7 @@ bool Shader::LinkProgram()
 
   if (m_vertexShader == -1 || m_fragmentShader == -1)
   {
-    std::cout<<"An error occured while compiling one or several shaders."<<std::endl;
+    rxLogError("An error occured while compiling one or several shaders.");
     assert(false);
   }
 
@@ -107,7 +108,7 @@ bool Shader::LinkProgram()
     glGetActiveUniform(m_program, uniformIdx, nameData.size(),
       &actualLength, &arraySize, &type, &nameData[0]);
     std::string name((char*)&nameData[0], actualLength);
-    std::cout<<"Found uniform "<< name <<" of type "<< type <<std::endl;
+    rxLogInfo("Found uniform "<< name <<" of type "<< type);
     m_uniforms[name] = type;
   }
 }

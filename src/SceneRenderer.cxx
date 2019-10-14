@@ -56,7 +56,7 @@ m_mainCamera()
 
   if (completeness != GL_FRAMEBUFFER_COMPLETE)
   {
-    std::cout<< "Framebuffer incomplete ! " << std::endl;
+    rxLogError("Framebuffer incomplete ! ");
     assert(false);
   }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
