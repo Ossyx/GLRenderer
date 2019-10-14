@@ -43,7 +43,7 @@ private:
   //Disable copy
   SceneRenderer(SceneRenderer const& p_other);
 
-  void GenerateGBufferShader(Mesh* p_mesh, Material* p_material);
+  void GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_material);
 
   std::string GeneratePreprocessorDefine(unsigned int p_gBufferFlags);
 
@@ -56,7 +56,7 @@ private:
 
   UintMap m_shaderForMaterial;
 
-  std::vector<Material*> m_materialPtrs;
+  std::vector<rx::Material*> m_materialPtrs;
 
   Camera m_mainCamera;
 

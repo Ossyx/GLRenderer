@@ -101,15 +101,15 @@ void SceneRenderer::PrepareTwoTrianglesBuffer()
 
 void SceneRenderer::AddModel()
 {
-  ModelLoader loader;
+  rx::ModelLoader loader;
   loader.LoadOBJModel("/home/bertrand/Work/models/sponza", "sponza.obj", "sponza");
-  Model* myModel = loader.FindModel("sponza");
+  rx::Model* myModel = loader.FindModel("sponza");
 
   for (unsigned int i = 0; i < myModel->GetMeshCount(); ++i)
   {
     DrawableItem item;
-    Mesh* meshPtr = myModel->GetMesh(i);
-    Material* materialPtr = myModel->GetMaterialForMesh(i);
+    rx::Mesh* meshPtr = myModel->GetMesh(i);
+    rx::Material* materialPtr = myModel->GetMaterialForMesh(i);
     assert(meshPtr != NULL && materialPtr != NULL);
 
     //find the shader for this mesh
@@ -171,7 +171,7 @@ void SceneRenderer::Render(GLFWwindow* p_window)
 
   for (unsigned int i = 0; i < m_drawableItems.size(); ++i)
   {
-    Material* materialPtr = m_materialPtrs[i];
+    rx::Material* materialPtr = m_materialPtrs[i];
     UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
     if (itShaderId != m_shaderForMaterial.end())
     {
@@ -253,11 +253,11 @@ void SceneRenderer::RenderGBufferDebug(GLFWwindow* p_window)
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void SceneRenderer::GenerateGBufferShader(Mesh* p_mesh, Material* p_material)
+void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_material)
 {
   unsigned int gBufferFlags = 0;
 
-  Material::StringMap const& uniforms = p_material->GetUniforms();
+  rx::Material::StringMap const& uniforms = p_material->GetUniforms();
 
   if (uniforms.find("texture1") != uniforms.cend())
   {

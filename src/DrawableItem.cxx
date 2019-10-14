@@ -41,7 +41,7 @@ void DrawableItem::SetTransform(glm::mat4 const& p_transform)
   m_transform = p_transform;
 }
 
-int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
+int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_material,
   Shader const& p_shader)
 {
   unsigned int vpos_location = p_shader.GetAttributeLocation("vPos");
@@ -162,7 +162,7 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
 
           rxLogInfo("Texture id : "<<m_textureId);
 
-          Material::ByteTexture const& tex = p_material.GetByteTexture(attributeKey);
+          rx::Material::ByteTexture const& tex = p_material.GetByteTexture(attributeKey);
           if (tex.m_channelCount == 3)
           {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex.m_width,
@@ -190,8 +190,9 @@ int DrawableItem::PrepareBuffer(Mesh const& p_mesh, Material const& p_material,
   }
 }
 
-int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat, Material const& p_material,
-  glm::mat4 const& p_view, glm::mat4 const& p_projection, glm::mat4 const& p_model,
+int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
+  rx::Material const& p_material, glm::mat4 const& p_view,
+  glm::mat4 const& p_projection, glm::mat4 const& p_model,
   glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
   unsigned int mvp_location = p_shader.GetUniformLocation("MVP");
