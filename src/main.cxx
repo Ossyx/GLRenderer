@@ -26,7 +26,7 @@ int main()
 {
   rxLogDebug(" Hello Space War 2 !");
 
-  if (!glfwInit())
+  if (glfwInit() == false)
   {
     rxLogError("Error : GLFW fails to initialize.");
     return 1;
@@ -62,6 +62,7 @@ int main()
 
   while (glfwWindowShouldClose(window) == false)
   {
+    renderer.RenderShadowMap(window);
     renderer.Render(window);
     renderer.RenderGBufferDebug(window);
   }

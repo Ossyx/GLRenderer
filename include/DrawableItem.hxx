@@ -26,6 +26,11 @@ public:
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
 
+  int DrawSimple(Shader const& p_shader, glm::mat4 const& p_vpMat,
+    glm::mat4 const& p_view, glm::mat4 const& p_projection,
+     glm::mat4 const& p_model);
+
+
 private:
 
   //Transformation matrix

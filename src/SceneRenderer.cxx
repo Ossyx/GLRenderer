@@ -16,51 +16,17 @@ m_mainCamera()
   m_renderShader.LinkProgram();
   PrepareTwoTrianglesBuffer();
 
+  m_shadowMapShader.SetVertexShaderSrc("shadowMapVS.shader");
+  m_shadowMapShader.SetFragmentShaderSrc("shadowMapFS.shader");
+  m_shadowMapShader.LinkProgram();
+
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
 
-  //Prepare render target for GBuffer
-  glGenFramebuffers(1, &m_gbufferFBO);
-  glBindFramebuffer(GL_FRAMEBUFFER, m_gbufferFBO);
+  PrepareGBufferFrameBufferObject(width, height);
+  PrepareShadowMapFrameBufferObject(width, height);
 
-  glGenTextures(1, &m_renderTarget1);
-  glBindTexture(GL_TEXTURE_2D, m_renderTarget1);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderTarget1, 0);
-
-  glGenTextures(1, &m_renderTarget2);
-  glBindTexture(GL_TEXTURE_2D, m_renderTarget2);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_renderTarget2, 0);
-
-  glGenTextures(1, &m_renderTarget3);
-  glBindTexture(GL_TEXTURE_2D, m_renderTarget3);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_renderTarget3, 0);
-
-  GLuint depthrenderbuffer;
-  glGenRenderbuffers(1, &depthrenderbuffer);
-  glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-  glBindRenderbuffer(GL_RENDERBUFFER, 0);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-    GL_RENDERBUFFER, depthrenderbuffer);
-
-  GLenum completeness = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
-
-  if (completeness != GL_FRAMEBUFFER_COMPLETE)
-  {
-    rxLogError("Framebuffer incomplete ! ");
-    assert(false);
-  }
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  m_sunLightDirection = glm::normalize(glm::vec3(1.0, 10.0, 1.0));
 }
 
 SceneRenderer::~SceneRenderer()
@@ -138,7 +104,7 @@ void SceneRenderer::Render(GLFWwindow* p_window)
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-    (float)width / (float)height, 1.0f, 3000.f);
+    (float)width / (float)height, 0.5f, 3000.f);
 
   float time = glfwGetTime();
   glm::mat4 identity = glm::mat4(1.0f);
@@ -148,6 +114,9 @@ void SceneRenderer::Render(GLFWwindow* p_window)
   view = glm::rotate(view, m_mainCamera.GetAzimuth(), glm::vec3(0.0f, 1.0f, 0.0f));
   view = glm::translate(view, m_mainCamera.GetPosition());
   glm::mat4 VP = projection * view;
+
+  m_invProjMatrix = glm::inverse(projection);
+  m_invViewMatrix = glm::inverse(view);
 
   glEnable(GL_DEPTH_TEST);
   glBindFramebuffer(GL_FRAMEBUFFER, m_gbufferFBO);
@@ -161,13 +130,7 @@ void SceneRenderer::Render(GLFWwindow* p_window)
 
   glm::mat4 model = identity;
   model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
-  //model = glm::rotate(model, time, glm::vec3(0.f,1.f,0.f));
-  model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-
-  //rotate light
-  auto rotYMat = glm::rotate(identity, time/5000.0f, glm::vec3(0.0, 0.0, 1.0));
-  glm::vec3 light(1.0, 1.0, 1.0);
-  light = glm::vec3(rotYMat * glm::vec4(light, 1.0f));
+  model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
 
   for (unsigned int i = 0; i < m_drawableItems.size(); ++i)
   {
@@ -179,7 +142,7 @@ void SceneRenderer::Render(GLFWwindow* p_window)
       glUseProgram(shader.GetProgram());
       m_drawableItems[i].SetTransform(model);
       m_drawableItems[i].Draw(shader, VP, *materialPtr, view, projection,
-        model, light, m_mainCamera.GetPosition());
+        model, m_sunLightDirection, m_mainCamera.GetPosition());
     }
 
   }
@@ -191,28 +154,50 @@ void SceneRenderer::Render(GLFWwindow* p_window)
   theTime = newTime;
   m_mainCamera.SmoothMovement(1.0f/1000.0f);
   glfwPollEvents();
+}
 
-//   if(time > 15)
-//   {
-//     unsigned char* outBuffer = new unsigned char[width*height*4];
-//     glActiveTexture(GL_TEXTURE0);
-//     glBindTexture(GL_TEXTURE_2D, m_renderTarget2);
-//
-//     glGetTexImage(GL_TEXTURE_2D,
-//                   0,
-//                   GL_RGBA,
-//                   GL_UNSIGNED_BYTE,
-//                   outBuffer);
-//
-//     cimg_library::CImg<unsigned char> texCIMG(outBuffer, width, height, 1, 4);
-//     cimg_library::CImgDisplay main_disp(texCIMG,"Click a point");
-//     while (!main_disp.is_closed())
-//     {
-//       main_disp.wait();
-//     }
-//
-//     delete [] outBuffer;
-//   }
+void SceneRenderer::RenderShadowMap(GLFWwindow* p_window)
+{
+  int width, height;
+  glfwGetFramebufferSize(p_window, &width, &height);
+  //glm::mat4 projection = glm::perspective(glm::radians(45.0f),
+  //  (float)width / (float)height, 0.5f, 3000.f);
+
+  glm::mat4 projection = glm::ortho<float>(-200.0, 200.0, -200.0, 200.0, -300.0, 300.0);
+
+  glm::mat4 identity = glm::mat4(1.0f);
+  float time = glfwGetTime();
+  auto rotYMat = glm::rotate(identity, time/10000.0f, glm::vec3(0.3, 0.0, 1.0));
+  m_sunLightDirection = glm::vec3(rotYMat * glm::vec4(m_sunLightDirection, 1.0f));
+  m_sunLightDirection = glm::normalize(m_sunLightDirection);
+  glm::mat4 view = glm::lookAt(m_sunLightDirection * 100.0f,
+    glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+  m_shadowMapMatrix = projection * view;
+
+  glEnable(GL_DEPTH_TEST);
+  //glCullFace(GL_BACK);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_shadowMapFBO);
+  GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
+  glDrawBuffers(1, buffers);
+
+  glViewport(0, 0, 4000, 4000);
+  glClearColor(0.25, 0.5, 1.0, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glm::mat4 model = identity;
+  model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
+  model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+
+  for (unsigned int i = 0; i < m_drawableItems.size(); ++i)
+  {
+      glUseProgram(m_shadowMapShader.GetProgram());
+      m_drawableItems[i].SetTransform(model);
+      m_drawableItems[i].DrawSimple(m_shadowMapShader, m_shadowMapMatrix, view, projection, model);
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  //glCullFace(GL_BACK);
+  glfwPollEvents();
+
 }
 
 void SceneRenderer::RenderGBufferDebug(GLFWwindow* p_window)
@@ -238,11 +223,38 @@ void SceneRenderer::RenderGBufferDebug(GLFWwindow* p_window)
   unsigned int rt3_location = m_renderShader.GetUniformLocation("render_target_three");
   glUniform1i(rt3_location, 2);
 
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D, m_renderTarget4);
+  unsigned int rt4_location = m_renderShader.GetUniformLocation("render_target_four");
+  glUniform1i(rt4_location, 3);
+
+  glActiveTexture(GL_TEXTURE4);
+  glBindTexture(GL_TEXTURE_2D, m_shadowMapTextureId1);
+  unsigned int rt5_location = m_renderShader.GetUniformLocation("render_target_five");
+  glUniform1i(rt5_location, 4);
+
+  glm::mat4 biasMatrix(
+    0.5, 0.0, 0.0, 0.0,
+    0.0, 0.5, 0.0, 0.0,
+    0.0, 0.0, 0.5, 0.0,
+    0.5, 0.5, 0.5, 1.0
+    );
+
+
   unsigned int lightLoc = m_renderShader.GetUniformLocation("light");
   unsigned int camLoc = m_renderShader.GetUniformLocation("cameraPos");
-  glm::vec3 light(1.0, 1.0, 1.0);
-  glUniform3fv(lightLoc, 1,  glm::value_ptr(light));
+  unsigned int shadowMapMatrixLoc = m_renderShader.GetUniformLocation("shadowMapMatrix");
+  unsigned int invertProjMatrixLoc = m_renderShader.GetUniformLocation("invertProjMatrix");
+  unsigned int invertViewMatrixLoc = m_renderShader.GetUniformLocation("invertViewMatrix");
+  unsigned int biasMatrixLoc = m_renderShader.GetUniformLocation("biasMatrix");
+
+  glUniform3fv(lightLoc, 1,  glm::value_ptr(m_sunLightDirection));
   glUniform3fv(camLoc, 1,  glm::value_ptr(m_mainCamera.GetPosition()));
+  glUniformMatrix4fv(shadowMapMatrixLoc, 1, GL_FALSE, glm::value_ptr(m_shadowMapMatrix));
+  glUniformMatrix4fv(invertProjMatrixLoc, 1, GL_FALSE, glm::value_ptr(m_invProjMatrix));
+  glUniformMatrix4fv(invertViewMatrixLoc, 1, GL_FALSE, glm::value_ptr(m_invViewMatrix));
+  glUniformMatrix4fv(biasMatrixLoc, 1, GL_FALSE, glm::value_ptr(biasMatrix));
+
 
   glBindVertexArray(m_renderVertexArray);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_iBufferId);
@@ -330,4 +342,87 @@ std::string SceneRenderer::GeneratePreprocessorDefine(unsigned int p_gBufferFlag
     result << "#define HAS_UVCOORDS" <<std::endl;
   }
   return result.str();
+}
+
+void SceneRenderer::PrepareGBufferFrameBufferObject(int p_width, int p_height)
+{
+  //Prepare render target for GBuffer
+  glGenFramebuffers(1, &m_gbufferFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_gbufferFBO);
+
+  glGenTextures(1, &m_renderTarget1);
+  glBindTexture(GL_TEXTURE_2D, m_renderTarget1);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, p_width, p_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderTarget1, 0);
+
+  glGenTextures(1, &m_renderTarget2);
+  glBindTexture(GL_TEXTURE_2D, m_renderTarget2);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, p_width, p_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_renderTarget2, 0);
+
+  glGenTextures(1, &m_renderTarget3);
+  glBindTexture(GL_TEXTURE_2D, m_renderTarget3);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, p_width, p_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_renderTarget3, 0);
+
+  glGenTextures(1, &m_renderTarget4);
+  glBindTexture(GL_TEXTURE_2D, m_renderTarget4);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, p_width, p_height,
+    0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_renderTarget4, 0);
+
+//   GLuint depthrenderbuffer;
+//   glGenRenderbuffers(1, &depthrenderbuffer);
+//   glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+//   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, p_width, p_height);
+//   glBindRenderbuffer(GL_RENDERBUFFER, 0);
+//   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+//     GL_RENDERBUFFER, depthrenderbuffer);
+
+  GLenum completeness = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+
+  if (completeness != GL_FRAMEBUFFER_COMPLETE)
+  {
+    rxLogError("Gbuffer framebuffer incomplete ! ");
+    assert(false);
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void SceneRenderer::PrepareShadowMapFrameBufferObject(int p_width, int p_height)
+{
+  glGenFramebuffers(1, &m_shadowMapFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_shadowMapFBO);
+
+  glGenTextures(1, &m_shadowMapTextureId1);
+  glBindTexture(GL_TEXTURE_2D, m_shadowMapTextureId1);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 4000, 4000,
+    0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+    GL_TEXTURE_2D, m_shadowMapTextureId1, 0);
+
+  GLenum completeness = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+
+  if (completeness != GL_FRAMEBUFFER_COMPLETE)
+  {
+    rxLogError("ShadowMap framebuffer incomplete ! ");
+    assert(false);
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -30,7 +30,7 @@ public:
 
   void AddModel();
 
-  void RenderDummy(GLFWwindow* p_window);
+  void RenderShadowMap(GLFWwindow* p_window);
 
   void Render(GLFWwindow* p_window);
 
@@ -49,6 +49,10 @@ private:
 
   void PrepareTwoTrianglesBuffer();
 
+  void PrepareGBufferFrameBufferObject(int p_width, int p_height);
+
+  void PrepareShadowMapFrameBufferObject(int p_width, int p_height);
+
   std::vector<DrawableItem> m_drawableItems;
 
   typedef std::map<unsigned int, Shader> GBufferShaderMap;
@@ -62,7 +66,7 @@ private:
 
   Shader m_renderShader;
 
-  Shader m_dummyShader;
+  Shader m_shadowMapShader;
 
   //For 2 triangles support render
   unsigned int m_vBufferId;
@@ -74,9 +78,16 @@ private:
   unsigned int m_renderTarget1;
   unsigned int m_renderTarget2;
   unsigned int m_renderTarget3;
+  unsigned int m_renderTarget4;
 
-  unsigned int m_renderTarget1_read;
-  unsigned int m_renderTarget2_read;
+  //ShadowMap target
+  unsigned int m_shadowMapFBO;
+  unsigned int m_shadowMapTextureId1;
+  glm::mat4 m_shadowMapMatrix;
+  glm::mat4 m_invProjMatrix;
+  glm::mat4 m_invViewMatrix;
+
+  glm::vec3 m_sunLightDirection;
 };
 
 #endif

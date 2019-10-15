@@ -1,6 +1,7 @@
 layout(location = 0) out vec4 outAlbedo;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec4 outSpecular;
+layout(location = 3) out float outDepth;
 in vec3 inormal;
 in vec3 itangent;
 in vec3 ibitangent;
@@ -76,4 +77,5 @@ void main()
   outAlbedo = vec4(albedo, 1.0);
   outNormal = vec4(packNormal(finalNormal), 1.0);
   outSpecular = vec4(spec, spec, spec, 1.0);
+  outDepth = gl_FragCoord.z;
 }

@@ -10,25 +10,6 @@
 
 DrawableItem::DrawableItem()
 {
-  //simple triangle
-//   m_vertex_buffer_data = new float[9];
-//   m_index_buffer = new int[3];
-//
-//   m_vertex_buffer_data[0] = 0.0f;
-//   m_vertex_buffer_data[1] = 0.5f;
-//   m_vertex_buffer_data[2] = 0.0f;
-//   m_vertex_buffer_data[3] = 0.5f;
-//   m_vertex_buffer_data[4] = -0.5f;
-//   m_vertex_buffer_data[5] = 0.0f;
-//   m_vertex_buffer_data[6] = -0.5f;
-//   m_vertex_buffer_data[7] = -0.5f;
-//   m_vertex_buffer_data[8] = 0.0f;
-//
-//
-//   m_index_buffer[0] = 0;
-//   m_index_buffer[1] = 1;
-//   m_index_buffer[2] = 2;
-//
   m_transform = glm::mat4(1.0f);
 }
 
@@ -261,3 +242,24 @@ int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
   glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
 }
+
+int DrawableItem::DrawSimple(Shader const& p_shader, glm::mat4 const& p_vpMat,
+  glm::mat4 const& p_view, glm::mat4 const& p_projection, glm::mat4 const& p_model)
+{
+  unsigned int mvp_location = p_shader.GetUniformLocation("MVP");
+  unsigned int modelLoc = p_shader.GetUniformLocation("Model");
+  unsigned int viewLoc = p_shader.GetUniformLocation("View");
+  unsigned int projection = p_shader.GetUniformLocation("Projection");
+
+  glm::mat4 mvp = p_vpMat * m_transform;
+  glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
+
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(p_model));
+  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(p_view));
+  glUniformMatrix4fv(projection, 1, GL_FALSE, glm::value_ptr(p_projection));
+
+  glBindVertexArray(m_vertexArrayId);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
+  glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
+}
+

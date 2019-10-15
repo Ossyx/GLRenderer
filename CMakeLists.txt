@@ -24,6 +24,8 @@ configure_file(${CMAKE_SOURCE_DIR}/shaders/renderVS.shader ${CMAKE_BINARY_DIR}/r
 configure_file(${CMAKE_SOURCE_DIR}/shaders/renderFS.shader ${CMAKE_BINARY_DIR}/renderFS.shader COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/shaders/gbufferFS.shader ${CMAKE_BINARY_DIR}/gbufferFS.shader COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/shaders/gbufferVS.shader ${CMAKE_BINARY_DIR}/gbufferVS.shader COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/shaders/shadowMapFS.shader ${CMAKE_BINARY_DIR}/shadowMapFS.shader COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/shaders/shadowMapVS.shader ${CMAKE_BINARY_DIR}/shadowMapVS.shader COPYONLY)
 add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/main.cxx
   ${CMAKE_SOURCE_DIR}/src/EventInterface.cxx
