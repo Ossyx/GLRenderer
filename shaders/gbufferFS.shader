@@ -65,17 +65,8 @@ void main()
   float specCoeff = specular_color.x;
 #endif
 
-  //Basic phong shading
-  vec3 viewVector = normalize(cameraPos - ipos);
-  vec3 nlight = normalize(light);
-  float value = max(dot(finalNormal, nlight), 0.0);
-  float ambient = 0.2;
-  vec3 refl = 2.0 * dot(nlight, finalNormal) * finalNormal - nlight;
-  float spec = pow(max(dot(viewVector, refl), 0.0), 4.0) * specCoeff;
-  vec3 final_color = ambient * albedo + value * albedo + spec * albedo;
-
   outAlbedo = vec4(albedo, 1.0);
   outNormal = vec4(packNormal(finalNormal), 1.0);
-  outSpecular = vec4(spec, spec, spec, 1.0);
+  outSpecular = vec4(specCoeff, specCoeff, specCoeff, 1.0);
   outDepth = gl_FragCoord.z;
 }

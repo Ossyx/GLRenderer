@@ -94,11 +94,13 @@ void main()
     vec4 specular = texture2D(render_target_three, uvcoord);
 
     //Basic phong shading
+    vec3 viewVector = normalize(cameraPos - posWorld);
     vec3 nlight = normalize(light);
     float value = max(dot(normal, nlight), 0.0);
-    float ambient = 0.2;
+    vec4 ambient = vec4(0.2, 0.2, 0.2, 1.0);
     vec3 refl = 2.0 * dot(nlight, normal) * normal - nlight;
-    vec4 final_color = ambient * albedo + (value * albedo + specular * vec4(1.0,1.0,1.0,1.0)) * shadow;
+    float spec = pow(max(dot(viewVector, refl), 0.0), 4.0) * specular.x;
+    vec4 final_color = ambient * albedo + (value * albedo + spec * vec4(1.0,1.0,1.0,1.0)) * shadow;
     frag_colour = final_color;
   }
 }
