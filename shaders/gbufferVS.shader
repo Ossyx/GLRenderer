@@ -19,6 +19,10 @@ out vec3 ibitangent;
 out vec2 iuvcoords;
 #endif
 
+#ifdef DISPLACEMENT_TEXTURE
+uniform sampler2D map_displacement;
+#endif
+
 out vec3 ipos;
 
 void main()
@@ -38,5 +42,10 @@ void main()
 
     ipos = vec4(Model * vec4(vPos, 1.0)).xyz;
     vec4 projectedVertex = Projection * View * Model * vec4(vPos, 1.0);
+
+#ifdef DISPLACEMENT_TEXTURE
+    float displacement = texture2D(map_displacement, iuvcoords).x;
+    projectedVertex = projectedVertex + displacement * vec4(inormal, 1.0);
+#endif
     gl_Position =  projectedVertex;
 }

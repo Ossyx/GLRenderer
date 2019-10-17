@@ -132,40 +132,74 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
         rxLogInfo("Uniform "<< uniformName <<" is attribute "
           <<attributeKey<<" of type GL_SAMPLER_2D");
         //Setup the textures
+
+        glGenTextures(1, &m_textureId);
+        glBindTexture(GL_TEXTURE_2D, m_textureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
         if (p_material.HasUCharTexData(attributeKey))
         {
-          glGenTextures(1, &m_textureId);
-          glBindTexture(GL_TEXTURE_2D, m_textureId);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-          rxLogInfo("Texture id : "<<m_textureId);
-
           rx::Material::ByteTexture const& tex = p_material.GetByteTexture(attributeKey);
-          if (tex.m_channelCount == 3)
-          {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex.m_width,
-              tex.m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex.m_data);
-          }
-          else if (tex.m_channelCount == 1)
+          if (tex.m_channelCount == 1)
           {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex.m_width,
               tex.m_height, 0, GL_RED, GL_UNSIGNED_BYTE, tex.m_data);
           }
+          else if (tex.m_channelCount == 3)
+          {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex.m_width,
+              tex.m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex.m_data);
+          }
+          else if (tex.m_channelCount == 4)
+          {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex.m_width,
+              tex.m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex.m_data);
+          }
           else
           {
-            rxLogInfo("Texture channel count unsupported");
+            rxLogInfo("UChar Texture channel count unsupported");
             assert(false);
           }
-          glGenerateMipmap(GL_TEXTURE_2D);
-          rxLogInfo("tex.m_width " << tex.m_width);
-          rxLogInfo("tex.m_height " << tex.m_height);
-          rxLogInfo("tex.m_channelCount " << tex.m_channelCount);
+        }
+        else if(p_material.HasUShortTexData(attributeKey))
+        {
+          rx::Material::UShortTexture const& tex = p_material.GetUShortTexture(attributeKey);
+          if (tex.m_channelCount == 1)
+          {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R16, tex.m_width,
+              tex.m_height, 0, GL_RED, GL_UNSIGNED_SHORT, tex.m_data);
+          }
+          else if (tex.m_channelCount == 3)
+          {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16, tex.m_width,
+              tex.m_height, 0, GL_RGB, GL_UNSIGNED_SHORT, tex.m_data);
+          }
+          else if (tex.m_channelCount == 4)
+          {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, tex.m_width,
+              tex.m_height, 0, GL_RGBA, GL_UNSIGNED_SHORT, tex.m_data);
+          }
+          else
+          {
+            rxLogInfo("UShort Texture channel count unsupported");
+            assert(false);
+          }
+        }
+        else
+        {
+          rxLogError("No attribute " << attributeKey <<" found in material "
+            << p_material.GetName());
+        }
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+//           rxLogInfo("tex.m_width " << tex.m_width);
+//           rxLogInfo("tex.m_height " << tex.m_height);
+//           rxLogInfo("tex.m_channelCount " << tex.m_channelCount);
 
           m_textureIdsLocation[m_textureId] = p_shader.GetUniformLocation(uniformName);
-        }
       }
     }
   }

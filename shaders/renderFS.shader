@@ -80,7 +80,7 @@ void main()
     float shadowMapProj = texture2D(render_target_five, worldInShadow.xy).x;
     float dist = worldInShadow.z - shadowMapProj;
     vec4 shadow = vec4(0.0, 0.0, 0.0, 1.0);
-    if(dist < 0.001)
+    if(dist < 0.001 && depth < 1.0)
     {
       shadow = vec4(1.0, 1.0, 1.0, 1.0);
     }
@@ -100,7 +100,7 @@ void main()
     vec4 ambient = vec4(0.2, 0.2, 0.2, 1.0);
     vec3 refl = 2.0 * dot(nlight, normal) * normal - nlight;
     float spec = pow(max(dot(viewVector, refl), 0.0), 4.0) * specular.x;
-    vec4 final_color = ambient * albedo + (value * albedo + spec * vec4(1.0,1.0,1.0,1.0)) * shadow;
+    vec4 final_color = ambient * albedo + (value * albedo + spec * vec4(1.0,1.0,1.0,1.0)) * specular.y * shadow;
     frag_colour = final_color;
   }
 }

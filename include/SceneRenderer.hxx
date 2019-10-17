@@ -17,7 +17,11 @@ enum GBufferShaderFlag
     specularColor = 0x4,
     specularTexture = 0x8,
     normalTexture = 0x10,
-    uvCoords = 0x20
+    uvCoords = 0x20,
+    aoTexture = 0x40,
+    roughnessTexture = 0x80,
+    roughnessColor = 0x100,
+    displacementTexture = 0x200
 };
 
 class SceneRenderer

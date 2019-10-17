@@ -271,17 +271,25 @@ void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_mate
 
   rx::Material::StringMap const& uniforms = p_material->GetUniforms();
 
-  if (uniforms.find("texture1") != uniforms.cend())
+  if (uniforms.find("map_diffuse") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::albedoTexture;
   }
-  if (uniforms.find("texture3") != uniforms.cend())
+  if (uniforms.find("map_specular") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::specularTexture;
   }
-  if (uniforms.find("texture6") != uniforms.cend())
+  if (uniforms.find("map_normal") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::normalTexture;
+  }
+  if (uniforms.find("map_roughness") != uniforms.cend())
+  {
+    gBufferFlags |= GBufferShaderFlag::roughnessTexture;
+  }
+  if (uniforms.find("map_ao") != uniforms.cend())
+  {
+    gBufferFlags |= GBufferShaderFlag::aoTexture;
   }
   if (uniforms.find("diffuse_color") != uniforms.cend())
   {
@@ -290,6 +298,14 @@ void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_mate
   if (uniforms.find("specular_color") != uniforms.cend())
   {
     gBufferFlags |= GBufferShaderFlag::specularColor;
+  }
+  if (uniforms.find("roughness_color") != uniforms.cend())
+  {
+    gBufferFlags |= GBufferShaderFlag::roughnessColor;
+  }
+  if (uniforms.find("map_displacement") != uniforms.cend())
+  {
+    gBufferFlags |= GBufferShaderFlag::displacementTexture;
   }
   if (p_mesh->HasUVCoords())
   {
@@ -337,9 +353,26 @@ std::string SceneRenderer::GeneratePreprocessorDefine(unsigned int p_gBufferFlag
   {
     result << "#define NORMAL_TEXTURE" <<std::endl;
   }
+  if (p_gBufferFlags & GBufferShaderFlag::aoTexture )
+  {
+    result << "#define AO_TEXTURE" <<std::endl;
+  }
+  if (p_gBufferFlags & GBufferShaderFlag::roughnessColor
+    && !(p_gBufferFlags & GBufferShaderFlag::roughnessTexture))
+  {
+    result << "#define ROUGHNESS_COLOR" <<std::endl;
+  }
+  if (p_gBufferFlags & GBufferShaderFlag::roughnessTexture )
+  {
+    result << "#define ROUGHNESS_TEXTURE" <<std::endl;
+  }
   if (p_gBufferFlags & GBufferShaderFlag::uvCoords )
   {
     result << "#define HAS_UVCOORDS" <<std::endl;
+  }
+  if (p_gBufferFlags & GBufferShaderFlag::displacementTexture )
+  {
+    result << "#define DISPLACEMENT_TEXTURE" <<std::endl;
   }
   return result.str();
 }
@@ -373,7 +406,7 @@ void SceneRenderer::PrepareGBufferFrameBufferObject(int p_width, int p_height)
 
   glGenTextures(1, &m_renderTarget4);
   glBindTexture(GL_TEXTURE_2D, m_renderTarget4);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, p_width, p_height,
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, p_width, p_height,
     0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -407,7 +440,7 @@ void SceneRenderer::PrepareShadowMapFrameBufferObject(int p_width, int p_height)
 
   glGenTextures(1, &m_shadowMapTextureId1);
   glBindTexture(GL_TEXTURE_2D, m_shadowMapTextureId1);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 4000, 4000,
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, 4000, 4000,
     0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
