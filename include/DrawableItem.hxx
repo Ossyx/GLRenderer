@@ -55,6 +55,8 @@ private:
   typedef std::unordered_map<unsigned int, unsigned int> IntIntMap;
   IntIntMap m_textureIdsLocation;
 
+  static std::unordered_map<std::string, IntIntMap> m_savedIdsAndLocations;
+
   unsigned int m_textureId;
 };
 

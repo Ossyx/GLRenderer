@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+std::unordered_map<std::string, DrawableItem::IntIntMap> DrawableItem::m_savedIdsAndLocations = {};
+
 DrawableItem::DrawableItem()
 {
   m_transform = glm::mat4(1.0f);
@@ -106,6 +108,13 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
 
   Shader::UniformMap::const_iterator it = shaderUniforms.begin();
 
+  bool loadtex = true;
+  if(DrawableItem::m_savedIdsAndLocations.find(p_material.GetName()) != DrawableItem::m_savedIdsAndLocations.end())
+  {
+    loadtex = false;
+    m_textureIdsLocation = DrawableItem::m_savedIdsAndLocations[p_material.GetName()];
+  }
+
   for (; it != shaderUniforms.end(); ++it)
   {
     rxLogInfo("Linking uniform "<< it->first <<" to material.");
@@ -127,7 +136,7 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
         rxLogInfo("Uniform "<< uniformName <<" is attribute "
           << attributeKey <<" of type GL_FLOAT_VEC3");
       }
-      else if (type == GL_SAMPLER_2D)
+      else if (type == GL_SAMPLER_2D && loadtex)
       {
         rxLogInfo("Uniform "<< uniformName <<" is attribute "
           <<attributeKey<<" of type GL_SAMPLER_2D");
@@ -200,9 +209,14 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
 //           rxLogInfo("tex.m_channelCount " << tex.m_channelCount);
 
           m_textureIdsLocation[m_textureId] = p_shader.GetUniformLocation(uniformName);
+        }
       }
     }
-  }
+
+    if(loadtex == true)
+    {
+      DrawableItem::m_savedIdsAndLocations[p_material.GetName()] = m_textureIdsLocation;
+    }
 }
 
 int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
