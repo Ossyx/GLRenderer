@@ -164,6 +164,7 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
           }
           else if (tex.m_channelCount == 4)
           {
+            rxLogWarning("Loading RGBA Texture " << attributeKey)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex.m_width,
               tex.m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex.m_data);
           }
@@ -219,10 +220,10 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
     }
 }
 
-int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
-  rx::Material const& p_material, glm::mat4 const& p_view,
-  glm::mat4 const& p_projection, glm::mat4 const& p_model,
-  glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
+void DrawableItem::SetupUniformAndTextures(Shader const& p_shader, glm::mat4 const& p_vpMat,
+    rx::Material& p_material, glm::mat4 const& p_view,
+    glm::mat4 const& p_projection, glm::mat4 const& p_model,
+    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
   unsigned int mvp_location = p_shader.GetUniformLocation("MVP");
   unsigned int modelLoc = p_shader.GetUniformLocation("Model");
@@ -284,11 +285,30 @@ int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
     glBindTexture(GL_TEXTURE_2D, it->first);
     glUniform1i(it->second, /*GL_TEXTURE*/ idTex);
   }
+}
 
+int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
+  rx::Material& p_material, glm::mat4 const& p_view,
+  glm::mat4 const& p_projection, glm::mat4 const& p_model,
+  glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
+{
+  SetupUniformAndTextures(p_shader, p_vpMat, p_material, p_view,
+    p_projection, p_model, p_light, p_cameraPos);
+  DrawElements();
+}
 
+void DrawableItem::DrawElements()
+{
   glBindVertexArray(m_vertexArrayId);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
   glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
+}
+
+void DrawableItem::DrawElementsInstanced(unsigned p_count)
+{
+  glBindVertexArray(m_vertexArrayId);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
+  glDrawElementsInstanced(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0, p_count);
 }
 
 int DrawableItem::DrawSimple(Shader const& p_shader, glm::mat4 const& p_vpMat,

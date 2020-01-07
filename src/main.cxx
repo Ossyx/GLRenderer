@@ -52,7 +52,16 @@ int main()
   glfwSetCursorPosCallback(window, EventDispatcher::HandleCursorEvent);
 
   SceneRenderer renderer(window);
-  renderer.AddModel();
+  //renderer.AddModel();
+  renderer.AddTerrain();
+
+  int maxSize;
+  glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxSize);
+  rxLogInfo("GL_MAX_UNIFORM_BLOCK_SIZE : "<<maxSize);
+
+  int maxtessgenlvl;
+  glGetIntegerv(GL_MAX_TESS_GEN_LEVEL, &maxtessgenlvl);
+  rxLogInfo("GL_MAX_TESS_GEN_LEVEL : "<<maxtessgenlvl);
 
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
@@ -60,11 +69,20 @@ int main()
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_DEPTH_TEST);
 
+  auto frameTimer = std::chrono::steady_clock::now();
   while (glfwWindowShouldClose(window) == false)
   {
-    renderer.RenderShadowMap(window);
-    renderer.Render(window);
+    auto newTime = std::chrono::steady_clock::now();
+    float millis = std::chrono::duration_cast<std::chrono::milliseconds>(newTime - frameTimer).count();
+    rxLogInfo("FPS : " << 1000.0f / millis);
+    renderer.UpdateCamera(millis);
+    //renderer.RenderShadowMap(window);
+    //renderer.Render(window);
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    renderer.RenderTerrain(window);
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
     renderer.RenderGBufferDebug(window);
+    frameTimer = newTime;
   }
 
   glfwDestroyWindow(window);

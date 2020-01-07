@@ -48,8 +48,19 @@ void Shader::SetFragmentShaderSrc(std::string const& p_file)
   m_fragmentShaderSrc = p_file;
 }
 
+void Shader::SetTessControlSrc(std::string const& p_file)
+{
+  m_tessControlSrc = p_file;
+}
+
+void Shader::SetTessEvalSrc(std::string const& p_file)
+{
+  m_tessEvalSrc = p_file;
+}
+
 unsigned int Shader::CompileShader(unsigned int p_shaderType, std::string const& p_source)
 {
+  rxLogInfo("Compiling "<< p_source);
   GLint isCompiled = GL_FALSE;
   int InfoLogLength;
   std::ifstream shaderInput(p_source);
@@ -69,6 +80,7 @@ unsigned int Shader::CompileShader(unsigned int p_shaderType, std::string const&
   if ( isCompiled == 0 )
   {
     glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    rxLogError("Issue with shader from file "<< p_source);
     rxLogError("Shader compilation failed with following log :");
     char* rawLog = new char[InfoLogLength+1];
     glGetShaderInfoLog(shaderId, InfoLogLength, &InfoLogLength, rawLog);
@@ -84,6 +96,26 @@ bool Shader::LinkProgram()
   m_vertexShader = CompileShader(GL_VERTEX_SHADER, m_verterShaderSrc);
   m_fragmentShader = CompileShader(GL_FRAGMENT_SHADER, m_fragmentShaderSrc);
 
+  if(m_tessControlSrc != "")
+  {
+    m_tessControlShader = CompileShader(GL_TESS_CONTROL_SHADER, m_tessControlSrc);
+    if(m_tessControlShader == -1)
+    {
+      rxLogError("Tesselation control shader compiltation failed.");
+      assert(false);
+    }
+  }
+
+  if(m_tessEvalSrc != "")
+  {
+    m_tessEvalShader = CompileShader(GL_TESS_EVALUATION_SHADER, m_tessEvalSrc);
+    if(m_tessEvalShader == -1)
+    {
+      rxLogError("Tesselation evaluation shader compiltation failed.");
+      assert(false);
+    }
+  }
+
   if (m_vertexShader == -1 || m_fragmentShader == -1)
   {
     rxLogError("An error occured while compiling one or several shaders.");
@@ -92,6 +124,14 @@ bool Shader::LinkProgram()
 
   m_program = glCreateProgram();
   glAttachShader(m_program, m_vertexShader);
+  if(m_tessControlSrc != "")
+  {
+    glAttachShader(m_program, m_tessControlShader);
+  }
+  if(m_tessEvalSrc != "")
+  {
+    glAttachShader(m_program, m_tessEvalShader);
+  }
   glAttachShader(m_program, m_fragmentShader);
   glLinkProgram(m_program);
 

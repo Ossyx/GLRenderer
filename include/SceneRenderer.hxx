@@ -6,6 +6,7 @@
 #include "Shader.hxx"
 #include "Camera.hxx"
 #include "EventDispatcher.hxx"
+#include "TerrainLOD.hxx"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -34,11 +35,17 @@ public:
 
   void AddModel();
 
+  void AddTerrain();
+
   void RenderShadowMap(GLFWwindow* p_window);
 
   void Render(GLFWwindow* p_window);
 
+  void RenderTerrain(GLFWwindow* p_window);
+
   void RenderGBufferDebug(GLFWwindow* p_window);
+
+  void UpdateCamera(float p_elapsedMs);
 
   typedef std::map<std::string, unsigned int> UintMap;
 
@@ -57,7 +64,7 @@ private:
 
   void PrepareShadowMapFrameBufferObject(int p_width, int p_height);
 
-  std::vector<DrawableItem> m_drawableItems;
+  std::vector<DrawableItem*> m_drawableItems;
 
   typedef std::map<unsigned int, Shader> GBufferShaderMap;
   GBufferShaderMap m_gbufferShaders;
@@ -71,6 +78,8 @@ private:
   Shader m_renderShader;
 
   Shader m_shadowMapShader;
+
+  TerrainLOD m_terrain;
 
   //For 2 triangles support render
   unsigned int m_vBufferId;

@@ -28,6 +28,8 @@ public:
 
   void SmoothMovement(float p_deltaT);
 
+  void MoveCamera(float p_deltaT, float p_speed);
+
   virtual void HandleKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
 
   virtual void HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY);

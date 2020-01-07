@@ -26,6 +26,11 @@ configure_file(${CMAKE_SOURCE_DIR}/shaders/gbufferFS.shader ${CMAKE_BINARY_DIR}/
 configure_file(${CMAKE_SOURCE_DIR}/shaders/gbufferVS.shader ${CMAKE_BINARY_DIR}/gbufferVS.shader COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/shaders/shadowMapFS.shader ${CMAKE_BINARY_DIR}/shadowMapFS.shader COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/shaders/shadowMapVS.shader ${CMAKE_BINARY_DIR}/shadowMapVS.shader COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/shaders/renderTerrainFS.shader ${CMAKE_BINARY_DIR}/renderTerrainFS.shader COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/shaders/renderTerrainVS.shader ${CMAKE_BINARY_DIR}/renderTerrainVS.shader COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/shaders/terrainTC.shader ${CMAKE_BINARY_DIR}/terrainTC.shader COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/shaders/terrainTE.shader ${CMAKE_BINARY_DIR}/terrainTE.shader COPYONLY)
+
 add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/main.cxx
   ${CMAKE_SOURCE_DIR}/src/EventInterface.cxx
@@ -33,7 +38,17 @@ add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/Camera.cxx
   ${CMAKE_SOURCE_DIR}/src/Shader.cxx
   ${CMAKE_SOURCE_DIR}/src/DrawableItem.cxx
-  ${CMAKE_SOURCE_DIR}/src/SceneRenderer.cxx)
+  ${CMAKE_SOURCE_DIR}/src/SceneRenderer.cxx
+  ${CMAKE_SOURCE_DIR}/src/FrustumCulling.cxx
+  ${CMAKE_SOURCE_DIR}/src/TerrainLOD.cxx)
+
+add_executable(TestFrustumCulling
+  ${CMAKE_SOURCE_DIR}/test/testFrustumCulling.cxx
+  ${CMAKE_SOURCE_DIR}/src/FrustumCulling.cxx)
+
+# add_executable(TestTerrainLOD
+#   ${CMAKE_SOURCE_DIR}/test/testTerrainLOD.cxx
+#   ${CMAKE_SOURCE_DIR}/src/TerrainLOD.cxx)
 
 #CMAKE_DL_LIBS is needed by glad
 target_link_libraries(GLRenderer
@@ -42,6 +57,12 @@ ${Glad_LIBRARIES}
 ${CMAKE_DL_LIBS}
 ${MESHLIB_LIBRARY}
 ${CImg_LIBRARIES})
+
+target_link_libraries(TestFrustumCulling
+${MESHLIB_LIBRARY})
+
+# target_link_libraries(TestTerrainLOD
+# ${MESHLIB_LIBRARY})
 
 
 file(GLOB_RECURSE srcs
