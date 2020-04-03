@@ -174,10 +174,13 @@ void SceneRenderer::Render(GLFWwindow* p_window)
 
 void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
 {
+
+  if(m_mainCamera.m_wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-    (float)width / (float)height, 0.001f, 1000.f);
+    (float)width / (float)height, 0.0001f, 1000.f);
 
   //float time = glfwGetTime();
   glm::mat4 identity = glm::mat4(1.0f);
@@ -185,7 +188,7 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
 
   view = glm::rotate(view, m_mainCamera.GetElevation(), glm::vec3(1.0f, 0.0f, 0.0f));
   view = glm::rotate(view, m_mainCamera.GetAzimuth(), glm::vec3(0.0f, 1.0f, 0.0f));
-  view = glm::translate(view, m_mainCamera.GetPosition());
+  view = glm::translate(view, -m_mainCamera.GetPosition());
   glm::mat4 VP = projection * view;
 
   m_invProjMatrix = glm::inverse(projection);
@@ -212,12 +215,19 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
   glm::mat4 model = identity;
 
   m_terrain.SetTransform(model);
-  m_terrain.RecomputeTree(m_mainCamera.GetPosition());
+  if(m_mainCamera.m_treeRecompute)
+  {
+    m_terrain.RecomputeTree(m_mainCamera.GetPosition());
+  }
   m_terrain.PrepareBufferQuad();
   m_terrain.DrawTerrain(VP, view, projection, model, m_sunLightDirection, m_mainCamera.GetPosition());
 
+  rxLogInfo(m_mainCamera.GetPosition().x<<" "<<m_mainCamera.GetPosition().y<<" "<<m_mainCamera.GetPosition().z);
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glfwPollEvents();
+
+  glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void SceneRenderer::RenderShadowMap(GLFWwindow* p_window)
@@ -335,7 +345,7 @@ void SceneRenderer::UpdateCamera(float p_elapsedMs)
 {
   //Calc elapsed time
   //m_mainCamera.SmoothMovement(1.0f/1000.0f);
-  m_mainCamera.MoveCamera(p_elapsedMs/1000.0f, 0.5);
+  m_mainCamera.MoveCamera(p_elapsedMs/1000.0f, 0.05);
 }
 
 void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_material)

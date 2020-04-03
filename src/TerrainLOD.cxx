@@ -5,33 +5,88 @@
 
 TerrainLOD::TerrainLOD()
 {
-  m_root = new QuadTreeNode(1, glm::vec3(0.0f, 0.0f, 0.0f));
+  //build eight vertex of unit cube;
+  glm::vec3 p0(-0.5, 0.5, -0.5);
+  glm::vec3 p1(-0.5, 0.5, 0.5);
+  glm::vec3 p2(0.5, 0.5, 0.5);
+  glm::vec3 p3(0.5, 0.5, -0.5);
+  glm::vec3 p4(-0.5, -0.5, -0.5);
+  glm::vec3 p5(0.5, -0.5, -0.5);
+  glm::vec3 p6(0.5, -0.5, 0.5);
+  glm::vec3 p7(-0.5, -0.5, 0.5);
+
+  //Build the cube
+  m_cubeRoots[0] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[0]->parent = nullptr;
+  m_cubeRoots[0]->SetGeometry(p0, p1, p2, p3);
+
+  m_cubeRoots[1] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[1]->parent = nullptr;
+  m_cubeRoots[1]->SetGeometry(p1, p7, p6, p2);
+
+  m_cubeRoots[2] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[2]->parent = nullptr;
+  m_cubeRoots[2]->SetGeometry(p2, p6, p5, p3);
+
+  m_cubeRoots[3] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[3]->parent = nullptr;
+  m_cubeRoots[3]->SetGeometry(p3, p5, p4, p0);
+
+  m_cubeRoots[4] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[4]->parent = nullptr;
+  m_cubeRoots[4]->SetGeometry(p0, p4, p7, p1);
+
+  m_cubeRoots[5] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[5]->parent = nullptr;
+  m_cubeRoots[5]->SetGeometry(p7, p4, p5, p6);
+
 
   //8 level quatree test
-  for(unsigned i=0; i < 6; ++i)
-  {
-    std::vector<QuadTreeNode*> leafs;
-    FindLeafs(leafs);
-    std::cout<<"Split " << i <<" got "<< leafs.size() <<" leafs."<<std::endl;
-    for(unsigned j=0; j < leafs.size(); ++j)
-    {
-      leafs[j]->Split();
-    }
-  }
+//   for(unsigned i=0; i < 3; ++i)
+//   {
+//     std::vector<QuadTreeNode*> leafs;
+//     FindLeafs(leafs);
+//     std::cout<<"Split " << i <<" got "<< leafs.size() <<" leafs."<<std::endl;
+//     for(unsigned j=0; j < leafs.size(); ++j)
+//     {
+//       leafs[j]->Split();
+//     }
+//   }
 
-  m_scale = 1.0f;
+//   float fac = 1.0f;
+//   unsigned level = 1;
+//   float distInit = 5.0;
+//   for(unsigned int i =0; i < 12; ++i)
+//   {
+//     float dist = distInit / (i + 1);
+//     m_levelDistances[level] = pow(dist, i+1) ;
+//     rxLogInfo("Level " << level <<" : " << m_levelDistances[level]);
+//     level *= 2;
+//   }
 
-  m_levelDistances[1] = 5.0 * m_scale;
-  m_levelDistances[2] = 2.5 * m_scale;
-  m_levelDistances[4] = 1.25* m_scale;
-  m_levelDistances[8] = 0.75 * m_scale;
-  m_levelDistances[16] = 0.35 * m_scale;
-  m_levelDistances[32] = 0.150 * m_scale;
-  m_levelDistances[64] = 0.75 * m_scale;
-  m_levelDistances[128] = 0.35 * m_scale;
-  m_levelDistances[256] = 0.150 * m_scale;
-  m_levelDistances[512] = 0.075 * m_scale;
-  m_levelDistances[1024] = 0.035 * m_scale;
+  m_levelDistances[1] = 5.0 ;
+  m_levelDistances[2] = 2.5 ;
+  m_levelDistances[4] = 1.0 ;
+  m_levelDistances[8] = 0.5 ;
+  m_levelDistances[16] = 0.25;
+  m_levelDistances[32] = 0.15;
+  m_levelDistances[64] = 0.1;
+  m_levelDistances[128] = 0.05;
+  m_levelDistances[256] = 0.01;
+  m_levelDistances[512] = 0.005;
+  m_levelDistances[1024] = 0.001;
+
+  m_tessellationLevel[1] = 8.0;
+  m_tessellationLevel[2] = 8.0;
+  m_tessellationLevel[4] = 16.0;
+  m_tessellationLevel[8] = 32.0;
+  m_tessellationLevel[16] = 32.0;
+  m_tessellationLevel[32] = 32.0;
+  m_tessellationLevel[64] = 32.0;
+  m_tessellationLevel[128] = 32.0;
+  m_tessellationLevel[256] = 32.0;
+  m_tessellationLevel[512] = 64.0;
+  m_tessellationLevel[1024] = 64.0;
 
   m_terrainShader.SetVertexShaderSrc("renderTerrainVS.shader");
   m_terrainShader.SetFragmentShaderSrc("renderTerrainFS.shader");
@@ -59,6 +114,15 @@ void TerrainLOD::PrepareBufferQuad()
   std::vector<QuadTreeNode*> leafs;
   FindLeafs(leafs);
   m_leafCount = leafs.size();
+
+  //Sort the leaf vector by level
+  std::sort(leafs.begin(), leafs.end(),
+    [](const QuadTreeNode* a, const QuadTreeNode* b)
+  {
+    return a->level > b->level;
+  });
+
+  SetOuterTessellationLvl(leafs);
   BuildPrimitiveBuffers(leafs);
 }
 
@@ -94,7 +158,10 @@ void TerrainLOD::BuildSimple()
 void TerrainLOD::FindLeafs(std::vector<QuadTreeNode*>& p_leafs)
 {
   std::vector<QuadTreeNode*> nodeToExplore;
-  nodeToExplore.push_back(m_root);
+  for(unsigned int i=0; i < 6; ++i)
+  {
+    nodeToExplore.push_back(m_cubeRoots[i]);
+  }
 
   while(nodeToExplore.size() > 0)
   {
@@ -118,14 +185,17 @@ void TerrainLOD::FindLeafs(std::vector<QuadTreeNode*>& p_leafs)
 void TerrainLOD::RecomputeTree(glm::vec3 const& p_cameraPosition)
 {
   std::vector<QuadTreeNode*> nodeToExplore;
-  nodeToExplore.push_back(m_root);
+  for(unsigned int i=0; i < 6; ++i)
+  {
+    nodeToExplore.push_back(m_cubeRoots[i]);
+  }
 
   while(nodeToExplore.size() > 0)
   {
     QuadTreeNode* last = nodeToExplore.back();
     nodeToExplore.pop_back();
 
-    float dist = glm::distance(p_cameraPosition, last->center);
+    float dist = glm::distance(last->center, p_cameraPosition);
     if(last->leaf == false)
     {
       if(dist > m_levelDistances[last->level])
@@ -217,6 +287,12 @@ int TerrainLOD::DrawTerrain(glm::mat4 const& p_vpMat,
   block_index = glGetProgramResourceIndex(m_terrainShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
   glShaderStorageBlockBinding(m_terrainShader.GetProgram(), block_index, 3);
 
+  block_index = glGetProgramResourceIndex(m_terrainShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
+  glShaderStorageBlockBinding(m_terrainShader.GetProgram(), block_index, 4);
+
+  block_index = glGetProgramResourceIndex(m_terrainShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
+  glShaderStorageBlockBinding(m_terrainShader.GetProgram(), block_index, 5);
+
   SetupUniformAndTextures(m_terrainShader, p_vpMat, *terrainMaterial,
     p_view, p_projection, p_model, p_light, p_cameraPos);
 
@@ -225,25 +301,95 @@ int TerrainLOD::DrawTerrain(glm::mat4 const& p_vpMat,
   glDrawArrays(GL_PATCHES, 0, 4*m_leafCount);
 }
 
+void TerrainLOD::SetOuterTessellationLvl(std::vector<QuadTreeNode*>& p_leafs)
+{
+
+  for(unsigned i=0; i < p_leafs.size(); i++)
+  {
+    unsigned int lvl = p_leafs[i]->level;
+    for(unsigned int j = 0; j < 4; ++j)
+    {
+      QuadTreeNode* nei = p_leafs[i]->FindNeighbour((DirectionType)j);
+      if(nei != nullptr && nei->level < lvl)
+      {
+        p_leafs[i]->outerTessLevel[j] = m_tessellationLevel[nei->level] / 2;
+      }
+      else
+      {
+        p_leafs[i]->outerTessLevel[j] = m_tessellationLevel[lvl];
+      }
+    }
+  }
+}
+
 void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs)
 {
   rxLogDebug("Prepare buffer for "<< p_leafs.size()<< " leafs");
   float* dataQuad = new float[12*p_leafs.size()];
   float* dataSSBO = new float[4*p_leafs.size()];
+  float* dataColorSSBO = new float[4*p_leafs.size()];
+  float* dataOuterTessSSBO = new float[4*p_leafs.size()];
   unsigned idx = 0;
   unsigned idxTrans = 0;
+
+  unsigned leafToShow = 0;
+
+  QuadTreeNode* northN = p_leafs[leafToShow]->FindNeighbour(DirectionType::eNorth);
+  QuadTreeNode* southN = p_leafs[leafToShow]->FindNeighbour(DirectionType::eSouth);
+  QuadTreeNode* eastN = p_leafs[leafToShow]->FindNeighbour(DirectionType::eEast);
+  QuadTreeNode* westN = p_leafs[leafToShow]->FindNeighbour(DirectionType::eWest);
+
   for(unsigned i=0; i < p_leafs.size(); i++)
   {
-    dataQuad[idx] = -0.5; dataQuad[idx+1] = 0.0; dataQuad[idx+2] = -0.5;
-    dataQuad[idx+3] = -0.5; dataQuad[idx+4] = 0.0; dataQuad[idx+5] = 0.5;
-    dataQuad[idx+6] = 0.5; dataQuad[idx+7] = 0.0; dataQuad[idx+8] = 0.5;
-    dataQuad[idx+9] = 0.5; dataQuad[idx+10] = 0.0; dataQuad[idx+11] = -0.5;
+    float scale = 1.0f / p_leafs[i]->level;
 
-    float scaleFactor = 1.0f * m_scale / p_leafs[i]->level;
-    dataSSBO[idxTrans] = -p_leafs[i]->center.x;
-    dataSSBO[idxTrans+1] = -p_leafs[i]->center.y;
-    dataSSBO[idxTrans+2]= -p_leafs[i]->center.z;
-    dataSSBO[idxTrans+3]= scaleFactor;
+    dataQuad[idx] = p_leafs[i]->geometry[0].x;
+    dataQuad[idx+1] = p_leafs[i]->geometry[0].y;
+    dataQuad[idx+2] = p_leafs[i]->geometry[0].z;
+
+    dataQuad[idx+3] = p_leafs[i]->geometry[1].x;
+    dataQuad[idx+4] = p_leafs[i]->geometry[1].y;
+    dataQuad[idx+5] = p_leafs[i]->geometry[1].z;
+
+    dataQuad[idx+6] = p_leafs[i]->geometry[2].x;
+    dataQuad[idx+7] = p_leafs[i]->geometry[2].y;
+    dataQuad[idx+8] = p_leafs[i]->geometry[2].z;
+
+    dataQuad[idx+9] = p_leafs[i]->geometry[3].x;
+    dataQuad[idx+10] = p_leafs[i]->geometry[3].y;
+    dataQuad[idx+11] = p_leafs[i]->geometry[3].z;
+
+    glm::vec3 color;
+    if(p_leafs[i]->level == 64)
+    {
+      color = glm::vec3(1.0, 0.0, 0.0);
+    }
+    else if(p_leafs[i]->level == 128)
+    {
+      color = glm::vec3(0.0, 1.0, 0.0);
+    }
+    else if(p_leafs[i]->level == 256)
+    {
+      color = glm::vec3(0.0, 0.0, 1.0);
+    }
+    else if(p_leafs[i]->level == 512)
+    {
+      color = glm::vec3(1.0, 1.0, 0.0);
+    }
+    else if(p_leafs[i]->level == 1024)
+    {
+      color = glm::vec3(0.0, 1.0, 1.0);
+    }
+
+    dataColorSSBO[idxTrans] = color.x;
+    dataColorSSBO[idxTrans+1] = color.y;
+    dataColorSSBO[idxTrans+2]= color.z;
+    dataColorSSBO[idxTrans+3]= 1.0;
+
+    dataOuterTessSSBO[idxTrans] = p_leafs[i]->outerTessLevel[0];
+    dataOuterTessSSBO[idxTrans+1] = p_leafs[i]->outerTessLevel[1];
+    dataOuterTessSSBO[idxTrans+2]= p_leafs[i]->outerTessLevel[2];
+    dataOuterTessSSBO[idxTrans+3]= p_leafs[i]->outerTessLevel[3];
 
     idx+=12;
     idxTrans+=4;
@@ -267,8 +413,27 @@ void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_quadDataSSBO);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
 
+  glGenBuffers(1, &m_quadColorSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_quadColorSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, p_leafs.size()*4*sizeof(float), dataColorSSBO, GL_STATIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, m_quadColorSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
+
+  glGenBuffers(1, &m_quadOuterTessSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_quadOuterTessSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, p_leafs.size()*4*sizeof(float), dataOuterTessSSBO, GL_STATIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, m_quadOuterTessSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
+
   delete[] dataQuad;
   delete[] dataSSBO;
+  delete[] dataColorSSBO;
+  delete[] dataOuterTessSSBO;
+}
+
+void TerrainLOD::SetSize(float p_size)
+{
+  m_size = p_size;
 }
 
 QuadTreeNode::QuadTreeNode(unsigned p_level, glm::vec3 const& p_position)
@@ -282,19 +447,224 @@ QuadTreeNode::QuadTreeNode(unsigned p_level, glm::vec3 const& p_position)
   leaf = true;
 }
 
+void QuadTreeNode::SetGeometry(glm::vec3 const& p_1, glm::vec3 const& p_2,
+    glm::vec3 const& p_3, glm::vec3 const& p_4)
+{
+  geometry[0] = glm::normalize(p_1);
+  geometry[1] = glm::normalize(p_2);
+  geometry[2] = glm::normalize(p_3);
+  geometry[3] = glm::normalize(p_4);
+}
+
 void QuadTreeNode::Split()
 {
   leaf = false;
+  glm::vec3 p_5 = geometry[0] + (geometry[3] - geometry[0]) * 0.5f;
+  glm::vec3 p_6 = geometry[3] + (geometry[2] - geometry[3]) * 0.5f;
+  glm::vec3 p_7 = geometry[2] + (geometry[1] - geometry[2]) * 0.5f;
+  glm::vec3 p_8 = geometry[1] + (geometry[0] - geometry[1]) * 0.5f;
+  glm::vec3 p_9 = geometry[0] + (geometry[2] - geometry[0]) * 0.5f;
+
   float scale = 1.0f/level;
   float subsize = 1.0f/4.0f;
-  glm::vec3 nwpos = center + glm::vec3(-subsize, 0.0f, -subsize) * scale;
+  //glm::vec3 nwpos = center + glm::vec3(-subsize, 0.0f, -subsize) * scale;
+  glm::vec3 nwpos = geometry[0] + (p_9 - geometry[0]) * 0.5f;
   childs[0] = new QuadTreeNode(level*2, nwpos);
-  glm::vec3 nepos = center + glm::vec3(subsize, 0.0f, -subsize) * scale;
+  childs[0]->parent = this;
+  childs[0]->SetGeometry(geometry[0], p_8, p_9, p_5);
+  //glm::vec3 nepos = center + glm::vec3(subsize, 0.0f, -subsize) * scale;
+  glm::vec3 nepos = geometry[3] + (p_9 - geometry[3]) * 0.5f;
   childs[1] = new QuadTreeNode(level*2, nepos);
-  glm::vec3 swpos = center + glm::vec3(subsize, 0.0f, subsize) * scale;
+  childs[1]->parent = this;
+  childs[1]->SetGeometry(p_5, p_9, p_6, geometry[3]);
+  //glm::vec3 swpos = center + glm::vec3(-subsize, 0.0f, subsize) * scale;
+  glm::vec3 swpos = geometry[1] + (p_9 - geometry[1]) * 0.5f;
   childs[2] = new QuadTreeNode(level*2, swpos);
-  glm::vec3 sepos = center + glm::vec3(-subsize, 0.0f, subsize) * scale;
+  childs[2]->parent = this;
+  childs[2]->SetGeometry(p_8, geometry[1], p_7, p_9);
+  //glm::vec3 sepos = center + glm::vec3(subsize, 0.0f, subsize) * scale;
+  glm::vec3 sepos = geometry[2] + (p_9 - geometry[2]) * 0.5f;
   childs[3] = new QuadTreeNode(level*2, sepos);
+  childs[3]->parent = this;
+  childs[3]->SetGeometry(p_9, p_7, geometry[2], p_6);
+}
+
+unsigned int QuadTreeNode::GetChildIdInParent()
+{
+  assert(parent != nullptr);
+  for(unsigned int i = 0; i < 4; ++i)
+  {
+    if(parent->childs[i] == this)
+    {
+      return i;
+    }
+  }
+}
+
+QuadTreeNode* QuadTreeNode::FindNeighbour(DirectionType p_direction)
+{
+  //Deux voisins evidents en fonction de la position du noeud dans le parent :
+  if(parent == nullptr)
+  {
+    return nullptr;
+  }
+  unsigned int idInParent = GetChildIdInParent();
+  switch(idInParent)
+  {
+    case 0 ://NW 00
+      if(p_direction == DirectionType::eSouth)
+      {
+        return parent->childs[2];//SW
+      }
+      else if(p_direction == DirectionType::eEast)
+      {
+        return parent->childs[1];//NE
+      }
+    break;
+    case 1 ://NE 01
+      if(p_direction == DirectionType::eSouth)
+      {
+        return parent->childs[3];//SE
+      }
+      else if(p_direction == DirectionType::eWest)
+      {
+        return parent->childs[0];//NW
+      }
+    break;
+    case 2 ://SW 10
+      if(p_direction == DirectionType::eNorth)
+      {
+        return parent->childs[0];//NW
+      }
+      else if(p_direction == DirectionType::eEast)
+      {
+        return parent->childs[3];//NE
+      }
+    break;
+    case 3 ://SE 11
+      if(p_direction == DirectionType::eNorth)
+      {
+        return parent->childs[1];//NE
+      }
+      else if(p_direction == DirectionType::eWest)
+      {
+        return parent->childs[2];//SW
+      }
+    break;
+  }
+
+  //Remonter jusqu'a pouvoir aller dans la direction p_direction et empiler l'axe orthognale à p_direction
+  //eNorth
+  //Remonter jusqu'a trouver un noeud parent SW ou SE
+  unsigned int q1, q2;
+  switch(p_direction)
+  {
+    case eNorth:
+      q1 = 2; q2 = 3;
+      break;
+    case eSouth:
+      q1 = 0; q2 = 1;
+      break;
+    case eWest:
+      q1 = 1; q2 = 3;
+      break;
+    case eEast:
+      q1 = 0; q2 = 2;
+      break;
+  }
+
+  bool found = false;
+  QuadTreeNode* currentNode = this;
+  std::vector<unsigned int> dirTaken;
+  while(found == false && currentNode->parent != nullptr)
+  {
+    idInParent = currentNode->GetChildIdInParent();
+    dirTaken.push_back(idInParent);
+    if(idInParent == q1 || idInParent == q2)
+    {
+      found = true;
+      switch(p_direction)
+      {
+        case eNorth:
+          if(idInParent == 2) currentNode = currentNode->parent->childs[0];
+          if(idInParent == 3) currentNode = currentNode->parent->childs[1];
+          break;
+        case eSouth:
+          if(idInParent == 0) currentNode = currentNode->parent->childs[2];
+          if(idInParent == 1) currentNode = currentNode->parent->childs[3];
+          break;
+        case eWest:
+          if(idInParent == 1) currentNode = currentNode->parent->childs[0];
+          if(idInParent == 3) currentNode = currentNode->parent->childs[2];
+          break;
+        case eEast:
+          if(idInParent == 0) currentNode = currentNode->parent->childs[1];
+          if(idInParent == 2) currentNode = currentNode->parent->childs[3];
+          break;
+      }
+      dirTaken.pop_back();
+      break;
+    }
+    currentNode = currentNode->parent;
+  }
+  //Redescendre en dépilant la liste d'axe orthognale à p_direction pour s'orienter
+  if(found == true)
+  {
+    while(currentNode->leaf == false)
+    {
+      unsigned int q = dirTaken.back();
+      dirTaken.pop_back();
+      switch(p_direction)
+      {
+        case eNorth://S
+          if(q == 0|| q == 2)//W
+          {
+            currentNode = currentNode->childs[2];
+          }
+          else//E
+          {
+            currentNode = currentNode->childs[3];
+          }
+          break;
+        case eSouth://N
+          if(q == 0 || q == 2)//W
+          {
+            currentNode = currentNode->childs[0];
+          }
+          else//E
+          {
+            currentNode = currentNode->childs[1];
+          }
+          break;
+        case eWest://E
+          if(q == 0 || q == 1)//N
+          {
+            currentNode = currentNode->childs[1];
+          }
+          else//S
+          {
+            currentNode = currentNode->childs[3];
+          }
+          break;
+        case eEast://W
+          if(q == 0 || q == 1)//N
+          {
+            currentNode = currentNode->childs[0];
+          }
+          else//S
+          {
+            currentNode = currentNode->childs[2];
+          }
+          break;
+      }
+    }
+    return currentNode;
+  }
+  else
+  {
+    return nullptr;
+  }
+  return nullptr;
 }
 
 QuadTreeNode::~QuadTreeNode()

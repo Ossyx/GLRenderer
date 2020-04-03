@@ -36,6 +36,7 @@ int main()
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+  //glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE );
   GLFWwindow* window = glfwCreateWindow(1920, 1080, "SpaceWar2 !", NULL, NULL);
 
   if (window == NULL)
@@ -78,9 +79,7 @@ int main()
     renderer.UpdateCamera(millis);
     //renderer.RenderShadowMap(window);
     //renderer.Render(window);
-    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     renderer.RenderTerrain(window);
-    //glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
     renderer.RenderGBufferDebug(window);
     frameTimer = newTime;
   }

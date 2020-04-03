@@ -10,12 +10,22 @@ uniform vec3 diffuse_color;
 
 in vec2 gradient;
 in float elevation;
+in vec4 quadColor;
 
 void main()
 {
-  vec4 albedo = vec4(elevation, elevation, elevation, 1.0);
+  vec4 albedo = quadColor;
   outAlbedo = albedo;
-  outNormal = vec4(gradient.x, gradient.y, 0.0, 1.0);
+
+   outNormal = vec4(0.0, gradient.y, 0.0, 1.0);
+  /*if(gradient.y > 0.05)
+  {
+    outNormal = vec4(0.0, gradient.y, 0.0, 1.0);
+  }
+  else
+  {
+    outNormal = vec4(0.0,0.0,1.0,1.0);
+  }*/
   outSpecular = vec4(1.0, 1.0, 1.0, 1.0);
   outDepth = gl_FragCoord.z;
 }

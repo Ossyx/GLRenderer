@@ -5,7 +5,7 @@
 #include <math.h>
 
 Camera::Camera():
-m_position(glm::vec3(0.0f, -5.0f, 0.0f)),
+m_position(glm::vec3(0.5f, 1.0f, 0.5f)),
 m_direction(glm::vec3(0.0f, 0.0f, 0.0f)),
 m_translationSpeed(0.0f),
 m_translationAcceleration(0.0f),
@@ -13,6 +13,9 @@ m_azimuth(0),
 m_elevation(0),
 m_keyPressed(0)
 {
+  m_wireframe = false;
+
+  m_treeRecompute = true;;
 }
 
 Camera::~Camera()
@@ -121,22 +124,22 @@ void Camera::ReadDirectionFromKeys()
   bool keyPressed = false;
   if (m_keyPressed & eKeyD)
   {
-    m_direction += glm::vec3(-1.0, 0.0, 0.0);
+    m_direction += glm::vec3(1.0, 0.0, 0.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyA)
   {
-    m_direction += glm::vec3(1.0, 0.0, 0.0);
+    m_direction += glm::vec3(-1.0, 0.0, 0.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyW)
   {
-    m_direction += glm::vec3(0.0, 0.0, 1.0);
+    m_direction += glm::vec3(0.0, 0.0, -1.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyS)
   {
-    m_direction += glm::vec3(0.0, 0.0, -1.0);
+    m_direction += glm::vec3(0.0, 0.0, 1.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyQ)
@@ -160,6 +163,7 @@ void Camera::ReadDirectionFromKeys()
   }
   else
   {
+    m_direction = glm::vec3(0.0f, 0.0f, 0.0f);
     m_translationAcceleration = -10.0;
   }
 }
@@ -187,6 +191,15 @@ void Camera::HandleKeyEvent(GLFWwindow* window, int key, int scancode, int actio
   MapKey(GLFW_KEY_D, eKeyD, key, action);
   MapKey(GLFW_KEY_Q, eKeyQ, key, action);
   MapKey(GLFW_KEY_Z, eKeyZ, key, action);
+
+  if(action == GLFW_PRESS && key == GLFW_KEY_J)
+  {
+    m_wireframe = !m_wireframe;
+  }
+  if(action == GLFW_PRESS && key == GLFW_KEY_K)
+  {
+    m_treeRecompute = !m_treeRecompute;
+  }
 }
 
 void Camera::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY)

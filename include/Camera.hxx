@@ -34,6 +34,10 @@ public:
 
   virtual void HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY);
 
+  bool m_wireframe;
+
+  bool m_treeRecompute;
+
 
 private:
 

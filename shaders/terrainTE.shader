@@ -9,80 +9,130 @@ layout(std430, binding = 3) buffer layoutDataQuad
   vec4 dataQuad[];
 };
 
+layout(std430, binding = 4) buffer layoutColorQuad
+{
+  vec4 colorQuad[];
+};
+
 out vec2 gradient;
 out float elevation;
+out vec4 quadColor;
 
-//Noise functions by candycat from shadertoy https://www.shadertoy.com/view/ldc3RB
-#define Use_Perlin
+//#define Use_Perlin
 //#define Use_Value
-//#define Use_Simplex
+#define Use_Simplex
 
-// ========= Noise ===========
-vec2 hash22(vec2 p)
+// ========= Hash ===========
+
+vec3 hashOld33(vec3 p)
 {
-    p = vec2( dot(p,vec2(127.1,311.7)),
-			  dot(p,vec2(269.5,183.3)));
+	p = vec3( dot(p,vec3(127.1,311.7, 74.7)),
+			  dot(p,vec3(269.5,183.3,246.1)),
+			  dot(p,vec3(113.5,271.9,124.6)));
 
-    //return normalize(-1.0 + 2.0 * fract(sin(p)*43758.5453123));
     return -1.0 + 2.0 * fract(sin(p)*43758.5453123);
 }
 
-float hash21(vec2 p)
+float hashOld31(vec3 p)
 {
-	float h = dot(p,vec2(127.1,311.7));
+    float h = dot(p,vec3(127.1,311.7, 74.7));
 
     return -1.0 + 2.0 * fract(sin(h)*43758.5453123);
 }
 
-float perlin_noise(vec2 p)
+// Grab from https://www.shadertoy.com/view/4djSRW
+#define MOD3 vec3(.1031,.11369,.13787)
+//#define MOD3 vec3(443.8975,397.2973, 491.1871)
+float hash31(vec3 p3)
 {
-    vec2 pi = floor(p);
-    vec2 pf = p - pi;
-
-    vec2 w = pf * pf * (3.0 - 2.0 * pf);
-
-    return mix(mix(dot(hash22(pi + vec2(0.0, 0.0)), pf - vec2(0.0, 0.0)),
-                   dot(hash22(pi + vec2(1.0, 0.0)), pf - vec2(1.0, 0.0)), w.x),
-               mix(dot(hash22(pi + vec2(0.0, 1.0)), pf - vec2(0.0, 1.0)),
-                   dot(hash22(pi + vec2(1.0, 1.0)), pf - vec2(1.0, 1.0)), w.x),
-               w.y);
+	p3  = fract(p3 * MOD3);
+    p3 += dot(p3, p3.yzx + 19.19);
+    return -1.0 + 2.0 * fract((p3.x + p3.y) * p3.z);
 }
 
-float value_noise(vec2 p)
+vec3 hash33(vec3 p3)
 {
-    vec2 pi = floor(p);
-    vec2 pf = p - pi;
-
-    vec2 w = pf * pf * (3.0 - 2.0 * pf);
-
-    return mix(mix(hash21(pi + vec2(0.0, 0.0)), hash21(pi + vec2(1.0, 0.0)), w.x),
-               mix(hash21(pi + vec2(0.0, 1.0)), hash21(pi + vec2(1.0, 1.0)), w.x),
-               w.y);
+	p3 = fract(p3 * MOD3);
+    p3 += dot(p3, p3.yxz+19.19);
+    return -1.0 + 2.0 * fract(vec3((p3.x + p3.y)*p3.z, (p3.x+p3.z)*p3.y, (p3.y+p3.z)*p3.x));
 }
 
-float simplex_noise(vec2 p)
+// ========= Noise ===========
+
+float value_noise(vec3 p)
 {
-    const float K1 = 0.366025404; // (sqrt(3)-1)/2;
-    const float K2 = 0.211324865; // (3-sqrt(3))/6;
+    vec3 pi = floor(p);
+    vec3 pf = p - pi;
 
-    vec2 i = floor(p + (p.x + p.y) * K1);
+    vec3 w = pf * pf * (3.0 - 2.0 * pf);
 
-    vec2 a = p - (i - (i.x + i.y) * K2);
-    vec2 o = (a.x < a.y) ? vec2(0.0, 1.0) : vec2(1.0, 0.0);
-    vec2 b = a - (o - K2);
-    vec2 c = a - (1.0 - 2.0 * K2);
-
-    vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);
-    vec3 n = h * h * h * h * vec3(dot(a, hash22(i)), dot(b, hash22(i + o)), dot(c, hash22(i + 1.0)));
-
-    return dot(vec3(70.0, 70.0, 70.0), n);
+    return 	mix(
+        		mix(
+        			mix(hash31(pi + vec3(0, 0, 0)), hash31(pi + vec3(1, 0, 0)), w.x),
+        			mix(hash31(pi + vec3(0, 0, 1)), hash31(pi + vec3(1, 0, 1)), w.x),
+                    w.z),
+        		mix(
+                    mix(hash31(pi + vec3(0, 1, 0)), hash31(pi + vec3(1, 1, 0)), w.x),
+        			mix(hash31(pi + vec3(0, 1, 1)), hash31(pi + vec3(1, 1, 1)), w.x),
+                    w.z),
+        		w.y);
 }
 
-float noise(vec2 p) {
+float perlin_noise(vec3 p)
+{
+    vec3 pi = floor(p);
+    vec3 pf = p - pi;
+
+    vec3 w = pf * pf * (3.0 - 2.0 * pf);
+
+    return 	mix(
+        		mix(
+                	mix(dot(pf - vec3(0, 0, 0), hash33(pi + vec3(0, 0, 0))),
+                        dot(pf - vec3(1, 0, 0), hash33(pi + vec3(1, 0, 0))),
+                       	w.x),
+                	mix(dot(pf - vec3(0, 0, 1), hash33(pi + vec3(0, 0, 1))),
+                        dot(pf - vec3(1, 0, 1), hash33(pi + vec3(1, 0, 1))),
+                       	w.x),
+                	w.z),
+        		mix(
+                    mix(dot(pf - vec3(0, 1, 0), hash33(pi + vec3(0, 1, 0))),
+                        dot(pf - vec3(1, 1, 0), hash33(pi + vec3(1, 1, 0))),
+                       	w.x),
+                   	mix(dot(pf - vec3(0, 1, 1), hash33(pi + vec3(0, 1, 1))),
+                        dot(pf - vec3(1, 1, 1), hash33(pi + vec3(1, 1, 1))),
+                       	w.x),
+                	w.z),
+    			w.y);
+}
+
+float simplex_noise(vec3 p)
+{
+    const float K1 = 0.333333333;
+    const float K2 = 0.166666667;
+
+    vec3 i = floor(p + (p.x + p.y + p.z) * K1);
+    vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);
+
+    // thx nikita: https://www.shadertoy.com/view/XsX3zB
+    vec3 e = step(vec3(0.0), d0 - d0.yzx);
+	vec3 i1 = e * (1.0 - e.zxy);
+	vec3 i2 = 1.0 - e.zxy * (1.0 - e);
+
+    vec3 d1 = d0 - (i1 - 1.0 * K2);
+    vec3 d2 = d0 - (i2 - 2.0 * K2);
+    vec3 d3 = d0 - (1.0 - 3.0 * K2);
+
+    vec4 h = max(0.6 - vec4(dot(d0, d0), dot(d1, d1), dot(d2, d2), dot(d3, d3)), 0.0);
+    vec4 n = h * h * h * h * vec4(dot(d0, hash33(i)), dot(d1, hash33(i + i1)), dot(d2, hash33(i + i2)), dot(d3, hash33(i + 1.0)));
+
+    return dot(vec4(31.316), n);
+}
+
+float noise(vec3 p) {
 #ifdef Use_Perlin
-    return perlin_noise(p);
+    return perlin_noise(p * 2.0);
 #elif defined Use_Value
-    return value_noise(p);
+    return value_noise(p * 2.0);
 #elif defined Use_Simplex
     return simplex_noise(p);
 #endif
@@ -91,32 +141,78 @@ float noise(vec2 p) {
 }
 
 // ========== Different function ==========
-float noise_itself(vec2 p)
+
+float noise_itself(vec3 p)
 {
     return noise(p * 8.0);
 }
 
-float noise_sum(vec2 p)
+float noise_sum(vec3 p)
 {
     float f = 0.0;
-    p = p * 4.0;
-    f += 1.0000 * noise(p); p = 2.0 * p;
+    p = p * 256.0;
+    float s = 0.001;
+    for(int i=0; i < 25; ++i)
+    {
+      f += s * noise(p); p = 2.0 * p;
+      s = s / 2.0;
+    }
+
+    /*f += 1.0000 * noise(p); p = 2.0 * p;
     f += 0.5000 * noise(p); p = 2.0 * p;
 	f += 0.2500 * noise(p); p = 2.0 * p;
 	f += 0.1250 * noise(p); p = 2.0 * p;
 	f += 0.0625 * noise(p); p = 2.0 * p;
 	f += 0.0312 * noise(p); p = 2.0 * p;
-	f += 0.0126 * noise(p); p = 2.0 * p;
-	f += 0.0063 * noise(p); p = 2.0 * p;
-	f += 0.0031 * noise(p); p = 2.0 * p;
+	f += 0.0156 * noise(p); p = 2.0 * p;
+	f += 0.0075 * noise(p); p = 2.0 * p;*/
 
     return f;
 }
 
-float noise_sum_abs(vec2 p)
+float noise_sum_H(vec3 p)
 {
     float f = 0.0;
-    p = p * 7.0;
+    p = p * 256.0;
+    float s = 0.001;
+    for(int i=0; i < 64; ++i)
+    {
+      f += s * noise(p); p = 2.0 * p;
+      s = s / 2.0;
+    }
+    return f;
+}
+
+float noise_sum_M(vec3 p)
+{
+    float f = 0.0;
+    p = p * 32.0;
+    float s = 1.0;
+    for(int i=0; i < 8; ++i)
+    {
+      f += s * noise(p); p = 2.0 * p;
+      s = s / 2.0;
+    }
+    return f;
+}
+
+float noise_sum_L(vec3 p)
+{
+    float f = 0.0;
+    p = p * 2.0;
+    float s = 1.0;
+    for(int i=0; i < 8; ++i)
+    {
+      f += s * noise(p); p = 2.0 * p;
+      s = s / 2.0;
+    }
+    return f;
+}
+
+float noise_sum_abs(vec3 p)
+{
+    float f = 0.0;
+    p = p * 3.0;
     f += 1.0000 * abs(noise(p)); p = 2.0 * p;
     f += 0.5000 * abs(noise(p)); p = 2.0 * p;
 	f += 0.2500 * abs(noise(p)); p = 2.0 * p;
@@ -126,24 +222,36 @@ float noise_sum_abs(vec2 p)
     return f;
 }
 
-float noise_sum_abs_sin(vec2 p)
+float noise_sum_abs_sin(vec3 p)
 {
     float f = noise_sum_abs(p);
-    f = sin(f * 1.5 + p.x * 7.0);
+    f = sin(f * 2.5 + p.x * 5.0 - 1.5);
 
-    return f * f;
+    return f ;
 }
 
-vec2 calcGrad( in vec2 pos )
+vec2 cartToSphere(in vec3 pos)
+{
+  return vec2(atan(pos.y / pos.x), acos(pos.z));
+}
+
+vec3 sphereToCart(vec2 coord)
+{
+  return vec3(sin(coord.y) * cos(coord.x), sin(coord.y) * sin(coord.x), cos(coord.y));
+}
+
+vec2 calcGrad( in vec3 pos)
 {
     const float eps = 0.002;
-    const vec2 v1 = vec2(1.0,0.0);
-    const vec2 v2 = vec2(-1.0,0.0);
-    const vec2 v3 = vec2(0.0,1.0);
-    const vec2 v4 = vec2(0.0,-1.0);
+    vec2 spCoord = cartToSphere(pos);
 
-    return vec2(noise_sum( pos + v1*eps )*0.1 - noise_sum( pos + v2*eps )*0.1,
-                noise_sum( pos + v3*eps )*0.1 - noise_sum( pos + v4*eps )*0.1);
+    vec3 v1 = sphereToCart(spCoord + vec2(1.0,0.0) *eps);
+    vec3 v2 = sphereToCart(spCoord + vec2(-1.0,0.0) *eps);
+    vec3 v3 = sphereToCart(spCoord + vec2(0.0,1.0) *eps);
+    vec3 v4 = sphereToCart(spCoord + vec2(0.0,-1.0) *eps);
+
+    return vec2(noise_sum(v1)- noise_sum(v2),
+                noise_sum(v3)- noise_sum(v4));
 }
 
 
@@ -161,12 +269,26 @@ void main(void)
   // interpolate in vert direction
   vec3 p = mix(p0, p1, gl_TessCoord.y);
   vec2 tePatchDistance = gl_TessCoord.xy;
-  vec3 positionOnQuad = p * dataQuad[gl_PrimitiveID].w  + dataQuad[gl_PrimitiveID].xyz;
+  vec3 positionOnQuad = normalize(p);
+  //gradient = normalize(calcGrad(positionOnQuad));
 
   //Displacement
-  elevation = noise_sum(positionOnQuad.xz);
-  positionOnQuad.y = elevation*0.1;
-  gradient = normalize(calcGrad(positionOnQuad.xz));
+  float e1 = abs(noise_sum_L(positionOnQuad));
+  float e2 = abs(noise_sum_M(positionOnQuad));
+  float e3 = abs(noise_sum_H(positionOnQuad));
+  elevation = e1 * 0.002 + e1 * e2 * 0.005 + e1 * e2 * e3 * 0.008;
+  float scale_elev = 0.001;
+  positionOnQuad = positionOnQuad + positionOnQuad*elevation;
+  gradient = vec2(elevation / scale_elev);
+  //gradient = normalize(calcGrad(positionOnQuad.xz, 16));
+
+  /*elevation = noise_sum(gl_TessCoord.xy, 16);
+  positionOnQuad = positionOnQuad + positionOnQuad*elevation*0.001;
+  gradient = normalize(calcGrad(gl_TessCoord.xy, 16));*/
+
+
+
+  quadColor = colorQuad[gl_PrimitiveID];
 
   gl_Position = Projection * View * Model * vec4(positionOnQuad, 1);
 }
