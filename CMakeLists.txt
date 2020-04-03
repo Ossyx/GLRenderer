@@ -20,16 +20,8 @@ set(MESHLIB_LIBRARY "${MESHLIB_INSTALL_DIR}/lib/libMeshLib.so")
 include_directories(${CMAKE_SOURCE_DIR}/include ${GLFW_INCLUDE_DIR} ${Glad_INCLUDE_DIR} ${glm_DIR} ${MESHLIB_INCLUDE})
 
 #Copy shaders to build directory
-configure_file(${CMAKE_SOURCE_DIR}/shaders/renderVS.shader ${CMAKE_BINARY_DIR}/renderVS.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/renderFS.shader ${CMAKE_BINARY_DIR}/renderFS.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/gbufferFS.shader ${CMAKE_BINARY_DIR}/gbufferFS.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/gbufferVS.shader ${CMAKE_BINARY_DIR}/gbufferVS.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/shadowMapFS.shader ${CMAKE_BINARY_DIR}/shadowMapFS.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/shadowMapVS.shader ${CMAKE_BINARY_DIR}/shadowMapVS.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/renderTerrainFS.shader ${CMAKE_BINARY_DIR}/renderTerrainFS.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/renderTerrainVS.shader ${CMAKE_BINARY_DIR}/renderTerrainVS.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/terrainTC.shader ${CMAKE_BINARY_DIR}/terrainTC.shader COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/shaders/terrainTE.shader ${CMAKE_BINARY_DIR}/terrainTE.shader COPYONLY)
+file(COPY ${CMAKE_SOURCE_DIR}/shaders DESTINATION ${CMAKE_BINARY_DIR})
+
 
 add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/main.cxx

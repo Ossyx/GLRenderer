@@ -40,30 +40,6 @@ TerrainLOD::TerrainLOD()
   m_cubeRoots[5]->parent = nullptr;
   m_cubeRoots[5]->SetGeometry(p7, p4, p5, p6);
 
-
-  //8 level quatree test
-//   for(unsigned i=0; i < 3; ++i)
-//   {
-//     std::vector<QuadTreeNode*> leafs;
-//     FindLeafs(leafs);
-//     std::cout<<"Split " << i <<" got "<< leafs.size() <<" leafs."<<std::endl;
-//     for(unsigned j=0; j < leafs.size(); ++j)
-//     {
-//       leafs[j]->Split();
-//     }
-//   }
-
-//   float fac = 1.0f;
-//   unsigned level = 1;
-//   float distInit = 5.0;
-//   for(unsigned int i =0; i < 12; ++i)
-//   {
-//     float dist = distInit / (i + 1);
-//     m_levelDistances[level] = pow(dist, i+1) ;
-//     rxLogInfo("Level " << level <<" : " << m_levelDistances[level]);
-//     level *= 2;
-//   }
-
   m_levelDistances[1] = 5.0 ;
   m_levelDistances[2] = 2.5 ;
   m_levelDistances[4] = 1.0 ;
@@ -88,10 +64,10 @@ TerrainLOD::TerrainLOD()
   m_tessellationLevel[512] = 64.0;
   m_tessellationLevel[1024] = 64.0;
 
-  m_terrainShader.SetVertexShaderSrc("renderTerrainVS.shader");
-  m_terrainShader.SetFragmentShaderSrc("renderTerrainFS.shader");
-  m_terrainShader.SetTessControlSrc("terrainTC.shader");
-  m_terrainShader.SetTessEvalSrc("terrainTE.shader");
+  m_terrainShader.SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
+  m_terrainShader.SetFragmentShaderSrc("shaders/terrain/renderTerrainFS.shader");
+  m_terrainShader.SetTessControlSrc("shaders/terrain/terrainTC.shader");
+  m_terrainShader.SetTessEvalSrc("shaders/terrain/terrainTE.shader");
   m_terrainShader.LinkProgram();
 
   terrainMaterial = new rx::Material();

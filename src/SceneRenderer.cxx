@@ -16,13 +16,13 @@ m_mainCamera()
   EventDispatcher* dispatcher = EventDispatcher::Get();
   dispatcher->AddEventListener("MainCamera", &m_mainCamera);
 
-  m_renderShader.SetVertexShaderSrc("renderVS.shader");
-  m_renderShader.SetFragmentShaderSrc("renderFS.shader");
+  m_renderShader.SetVertexShaderSrc("shaders/deferred/renderVS.shader");
+  m_renderShader.SetFragmentShaderSrc("shaders/deferred/renderFS.shader");
   m_renderShader.LinkProgram();
   PrepareTwoTrianglesBuffer();
 
-  m_shadowMapShader.SetVertexShaderSrc("shadowMapVS.shader");
-  m_shadowMapShader.SetFragmentShaderSrc("shadowMapFS.shader");
+  m_shadowMapShader.SetVertexShaderSrc("shaders/shadow/shadowMapVS.shader");
+  m_shadowMapShader.SetFragmentShaderSrc("shaders/shadow/shadowMapFS.shader");
   m_shadowMapShader.LinkProgram();
 
   int width, height;
@@ -403,8 +403,8 @@ void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_mate
     rxLogInfo("Creating shader for material : "<< p_material->GetName());
     Shader& shaderGBuffer = m_gbufferShaders[gBufferFlags];
     shaderGBuffer.SetName("GBufferGenerationShader");
-    shaderGBuffer.SetVertexShaderSrc("gbufferVS.shader");
-    shaderGBuffer.SetFragmentShaderSrc("gbufferFS.shader");
+    shaderGBuffer.SetVertexShaderSrc("shaders/deferred/gbufferVS.shader");
+    shaderGBuffer.SetFragmentShaderSrc("shaders/deferred/gbufferFS.shader");
     shaderGBuffer.SetPreprocessorConfig(preprocSrc);
     shaderGBuffer.LinkProgram();
   }
