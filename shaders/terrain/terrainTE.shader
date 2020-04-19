@@ -2,6 +2,7 @@ layout (quads , equal_spacing, ccw) in;
 uniform mat4 Model;
 uniform mat4 View;
 uniform mat4 Projection;
+uniform float size;
 
 layout(std430, binding = 3) buffer layoutDataQuad
 {
@@ -17,6 +18,8 @@ layout(std430, binding = 4) buffer layoutColorQuad
 out vec2 gradient;
 out float elevation;
 out vec4 quadColor;
+out vec3 normal;
+out vec3 position;
 
 //#define Use_Perlin
 //#define Use_Value
@@ -186,11 +189,11 @@ float noise_sum_H(vec3 p)
 float noise_sum_M(vec3 p)
 {
     float f = 0.0;
-    p = p * 32.0;
+    p = p * 8.0;
     float s = 1.0;
-    for(int i=0; i < 8; ++i)
+    for(int i=0; i < 16; ++i)
     {
-      f += s * noise(p); p = 2.0 * p;
+      f += s * abs(noise(p)); p = 2.0 * p;
       s = s / 2.0;
     }
     return f;
@@ -199,9 +202,9 @@ float noise_sum_M(vec3 p)
 float noise_sum_L(vec3 p)
 {
     float f = 0.0;
-    p = p * 2.0;
+    p = p * 1.0;
     float s = 1.0;
-    for(int i=0; i < 8; ++i)
+    for(int i=0; i < 4; ++i)
     {
       f += s * noise(p); p = 2.0 * p;
       s = s / 2.0;
@@ -240,28 +243,27 @@ vec3 sphereToCart(vec2 coord)
   return vec3(sin(coord.y) * cos(coord.x), sin(coord.y) * sin(coord.x), cos(coord.y));
 }
 
-vec2 calcGrad( in vec3 pos)
+float calcElevation(vec3 pos)
 {
-    const float eps = 0.002;
+  float e1 = noise_sum_L(pos);
+  float e2 = 1.0 - abs(noise_sum_M(pos));
+  return e1 * e2 * 0.04;
+}
+
+vec2 calcGrad( in vec3 pos, float elev)
+{
+    const float eps = 0.001;
     vec2 spCoord = cartToSphere(pos);
 
     vec3 v1 = sphereToCart(spCoord + vec2(1.0,0.0) *eps);
-    vec3 v2 = sphereToCart(spCoord + vec2(-1.0,0.0) *eps);
     vec3 v3 = sphereToCart(spCoord + vec2(0.0,1.0) *eps);
-    vec3 v4 = sphereToCart(spCoord + vec2(0.0,-1.0) *eps);
 
-    return vec2(noise_sum(v1)- noise_sum(v2),
-                noise_sum(v3)- noise_sum(v4));
+    return vec2(calcElevation(v1) - elev,
+                calcElevation(v3) - elev);
 }
-
 
 void main(void)
 {
-  /*vec4 position =   gl_TessCoord.x * gl_in[0].gl_Position +
-                    gl_TessCoord.y * gl_in[1].gl_Position +
-                    gl_TessCoord.z * gl_in[2].gl_Position;
-  gl_Position = Projection * View * Model * position;*/
-
   // interpolate in horizontal direction between vert. 0 and 3
   vec3 p0 = mix(gl_in[1].gl_Position.xyz, gl_in[2].gl_Position.xyz, gl_TessCoord.x);
   // interpolate in horizontal direction between vert. 1 and 2
@@ -270,25 +272,11 @@ void main(void)
   vec3 p = mix(p0, p1, gl_TessCoord.y);
   vec2 tePatchDistance = gl_TessCoord.xy;
   vec3 positionOnQuad = normalize(p);
-  //gradient = normalize(calcGrad(positionOnQuad));
 
   //Displacement
-  float e1 = abs(noise_sum_L(positionOnQuad));
-  float e2 = abs(noise_sum_M(positionOnQuad));
-  float e3 = abs(noise_sum_H(positionOnQuad));
-  elevation = e1 * 0.002 + e1 * e2 * 0.005 + e1 * e2 * e3 * 0.008;
-  float scale_elev = 0.001;
-  positionOnQuad = positionOnQuad + positionOnQuad*elevation;
-  gradient = vec2(elevation / scale_elev);
-  //gradient = normalize(calcGrad(positionOnQuad.xz, 16));
-
-  /*elevation = noise_sum(gl_TessCoord.xy, 16);
-  positionOnQuad = positionOnQuad + positionOnQuad*elevation*0.001;
-  gradient = normalize(calcGrad(gl_TessCoord.xy, 16));*/
-
-
-
+  elevation = calcElevation(positionOnQuad * size);
+  position = positionOnQuad;
+  positionOnQuad = positionOnQuad * size + positionOnQuad * elevation;
   quadColor = colorQuad[gl_PrimitiveID];
-
   gl_Position = Projection * View * Model * vec4(positionOnQuad, 1);
 }

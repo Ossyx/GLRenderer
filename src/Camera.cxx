@@ -5,13 +5,14 @@
 #include <math.h>
 
 Camera::Camera():
-m_position(glm::vec3(0.5f, 1.0f, 0.5f)),
+m_position(glm::vec3(0.0f, 12.8f, 0.0f)),
 m_direction(glm::vec3(0.0f, 0.0f, 0.0f)),
 m_translationSpeed(0.0f),
 m_translationAcceleration(0.0f),
 m_azimuth(0),
 m_elevation(0),
-m_keyPressed(0)
+m_keyPressed(0),
+m_speedFactor(1.0)
 {
   m_wireframe = false;
 
@@ -58,6 +59,19 @@ glm::mat4 Camera::ComputeViewMatrix() const
   view = glm::translate(view, m_position);
 }
 
+glm::vec3 Camera::GetDirection() const
+{
+  glm::mat4 view = glm::mat4(1.0f);
+  view = glm::rotate(view, m_elevation, glm::vec3(1.0f, 0.0f, 0.0f));
+  view = glm::rotate(view, m_azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+
+  glm::vec4 vVect = glm::vec4(0.0, 0.0, -1.0, 1.0) * view;
+  return glm::vec3(vVect.x, vVect.y, vVect.z);
+  /*return glm::vec3(sin(m_elevation) * cos(m_azimuth),
+                   sin(m_elevation) * sin(m_azimuth),
+                   cos(m_elevation));*/
+}
+
 void Camera::SmoothMovement(float p_deltaT)
 {
   ReadDirectionFromKeys();
@@ -89,7 +103,7 @@ void Camera::SmoothMovement(float p_deltaT)
 void Camera::MoveCamera(float p_deltaT, float p_speed)
 {
   ReadDirectionFromKeys();
-  m_translationSpeed = p_deltaT * p_speed;
+  m_translationSpeed = p_deltaT * p_speed * m_speedFactor;
   //m_translationSpeed = std::max(0.0f, m_translationSpeed);
   //m_translationSpeed = std::min(10.0f, m_translationSpeed);
 
@@ -199,6 +213,14 @@ void Camera::HandleKeyEvent(GLFWwindow* window, int key, int scancode, int actio
   if(action == GLFW_PRESS && key == GLFW_KEY_K)
   {
     m_treeRecompute = !m_treeRecompute;
+  }
+  if(action == GLFW_PRESS && key == GLFW_KEY_PAGE_DOWN)
+  {
+    m_speedFactor = m_speedFactor / 2.0f;
+  }
+  if(action == GLFW_PRESS && key == GLFW_KEY_PAGE_UP)
+  {
+    m_speedFactor = m_speedFactor * 2.0f;
   }
 }
 

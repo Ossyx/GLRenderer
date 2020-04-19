@@ -24,7 +24,7 @@ public:
   float GetAzimuth() const;
   float GetElevation() const;
   glm::mat4 ComputeViewMatrix() const;
-
+  glm::vec3 GetDirection() const;
 
   void SmoothMovement(float p_deltaT);
 
@@ -57,6 +57,8 @@ private:
   float m_elevation;
 
   int m_keyPressed;
+
+  float m_speedFactor;
 };
 
 #endif

@@ -6,6 +6,8 @@
 #include <algorithm>
 #include "FrustumCulling.hxx"
 #include "DrawableItem.hxx"
+#include "OceanSurface.h"
+#include "Camera.hxx"
 
 enum DirectionType
 {
@@ -44,7 +46,7 @@ public:
   TerrainLOD();
   virtual ~TerrainLOD();
 
-  void PrepareBufferQuad();
+  void PrepareBufferQuad(Camera const& p_cam);
 
   virtual int Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
     rx::Material& p_material, glm::mat4 const& p_view,
@@ -55,16 +57,36 @@ public:
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
 
+  int DrawWater(glm::mat4 const& p_vpMat, glm::mat4 const& p_view,
+    glm::mat4 const& p_projection, glm::mat4 const& p_model,
+    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos,
+    rx::OceanSurface const& p_surf, unsigned int p_waterSurfTex);
+
   void RecomputeTree(glm::vec3 const& p_cameraPosition);
 
+  void RecomputeTree2(glm::vec3 const& p_cameraPosition);
+
+  void SetShader(Shader const& p_shader);
+
   void SetSize(float p_size);
+
+  float ComputeDistanceToSurface(glm::vec3 const& p_position);
+
+  void ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const& p_direction, std::vector<QuadTreeNode*>& p_leafs);
+
+  float near;
+  float far;
 
 private:
   void FindLeafs(std::vector<QuadTreeNode*>& p_leafs);
   void DestroySubtree(QuadTreeNode* p_node);
   void SetOuterTessellationLvl(std::vector<QuadTreeNode*>& p_leafs);
   void BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs);
+  void CullLeaves(std::vector<QuadTreeNode*>& p_leafs, glm::vec3 const& p_cameraPosition);
   void BuildSimple();
+  QuadTreeNode* FindClosestTree(glm::vec3 const& p_pos);
+  QuadTreeNode* FindClosestLeaf(glm::vec3 const& p_pos, QuadTreeNode* p_node);
+  unsigned int LevelFromDistance(float p_distance);
 
   QuadTreeNode* m_cubeRoots[8];
   typedef std::unordered_map<unsigned int, float> IntFloatMap;
@@ -75,7 +97,7 @@ private:
   float m_size;
 
   rx::Material* terrainMaterial;
-  Shader m_terrainShader;
+  Shader m_renderShader;
 
   unsigned m_quadDataSSBO;
   unsigned m_quadColorSSBO;

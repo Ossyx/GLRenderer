@@ -8,6 +8,8 @@
 #include "EventDispatcher.hxx"
 #include "TerrainLOD.hxx"
 
+#include "OceanSurface.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -80,6 +82,9 @@ private:
   Shader m_shadowMapShader;
 
   TerrainLOD m_terrain;
+  TerrainLOD m_water;
+  rx::OceanSurface m_surf;
+  unsigned int m_watersurfTex;
 
   //For 2 triangles support render
   unsigned int m_vBufferId;

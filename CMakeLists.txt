@@ -12,12 +12,24 @@ find_package(glm REQUIRED)
 #glad is a dependency
 find_package(GLAD REQUIRED)
 
+find_package(LibNoise)
+
 option(MESHLIB_INSTALL_DIR "MeshLib installation directory" "")
 
 set(MESHLIB_INCLUDE "${MESHLIB_INSTALL_DIR}/include")
 set(MESHLIB_LIBRARY "${MESHLIB_INSTALL_DIR}/lib/libMeshLib.so")
 
-include_directories(${CMAKE_SOURCE_DIR}/include ${GLFW_INCLUDE_DIR} ${Glad_INCLUDE_DIR} ${glm_DIR} ${MESHLIB_INCLUDE})
+set(OCEANSURFACE_INCLUDE "/home/bertrand/Work/FFTWater/OceanSurface")
+set(OCEANSURFACE_LIBRARY "/home/bertrand/Work/FFTWater/build/libOceanSurface.so")
+
+include_directories(${CMAKE_SOURCE_DIR}/include
+${GLFW_INCLUDE_DIR}
+${Glad_INCLUDE_DIR}
+${glm_DIR}
+${MESHLIB_INCLUDE}
+${OCEANSURFACE_INCLUDE}
+${CImg_INCLUDE_DIR}
+${LIBNOISE_INCLUDE_DIR})
 
 #Copy shaders to build directory
 file(COPY ${CMAKE_SOURCE_DIR}/shaders DESTINATION ${CMAKE_BINARY_DIR})
@@ -42,16 +54,25 @@ add_executable(TestFrustumCulling
 #   ${CMAKE_SOURCE_DIR}/test/testTerrainLOD.cxx
 #   ${CMAKE_SOURCE_DIR}/src/TerrainLOD.cxx)
 
+add_executable(generateHeightmap
+  ${CMAKE_SOURCE_DIR}/test/generateHeightmap.cxx
+  ${CMAKE_SOURCE_DIR}/src/HeightmapGenerator.cxx)
+
 #CMAKE_DL_LIBS is needed by glad
 target_link_libraries(GLRenderer
 ${GLFW_LIBRARY}
 ${Glad_LIBRARIES}
 ${CMAKE_DL_LIBS}
 ${MESHLIB_LIBRARY}
-${CImg_LIBRARIES})
+${CImg_LIBRARIES}
+${OCEANSURFACE_LIBRARY})
 
 target_link_libraries(TestFrustumCulling
 ${MESHLIB_LIBRARY})
+
+target_link_libraries(generateHeightmap
+${CImg_LIBRARIES}
+${LIBNOISE_LIBRARIES})
 
 # target_link_libraries(TestTerrainLOD
 # ${MESHLIB_LIBRARY})

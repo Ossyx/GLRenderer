@@ -25,13 +25,32 @@ m_mainCamera()
   m_shadowMapShader.SetFragmentShaderSrc("shaders/shadow/shadowMapFS.shader");
   m_shadowMapShader.LinkProgram();
 
+  Shader terrainRendering;
+  terrainRendering.SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
+  terrainRendering.SetFragmentShaderSrc("shaders/terrain/renderTerrainFS.shader");
+  terrainRendering.SetTessControlSrc("shaders/terrain/terrainTC.shader");
+  terrainRendering.SetTessEvalSrc("shaders/terrain/terrainTE.shader");
+  terrainRendering.LinkProgram();
+  m_terrain.SetShader(terrainRendering);
+  m_terrain.SetSize(6.4f);
+
+  Shader waterRendering;
+  waterRendering.SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
+  waterRendering.SetFragmentShaderSrc("shaders/water/renderWaterFS.shader");
+  waterRendering.SetTessControlSrc("shaders/terrain/terrainTC.shader");
+  waterRendering.SetTessEvalSrc("shaders/water/waterTE.shader");
+  waterRendering.LinkProgram();
+  m_water.SetShader(waterRendering);
+  m_water.SetSize(6.401f);
+  m_surf.PrecomputeFields();
+
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
 
   PrepareGBufferFrameBufferObject(width, height);
   PrepareShadowMapFrameBufferObject(width, height);
 
-  m_sunLightDirection = glm::normalize(glm::vec3(-10.0, 3.0, -10.0));
+  m_sunLightDirection = glm::normalize(glm::vec3(10.0, 3.0, 10.0));
 }
 
 SceneRenderer::~SceneRenderer()
@@ -109,7 +128,20 @@ void SceneRenderer::AddModel()
 
 void SceneRenderer::AddTerrain()
 {
-  m_terrain.PrepareBufferQuad();
+  m_terrain.PrepareBufferQuad(m_mainCamera);
+  //m_water.PrepareBufferQuad(m_mainCamera.GetPosition());
+
+  //Build texture for water surface
+  glGenTextures(1, &m_watersurfTex);
+  glBindTexture(GL_TEXTURE_2D, m_watersurfTex);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  float* dummy = new float[128*128];
+  for(int i=0; i < 128*128; ++i) dummy[i] = 0.5;
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 128, 128, 0, GL_RED, GL_FLOAT, dummy);
+  glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void SceneRenderer::Render(GLFWwindow* p_window)
@@ -175,12 +207,27 @@ void SceneRenderer::Render(GLFWwindow* p_window)
 void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
 {
 
-  if(m_mainCamera.m_wireframe) glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+  if(m_mainCamera.m_wireframe)
+  {
+    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+  }
+
+  m_surf.ComputeHeightmap(glfwGetTime());
+  float distTerrain = m_terrain.ComputeDistanceToSurface(m_mainCamera.GetPosition());
+
+  //epsilon should be greater than highest detail on sphere surface
+  float epsilon = 0.1f;
+  float near = std::max(distTerrain - epsilon, 0.001f);
+  float far = distTerrain + 2.0f;
+
+  near = m_terrain.near;
+  far = m_terrain.far;
+  rxLogInfo(" Distance " << distTerrain <<" near|far "<< near <<" | "<< far);
 
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-    (float)width / (float)height, 0.0001f, 1000.f);
+    (float)width / (float)height, near, far);
 
   //float time = glfwGetTime();
   glm::mat4 identity = glm::mat4(1.0f);
@@ -215,12 +262,16 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
   glm::mat4 model = identity;
 
   m_terrain.SetTransform(model);
+  //m_water.SetTransform(model);
   if(m_mainCamera.m_treeRecompute)
   {
     m_terrain.RecomputeTree(m_mainCamera.GetPosition());
+    //m_water.RecomputeTree(m_mainCamera.GetPosition());
   }
-  m_terrain.PrepareBufferQuad();
+  m_terrain.PrepareBufferQuad(m_mainCamera);
   m_terrain.DrawTerrain(VP, view, projection, model, m_sunLightDirection, m_mainCamera.GetPosition());
+  //m_water.PrepareBufferQuad(m_mainCamera.GetPosition());
+  //m_water.DrawWater(VP, view, projection, model, m_sunLightDirection, m_mainCamera.GetPosition(), m_surf, m_watersurfTex);
 
   rxLogInfo(m_mainCamera.GetPosition().x<<" "<<m_mainCamera.GetPosition().y<<" "<<m_mainCamera.GetPosition().z);
 

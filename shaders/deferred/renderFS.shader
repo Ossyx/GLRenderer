@@ -69,7 +69,7 @@ void main()
     frag_colour = vec4(depthColor, depthColor, depthColor, 1.0);
   }
 
-  if(ipos.x > 0.0 && ipos.y < 0.0)
+  /*if(ipos.x > 0.0 && ipos.y < 0.0)
   {
     vec2 uvcoord = vec2(ipos.x, ipos.y + 1.0);
 
@@ -102,5 +102,19 @@ void main()
     float spec = pow(max(dot(viewVector, refl), 0.0), 4.0) * specular.x;
     vec4 final_color = ambient * albedo + (value * albedo + spec * vec4(1.0,1.0,1.0,1.0)) * specular.y * shadow;
     frag_colour = final_color;
+  }*/
+
+  if(ipos.x > 0.0 && ipos.y < 0.0)
+  {
+    vec2 uvcoord = vec2(ipos.x, ipos.y + 1.0);
+
+    vec4 albedo = texture2D(render_target_one, uvcoord);
+    vec3 normal = unpackNormal(texture2D(render_target_two, uvcoord).xyz);
+    vec4 specular = texture2D(render_target_three, uvcoord);
+
+    //Basic phong shading
+    vec3 nlight = normalize(light);
+    float value = max(dot(normal, nlight), 0.0);
+    frag_colour = vec4(value, value, value, 1.0);
   }
 }

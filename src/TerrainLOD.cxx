@@ -20,55 +20,73 @@ TerrainLOD::TerrainLOD()
   m_cubeRoots[0]->parent = nullptr;
   m_cubeRoots[0]->SetGeometry(p0, p1, p2, p3);
 
-  m_cubeRoots[1] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[1] = new QuadTreeNode(1, glm::vec3(0.0f, 0.0f, 0.5f));
   m_cubeRoots[1]->parent = nullptr;
   m_cubeRoots[1]->SetGeometry(p1, p7, p6, p2);
 
-  m_cubeRoots[2] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[2] = new QuadTreeNode(1, glm::vec3(0.5f, 0.0f, 0.0f));
   m_cubeRoots[2]->parent = nullptr;
   m_cubeRoots[2]->SetGeometry(p2, p6, p5, p3);
 
-  m_cubeRoots[3] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[3] = new QuadTreeNode(1, glm::vec3(0.0f, 0.0f, -0.5f));
   m_cubeRoots[3]->parent = nullptr;
   m_cubeRoots[3]->SetGeometry(p3, p5, p4, p0);
 
-  m_cubeRoots[4] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[4] = new QuadTreeNode(1, glm::vec3(-0.5f, 0.0f, 0.0f));
   m_cubeRoots[4]->parent = nullptr;
   m_cubeRoots[4]->SetGeometry(p0, p4, p7, p1);
 
-  m_cubeRoots[5] = new QuadTreeNode(1, glm::vec3(0.0f, 0.5f, 0.0f));
+  m_cubeRoots[5] = new QuadTreeNode(1, glm::vec3(0.0f, -0.5f, 0.0f));
   m_cubeRoots[5]->parent = nullptr;
   m_cubeRoots[5]->SetGeometry(p7, p4, p5, p6);
 
-  m_levelDistances[1] = 5.0 ;
-  m_levelDistances[2] = 2.5 ;
-  m_levelDistances[4] = 1.0 ;
-  m_levelDistances[8] = 0.5 ;
-  m_levelDistances[16] = 0.25;
-  m_levelDistances[32] = 0.15;
-  m_levelDistances[64] = 0.1;
-  m_levelDistances[128] = 0.05;
-  m_levelDistances[256] = 0.01;
-  m_levelDistances[512] = 0.005;
-  m_levelDistances[1024] = 0.001;
+//   m_levelDistances[1] = 15.0;
+//   m_levelDistances[2] = 5.0;
+//   m_levelDistances[4] = 2.5;
+//   m_levelDistances[8] = 1.0;
+//   m_levelDistances[16] = 0.25;
+//   m_levelDistances[32] = 0.15;
+//   m_levelDistances[64] = 0.1;
+//   m_levelDistances[128] = 0.05;
+//   m_levelDistances[256] = 0.01;
+//   m_levelDistances[512] = 0.005;
+//   m_levelDistances[1024] = 0.001;
+
+  m_levelDistances[1] = 16.0;
+  m_levelDistances[2] = 8.0;
+  m_levelDistances[4] = 4.0;
+  m_levelDistances[8] = 2.0;
+  m_levelDistances[16] = 1.5;
+  m_levelDistances[32] = 0.75;
+  m_levelDistances[64] = 0.325;
+  m_levelDistances[128] = 0.15125;
+  m_levelDistances[256] = 0.07;
+  m_levelDistances[512] = 0.035;
+  m_levelDistances[1024] = 0.015;
+
+//   m_tessellationLevel[1] = 4.0;
+//   m_tessellationLevel[2] = 4.0;
+//   m_tessellationLevel[4] = 8.0;
+//   m_tessellationLevel[8] = 8.0;
+//   m_tessellationLevel[16] = 16.0;
+//   m_tessellationLevel[32] = 16.0;
+//   m_tessellationLevel[64] = 32.0;
+//   m_tessellationLevel[128] = 32.0;
+//   m_tessellationLevel[256] = 32.0;
+//   m_tessellationLevel[512] = 32.0;
+//   m_tessellationLevel[1024] = 32.0;
 
   m_tessellationLevel[1] = 8.0;
   m_tessellationLevel[2] = 8.0;
-  m_tessellationLevel[4] = 16.0;
-  m_tessellationLevel[8] = 32.0;
-  m_tessellationLevel[16] = 32.0;
-  m_tessellationLevel[32] = 32.0;
-  m_tessellationLevel[64] = 32.0;
-  m_tessellationLevel[128] = 32.0;
+  m_tessellationLevel[4] = 8.0;
+  m_tessellationLevel[8] = 8.0;
+  m_tessellationLevel[16] = 16.0;
+  m_tessellationLevel[32] = 16.0;
+  m_tessellationLevel[64] = 16.0;
+  m_tessellationLevel[128] = 16.0;
   m_tessellationLevel[256] = 32.0;
-  m_tessellationLevel[512] = 64.0;
+  m_tessellationLevel[512] = 32.0;
   m_tessellationLevel[1024] = 64.0;
-
-  m_terrainShader.SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
-  m_terrainShader.SetFragmentShaderSrc("shaders/terrain/renderTerrainFS.shader");
-  m_terrainShader.SetTessControlSrc("shaders/terrain/terrainTC.shader");
-  m_terrainShader.SetTessEvalSrc("shaders/terrain/terrainTE.shader");
-  m_terrainShader.LinkProgram();
 
   terrainMaterial = new rx::Material();
   terrainMaterial->SetName("CubeMaterial");
@@ -85,7 +103,22 @@ TerrainLOD::~TerrainLOD()
 {
 }
 
-void TerrainLOD::PrepareBufferQuad()
+unsigned int TerrainLOD::LevelFromDistance(float p_distance)
+{
+//   if( p_distance > 15.0) return 1;
+//   if( p_distance > 5.0) return 2;
+//   if( p_distance > 2.5) return 4;
+//   if( p_distance > 1.0) return 8;
+//   if( p_distance > 0.25) return 16;
+//   if( p_distance > 0.15) return 32;
+//   if( p_distance > 0.1) return 64;
+//   if( p_distance > 0.05) return 128;
+//   if( p_distance > 0.01) return 256;
+//   if( p_distance > 0.005) return 512;
+//   if( p_distance > 0.005) return 1024;
+}
+
+void TerrainLOD::PrepareBufferQuad(Camera const& p_cam)
 {
   std::vector<QuadTreeNode*> leafs;
   FindLeafs(leafs);
@@ -99,6 +132,8 @@ void TerrainLOD::PrepareBufferQuad()
   });
 
   SetOuterTessellationLvl(leafs);
+  CullLeaves(leafs, p_cam.GetPosition());
+  ComputeNearAndFar(p_cam.GetPosition(), p_cam.GetDirection(), leafs);
   BuildPrimitiveBuffers(leafs);
 }
 
@@ -109,7 +144,7 @@ void TerrainLOD::BuildSimple()
     1.0, 0.0, 1.0,
     1.0, 0.0, -1.0};
 
-  unsigned int vpos_location = m_terrainShader.GetAttributeLocation("vPos");
+  unsigned int vpos_location = m_renderShader.GetAttributeLocation("vPos");
 
   glGenBuffers(1, &m_vertexBufferId);
   glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
@@ -171,7 +206,8 @@ void TerrainLOD::RecomputeTree(glm::vec3 const& p_cameraPosition)
     QuadTreeNode* last = nodeToExplore.back();
     nodeToExplore.pop_back();
 
-    float dist = glm::distance(last->center, p_cameraPosition);
+    float dist = glm::distance(last->center * m_size, p_cameraPosition);
+    dist = dist - (1.0f/last->level);
     if(last->leaf == false)
     {
       if(dist > m_levelDistances[last->level])
@@ -198,6 +234,68 @@ void TerrainLOD::RecomputeTree(glm::vec3 const& p_cameraPosition)
       }
     }
   }
+}
+
+QuadTreeNode* TerrainLOD::FindClosestTree(glm::vec3 const& p_pos)
+{
+//   float minDist = std::numeric_limits<float>::max();
+//   QuadTreeNode* node = nullptr;
+//   for(unsigned int i=0; i < 6; ++i)
+//   {
+//     float dist = glm::distance(m_cubeRoots[i]->center * m_size, p_pos);
+//     if( dist < minDist )
+//     {
+//       minDist = dist;
+//       node = m_cubeRoots[i];
+//     }
+//   }
+//   return node;
+}
+
+QuadTreeNode* TerrainLOD::FindClosestLeaf(glm::vec3 const& p_pos, QuadTreeNode* p_node)
+{
+//   QuadTreeNode* node = p_node;
+//   while(node->leaf == false)
+//   {
+//     unsigned id = 0;
+//     float minDist = std::numeric_limits<float>::max();
+//     for(unsigned int i=0; i < 4; ++i)
+//     {
+//       float d = glm::distance(node->childs[i]->center * m_size, p_pos);
+//       if( d < minDist)
+//       {
+//         id = i;
+//       }
+//     }
+//     node = node->childs[id];
+//   }
+//   return node;
+}
+
+void TerrainLOD::RecomputeTree2(glm::vec3 const& p_cameraPosition)
+{
+//   //Find closest node
+//   QuadTreeNode* tree = FindClosestTree(p_cameraPosition);
+//   QuadTreeNode* node = FindClosestLeaf(p_cameraPosition, tree);
+//
+//   //Split it until satisfied level reached
+//   float distToSurface = ComputeDistanceToSurface(p_cameraPosition);
+//   unsigned int level = LevelFromDistance(distToSurface);
+//
+//   QuadTreeNode* cNode = node;
+//   while(cNode->level != level)
+//   {
+//     QuadTreeNode* nN = cNode->FindNeighbour(eNorth);
+//     if(nN != nullptr) nN->Split();
+//     QuadTreeNode* nS = cNode->FindNeighbour(eSouth);
+//     if(nS != nullptr) nS->Split();
+//     QuadTreeNode* nE = cNode->FindNeighbour(eEast);
+//     if(nE != nullptr) nE->Split();
+//     QuadTreeNode* nW = cNode->FindNeighbour(eWest);
+//     if(nW != nullptr) nW->Split();
+//     cNode->Split();
+//     cNode = FindClosestLeaf(p_cameraPosition, cNode);
+//   }
 }
 
 void TerrainLOD::DestroySubtree(QuadTreeNode* p_node)
@@ -258,19 +356,59 @@ int TerrainLOD::DrawTerrain(glm::mat4 const& p_vpMat,
     glm::mat4 const& p_model, glm::vec3 const& p_light,
     glm::vec3 const& p_cameraPos)
 {
-  glUseProgram(m_terrainShader.GetProgram());
+  glUseProgram(m_renderShader.GetProgram());
   unsigned block_index = 0;
-  block_index = glGetProgramResourceIndex(m_terrainShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
-  glShaderStorageBlockBinding(m_terrainShader.GetProgram(), block_index, 3);
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 3);
 
-  block_index = glGetProgramResourceIndex(m_terrainShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
-  glShaderStorageBlockBinding(m_terrainShader.GetProgram(), block_index, 4);
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 4);
 
-  block_index = glGetProgramResourceIndex(m_terrainShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
-  glShaderStorageBlockBinding(m_terrainShader.GetProgram(), block_index, 5);
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 5);
 
-  SetupUniformAndTextures(m_terrainShader, p_vpMat, *terrainMaterial,
+  unsigned int size_location = m_renderShader.GetUniformLocation("size");
+  glUniform1f(size_location, m_size);
+
+  unsigned int surfdist_location = m_renderShader.GetUniformLocation("surface_distance");
+  glUniform1f(surfdist_location, ComputeDistanceToSurface(p_cameraPos));
+
+  SetupUniformAndTextures(m_renderShader, p_vpMat, *terrainMaterial,
     p_view, p_projection, p_model, p_light, p_cameraPos);
+
+  glPatchParameteri(GL_PATCH_VERTICES, 4);
+  glBindVertexArray(m_vertexArrayId);
+  glDrawArrays(GL_PATCHES, 0, 4*m_leafCount);
+}
+
+int TerrainLOD::DrawWater(glm::mat4 const& p_vpMat, glm::mat4 const& p_view,
+    glm::mat4 const& p_projection, glm::mat4 const& p_model,
+    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos,
+    rx::OceanSurface const& p_surf, unsigned int p_waterSurfTex)
+{
+  glUseProgram(m_renderShader.GetProgram());
+  unsigned block_index = 0;
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 3);
+
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 4);
+
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 5);
+
+  unsigned int size_location = m_renderShader.GetUniformLocation("size");
+  glUniform1f(size_location, m_size);
+
+  SetupUniformAndTextures(m_renderShader, p_vpMat, *terrainMaterial,
+    p_view, p_projection, p_model, p_light, p_cameraPos);
+
+  //Bind water heightmap to tex 0
+  unsigned hLocation = m_renderShader.GetUniformLocation("toto");
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, p_waterSurfTex);
+  glTexSubImage2D(GL_TEXTURE_2D,0,0,0,128,128,GL_RED,GL_FLOAT,p_surf.m_heightmapData);
+  glUniform1i(hLocation, 0);
 
   glPatchParameteri(GL_PATCH_VERTICES, 4);
   glBindVertexArray(m_vertexArrayId);
@@ -315,6 +453,8 @@ void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs
   QuadTreeNode* eastN = p_leafs[leafToShow]->FindNeighbour(DirectionType::eEast);
   QuadTreeNode* westN = p_leafs[leafToShow]->FindNeighbour(DirectionType::eWest);
 
+  std::map<int, int> count;
+
   for(unsigned i=0; i < p_leafs.size(); i++)
   {
     float scale = 1.0f / p_leafs[i]->level;
@@ -336,25 +476,33 @@ void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs
     dataQuad[idx+11] = p_leafs[i]->geometry[3].z;
 
     glm::vec3 color;
-    if(p_leafs[i]->level == 64)
+    if(p_leafs[i]->level == 16)
     {
-      color = glm::vec3(1.0, 0.0, 0.0);
+      color = glm::vec3(0.0, 0.0, 0.0);//black
+    }
+    else if(p_leafs[i]->level == 32)
+    {
+      color = glm::vec3(0.0, 0.0, 1.0);//blue
+    }
+    else if(p_leafs[i]->level == 64)
+    {
+      color = glm::vec3(0.0, 1.0, 0.0);//green
     }
     else if(p_leafs[i]->level == 128)
     {
-      color = glm::vec3(0.0, 1.0, 0.0);
+      color = glm::vec3(0.0, 1.0, 1.0);//turquoise
     }
     else if(p_leafs[i]->level == 256)
     {
-      color = glm::vec3(0.0, 0.0, 1.0);
+      color = glm::vec3(1.0, 0.0, 0.0);//red
     }
     else if(p_leafs[i]->level == 512)
     {
-      color = glm::vec3(1.0, 1.0, 0.0);
+      color = glm::vec3(1.0, 0.0, 1.0);//purple
     }
     else if(p_leafs[i]->level == 1024)
     {
-      color = glm::vec3(0.0, 1.0, 1.0);
+      color = glm::vec3(1.0, 1.0, 0.0);//yellow
     }
 
     dataColorSSBO[idxTrans] = color.x;
@@ -369,9 +517,25 @@ void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs
 
     idx+=12;
     idxTrans+=4;
+
+    if(count.find(p_leafs[i]->level) == count.end())
+    {
+      count[p_leafs[i]->level] = 1;
+    }
+    else
+    {
+      count[p_leafs[i]->level]++;
+    }
   }
 
-  unsigned int vpos_location = m_terrainShader.GetAttributeLocation("vPos");
+  for(auto it = count.begin(); it != count.end(); ++it)
+  {
+    std::cout<<it->first<<"/"<<it->second<<" ";
+  }
+
+  std::cout<<std::endl;
+
+  unsigned int vpos_location = m_renderShader.GetAttributeLocation("vPos");
   glGenBuffers(1, &m_vertexBufferId);
   glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
   glBufferData(GL_ARRAY_BUFFER, p_leafs.size()*12*sizeof(float), dataQuad, GL_STATIC_DRAW);
@@ -407,9 +571,72 @@ void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs
   delete[] dataOuterTessSSBO;
 }
 
+void TerrainLOD::CullLeaves(std::vector<QuadTreeNode*>& p_leafs, glm::vec3 const& p_cameraPosition)
+{
+  std::vector<QuadTreeNode*> notculled;
+  float surfaceDist = std::max(ComputeDistanceToSurface(p_cameraPosition), 0.001f);
+  float horizon = sqrt((surfaceDist + m_size ) * (surfaceDist + m_size) - m_size * m_size);
+
+  glm::vec3 viewVec = glm::normalize(p_cameraPosition);
+  for(unsigned int i=0; i < p_leafs.size(); ++i)
+  {
+    glm::vec3 centerReal = glm::normalize(p_leafs[i]->center) * m_size;
+    float distNode = glm::distance(centerReal, p_cameraPosition);
+    float cdotv = glm::dot(p_leafs[i]->center, viewVec);
+    if( cdotv > 0 && distNode < horizon)
+    {
+      notculled.push_back(p_leafs[i]);
+    }
+  }
+  rxLogInfo("SurfaceDist " << surfaceDist << " threshold "<< horizon <<" "<<p_leafs.size() - notculled.size() << " culled");
+  p_leafs = notculled;
+}
+
 void TerrainLOD::SetSize(float p_size)
 {
   m_size = p_size;
+}
+
+void TerrainLOD::SetShader(Shader const& p_shader)
+{
+  m_renderShader = p_shader;
+}
+
+float TerrainLOD::ComputeDistanceToSurface(glm::vec3 const& p_position)
+{
+  //Approximation
+  //Simple distance to the surface
+  //of a sphere of diameter m_size
+  //centered at origin
+  return std::fabs(glm::length(p_position) - m_size);
+}
+
+void TerrainLOD::ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const& p_direction, std::vector<QuadTreeNode*>& p_leafs)
+{
+
+  //rxLogInfo("Direction " << p_direction.x << " " << p_direction.y << " " << p_direction.z );
+  float minDistance = std::numeric_limits<float>::max();
+  float maxDistance = std::numeric_limits<float>::min();
+
+  int leafInSight = 0;
+  for(unsigned int i=0; i < p_leafs.size(); ++i)
+  {
+    for(unsigned int j = 0; j < 4; ++j)
+    {
+      glm::vec3 dirG = (p_leafs[i]->geometry[j] * m_size) - p_position;
+      float h = glm::length(dirG);
+      dirG = glm::normalize(dirG);
+      float cosA = glm::dot(p_direction, dirG);
+      if ( cosA < 0.707 ) continue;
+      float d = h * cosA;
+      if( d < minDistance ) minDistance = d;
+      if( d > maxDistance ) maxDistance = d;
+    }
+  }
+
+  near = std::max(minDistance - 0.04f, 0.000001f);
+  far = maxDistance;
+  rxLogInfo("Computed near and far " << near << " " << far << " in sight " << leafInSight );
 }
 
 QuadTreeNode::QuadTreeNode(unsigned p_level, glm::vec3 const& p_position)
