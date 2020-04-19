@@ -64,18 +64,17 @@ public:
 
   void RecomputeTree(glm::vec3 const& p_cameraPosition);
 
-  void RecomputeTree2(glm::vec3 const& p_cameraPosition);
-
   void SetShader(Shader const& p_shader);
 
   void SetSize(float p_size);
 
+  float GetSize() const;
+
+  float GetNear() const;
+
+  float GetFar() const;
+
   float ComputeDistanceToSurface(glm::vec3 const& p_position);
-
-  void ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const& p_direction, std::vector<QuadTreeNode*>& p_leafs);
-
-  float near;
-  float far;
 
 private:
   void FindLeafs(std::vector<QuadTreeNode*>& p_leafs);
@@ -84,9 +83,9 @@ private:
   void BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs);
   void CullLeaves(std::vector<QuadTreeNode*>& p_leafs, glm::vec3 const& p_cameraPosition);
   void BuildSimple();
+  void ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const& p_direction, std::vector<QuadTreeNode*>& p_leafs);
   QuadTreeNode* FindClosestTree(glm::vec3 const& p_pos);
   QuadTreeNode* FindClosestLeaf(glm::vec3 const& p_pos, QuadTreeNode* p_node);
-  unsigned int LevelFromDistance(float p_distance);
 
   QuadTreeNode* m_cubeRoots[8];
   typedef std::unordered_map<unsigned int, float> IntFloatMap;
@@ -102,6 +101,9 @@ private:
   unsigned m_quadDataSSBO;
   unsigned m_quadColorSSBO;
   unsigned m_quadOuterTessSSBO;
+
+  float m_near;
+  float m_far;
 };
 
 #endif

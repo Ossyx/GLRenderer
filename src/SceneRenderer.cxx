@@ -216,12 +216,13 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
   float distTerrain = m_terrain.ComputeDistanceToSurface(m_mainCamera.GetPosition());
 
   //epsilon should be greater than highest detail on sphere surface
-  float epsilon = 0.1f;
+  /*float epsilon = 0.1f;
   float near = std::max(distTerrain - epsilon, 0.001f);
-  float far = distTerrain + 2.0f;
+  float far = distTerrain + 2.0f;*/
 
-  near = m_terrain.near;
-  far = m_terrain.far;
+  float near = m_terrain.GetNear();
+  float far = m_terrain.GetFar();
+
   rxLogInfo(" Distance " << distTerrain <<" near|far "<< near <<" | "<< far);
 
   int width, height;

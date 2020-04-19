@@ -40,18 +40,6 @@ TerrainLOD::TerrainLOD()
   m_cubeRoots[5]->parent = nullptr;
   m_cubeRoots[5]->SetGeometry(p7, p4, p5, p6);
 
-//   m_levelDistances[1] = 15.0;
-//   m_levelDistances[2] = 5.0;
-//   m_levelDistances[4] = 2.5;
-//   m_levelDistances[8] = 1.0;
-//   m_levelDistances[16] = 0.25;
-//   m_levelDistances[32] = 0.15;
-//   m_levelDistances[64] = 0.1;
-//   m_levelDistances[128] = 0.05;
-//   m_levelDistances[256] = 0.01;
-//   m_levelDistances[512] = 0.005;
-//   m_levelDistances[1024] = 0.001;
-
   m_levelDistances[1] = 16.0;
   m_levelDistances[2] = 8.0;
   m_levelDistances[4] = 4.0;
@@ -63,18 +51,6 @@ TerrainLOD::TerrainLOD()
   m_levelDistances[256] = 0.07;
   m_levelDistances[512] = 0.035;
   m_levelDistances[1024] = 0.015;
-
-//   m_tessellationLevel[1] = 4.0;
-//   m_tessellationLevel[2] = 4.0;
-//   m_tessellationLevel[4] = 8.0;
-//   m_tessellationLevel[8] = 8.0;
-//   m_tessellationLevel[16] = 16.0;
-//   m_tessellationLevel[32] = 16.0;
-//   m_tessellationLevel[64] = 32.0;
-//   m_tessellationLevel[128] = 32.0;
-//   m_tessellationLevel[256] = 32.0;
-//   m_tessellationLevel[512] = 32.0;
-//   m_tessellationLevel[1024] = 32.0;
 
   m_tessellationLevel[1] = 8.0;
   m_tessellationLevel[2] = 8.0;
@@ -102,22 +78,6 @@ TerrainLOD::TerrainLOD()
 TerrainLOD::~TerrainLOD()
 {
 }
-
-unsigned int TerrainLOD::LevelFromDistance(float p_distance)
-{
-//   if( p_distance > 15.0) return 1;
-//   if( p_distance > 5.0) return 2;
-//   if( p_distance > 2.5) return 4;
-//   if( p_distance > 1.0) return 8;
-//   if( p_distance > 0.25) return 16;
-//   if( p_distance > 0.15) return 32;
-//   if( p_distance > 0.1) return 64;
-//   if( p_distance > 0.05) return 128;
-//   if( p_distance > 0.01) return 256;
-//   if( p_distance > 0.005) return 512;
-//   if( p_distance > 0.005) return 1024;
-}
-
 void TerrainLOD::PrepareBufferQuad(Camera const& p_cam)
 {
   std::vector<QuadTreeNode*> leafs;
@@ -238,64 +198,38 @@ void TerrainLOD::RecomputeTree(glm::vec3 const& p_cameraPosition)
 
 QuadTreeNode* TerrainLOD::FindClosestTree(glm::vec3 const& p_pos)
 {
-//   float minDist = std::numeric_limits<float>::max();
-//   QuadTreeNode* node = nullptr;
-//   for(unsigned int i=0; i < 6; ++i)
-//   {
-//     float dist = glm::distance(m_cubeRoots[i]->center * m_size, p_pos);
-//     if( dist < minDist )
-//     {
-//       minDist = dist;
-//       node = m_cubeRoots[i];
-//     }
-//   }
-//   return node;
+  float minDist = std::numeric_limits<float>::max();
+  QuadTreeNode* node = nullptr;
+  for(unsigned int i=0; i < 6; ++i)
+  {
+    float dist = glm::distance(m_cubeRoots[i]->center * m_size, p_pos);
+    if( dist < minDist )
+    {
+      minDist = dist;
+      node = m_cubeRoots[i];
+    }
+  }
+  return node;
 }
 
 QuadTreeNode* TerrainLOD::FindClosestLeaf(glm::vec3 const& p_pos, QuadTreeNode* p_node)
 {
-//   QuadTreeNode* node = p_node;
-//   while(node->leaf == false)
-//   {
-//     unsigned id = 0;
-//     float minDist = std::numeric_limits<float>::max();
-//     for(unsigned int i=0; i < 4; ++i)
-//     {
-//       float d = glm::distance(node->childs[i]->center * m_size, p_pos);
-//       if( d < minDist)
-//       {
-//         id = i;
-//       }
-//     }
-//     node = node->childs[id];
-//   }
-//   return node;
-}
-
-void TerrainLOD::RecomputeTree2(glm::vec3 const& p_cameraPosition)
-{
-//   //Find closest node
-//   QuadTreeNode* tree = FindClosestTree(p_cameraPosition);
-//   QuadTreeNode* node = FindClosestLeaf(p_cameraPosition, tree);
-//
-//   //Split it until satisfied level reached
-//   float distToSurface = ComputeDistanceToSurface(p_cameraPosition);
-//   unsigned int level = LevelFromDistance(distToSurface);
-//
-//   QuadTreeNode* cNode = node;
-//   while(cNode->level != level)
-//   {
-//     QuadTreeNode* nN = cNode->FindNeighbour(eNorth);
-//     if(nN != nullptr) nN->Split();
-//     QuadTreeNode* nS = cNode->FindNeighbour(eSouth);
-//     if(nS != nullptr) nS->Split();
-//     QuadTreeNode* nE = cNode->FindNeighbour(eEast);
-//     if(nE != nullptr) nE->Split();
-//     QuadTreeNode* nW = cNode->FindNeighbour(eWest);
-//     if(nW != nullptr) nW->Split();
-//     cNode->Split();
-//     cNode = FindClosestLeaf(p_cameraPosition, cNode);
-//   }
+  QuadTreeNode* node = p_node;
+  while(node->leaf == false)
+  {
+    unsigned id = 0;
+    float minDist = std::numeric_limits<float>::max();
+    for(unsigned int i=0; i < 4; ++i)
+    {
+      float d = glm::distance(node->childs[i]->center * m_size, p_pos);
+      if( d < minDist)
+      {
+        id = i;
+      }
+    }
+    node = node->childs[id];
+  }
+  return node;
 }
 
 void TerrainLOD::DestroySubtree(QuadTreeNode* p_node)
@@ -332,23 +266,6 @@ int TerrainLOD::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
-//   RecomputeTree(p_cameraPos);
-//   std::vector<QuadTreeNode*> leafs;
-//   FindLeafs(leafs);
-//
-//   rxLogDebug("Draw "<< leafs.size()<< " leafs");
-//   for(unsigned i=0; i < leafs.size(); i++)
-//   {
-//     p_material.SetData("Kd", glm::vec3(std::fabs(leafs[i]->center.x / 0.5), std::fabs(leafs[i]->center.z / 0.5), 0.0));
-//     glm::mat4 model = glm::mat4(1.0f);
-//     float scaleFactor = 1.0f* m_scale / leafs[i]->level;
-//     model = glm::translate(model, -leafs[i]->center * m_scale);
-//     model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-//     SetTransform(model);
-//     DrawableItem::Draw(p_shader, p_vpMat, p_material, p_view,
-//       p_projection, model, p_light, p_cameraPos);
-//   }
-  //exit(0);
 }
 
 int TerrainLOD::DrawTerrain(glm::mat4 const& p_vpMat,
@@ -597,6 +514,21 @@ void TerrainLOD::SetSize(float p_size)
   m_size = p_size;
 }
 
+float TerrainLOD::GetSize() const
+{
+  return m_size;
+}
+
+float TerrainLOD::GetNear() const
+{
+  return m_near;
+}
+
+float TerrainLOD::GetFar() const
+{
+  return m_far;
+}
+
 void TerrainLOD::SetShader(Shader const& p_shader)
 {
   m_renderShader = p_shader;
@@ -634,9 +566,9 @@ void TerrainLOD::ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const&
     }
   }
 
-  near = std::max(minDistance - 0.04f, 0.000001f);
-  far = maxDistance;
-  rxLogInfo("Computed near and far " << near << " " << far << " in sight " << leafInSight );
+  m_near = std::max(minDistance - 0.04f, 0.000001f);
+  m_far = maxDistance;
+  rxLogInfo("Computed near and far " << m_near << " " << m_far << " in sight " << leafInSight );
 }
 
 QuadTreeNode::QuadTreeNode(unsigned p_level, glm::vec3 const& p_position)
