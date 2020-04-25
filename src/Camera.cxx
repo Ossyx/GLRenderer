@@ -12,7 +12,8 @@ m_translationAcceleration(0.0f),
 m_azimuth(0),
 m_elevation(0),
 m_keyPressed(0),
-m_speedFactor(1.0)
+m_speedFactor(1.0),
+m_scaleFactor(1.0)
 {
   m_wireframe = false;
 
@@ -56,7 +57,8 @@ glm::mat4 Camera::ComputeViewMatrix() const
   glm::mat4 view = glm::mat4(1.0f);
   view = glm::rotate(view, m_elevation, glm::vec3(1.0f, 0.0f, 0.0f));
   view = glm::rotate(view, m_azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-  view = glm::translate(view, m_position);
+  view = glm::translate(view, -m_position);
+  return view;
 }
 
 glm::vec3 Camera::GetDirection() const
@@ -222,6 +224,10 @@ void Camera::HandleKeyEvent(GLFWwindow* window, int key, int scancode, int actio
   {
     m_speedFactor = m_speedFactor * 2.0f;
   }
+  if(action == GLFW_PRESS && key == GLFW_KEY_H)
+  {
+    m_scaleFactor = m_scaleFactor * 1.05f;
+  }
 }
 
 void Camera::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY)
@@ -246,4 +252,9 @@ void Camera::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, do
   {
     m_elevation = (-M_PI/2.0 + epsilon);
   }
+}
+
+void Camera::SetScaleFactor( float p_scaleFactor )
+{
+  m_scaleFactor = p_scaleFactor;
 }

@@ -37,7 +37,7 @@ int main()
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   //glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE );
-  GLFWwindow* window = glfwCreateWindow(1280, 720, "SpaceWar2 !", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(1920, 1080, "SpaceWar2 !", NULL, NULL);
 
   if (window == NULL)
   {

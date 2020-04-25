@@ -4,6 +4,12 @@ uniform mat4 View;
 uniform mat4 Projection;
 uniform float size;
 
+uniform vec3 translateOrigin;
+uniform float scaleOrigin;
+
+uniform float near;
+uniform float far;
+
 layout(std430, binding = 3) buffer layoutDataQuad
 {
   //Center position + scale
@@ -20,6 +26,9 @@ out float elevation;
 out vec4 quadColor;
 out vec3 normal;
 out vec3 position;
+out vec2 patchCoord;
+out vec3 tan1;
+out vec3 tan2;
 
 //#define Use_Perlin
 //#define Use_Value
@@ -247,7 +256,7 @@ float calcElevation(vec3 pos)
 {
   float e1 = noise_sum_L(pos);
   float e2 = 1.0 - abs(noise_sum_M(pos));
-  return e1 * e2 * 0.04;
+  return e1 * e2 * 0.04 * scaleOrigin;
 }
 
 vec2 calcGrad( in vec3 pos, float elev)
@@ -271,12 +280,25 @@ void main(void)
   // interpolate in vert direction
   vec3 p = mix(p0, p1, gl_TessCoord.y);
   vec2 tePatchDistance = gl_TessCoord.xy;
-  vec3 positionOnQuad = normalize(p);
+
+  tan1 = normalize(gl_in[3].gl_Position.xyz - gl_in[0].gl_Position.xyz);
+  tan2 = normalize(gl_in[1].gl_Position.xyz - gl_in[0].gl_Position.xyz);
+
+  patchCoord = gl_TessCoord.xy;
+
+  vec3 normalSphere = normalize(p);
+  vec3 positionOnQuad = normalSphere * size;
 
   //Displacement
-  elevation = calcElevation(positionOnQuad * size);
+  elevation = calcElevation(positionOnQuad);
   position = positionOnQuad;
-  positionOnQuad = positionOnQuad * size + positionOnQuad * elevation;
+
   quadColor = colorQuad[gl_PrimitiveID];
+  positionOnQuad = (positionOnQuad - translateOrigin) * scaleOrigin;
+  positionOnQuad = positionOnQuad  + normalSphere * elevation;
+
   gl_Position = Projection * View * Model * vec4(positionOnQuad, 1);
+
+  gl_Position.z = 2.0*log(gl_Position.w + 1)/log(far + 1) - 1;
+  gl_Position.z *= gl_Position.w;
 }

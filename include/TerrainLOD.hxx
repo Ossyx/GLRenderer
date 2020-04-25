@@ -76,6 +76,10 @@ public:
 
   float ComputeDistanceToSurface(glm::vec3 const& p_position);
 
+  bool isSurfaceMode(glm::vec3 const& p_position);
+
+  glm::vec3 sphereProjectedPosition(glm::vec3 const& p_position);
+
 private:
   void FindLeafs(std::vector<QuadTreeNode*>& p_leafs);
   void DestroySubtree(QuadTreeNode* p_node);
@@ -84,6 +88,7 @@ private:
   void CullLeaves(std::vector<QuadTreeNode*>& p_leafs, glm::vec3 const& p_cameraPosition);
   void BuildSimple();
   void ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const& p_direction, std::vector<QuadTreeNode*>& p_leafs);
+
   QuadTreeNode* FindClosestTree(glm::vec3 const& p_pos);
   QuadTreeNode* FindClosestLeaf(glm::vec3 const& p_pos, QuadTreeNode* p_node);
 
@@ -91,7 +96,6 @@ private:
   typedef std::unordered_map<unsigned int, float> IntFloatMap;
   IntFloatMap m_levelDistances;
   IntFloatMap m_tessellationLevel;
-  float m_scale;
   unsigned m_leafCount;
   float m_size;
 
@@ -104,6 +108,9 @@ private:
 
   float m_near;
   float m_far;
+
+  glm::vec3 m_origin;
+  float m_scale;
 };
 
 #endif

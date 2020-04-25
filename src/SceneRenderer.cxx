@@ -215,11 +215,6 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
   m_surf.ComputeHeightmap(glfwGetTime());
   float distTerrain = m_terrain.ComputeDistanceToSurface(m_mainCamera.GetPosition());
 
-  //epsilon should be greater than highest detail on sphere surface
-  /*float epsilon = 0.1f;
-  float near = std::max(distTerrain - epsilon, 0.001f);
-  float far = distTerrain + 2.0f;*/
-
   float near = m_terrain.GetNear();
   float far = m_terrain.GetFar();
 
@@ -232,11 +227,11 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
 
   //float time = glfwGetTime();
   glm::mat4 identity = glm::mat4(1.0f);
-  glm::mat4 view = identity;
+  glm::mat4 view = m_mainCamera.ComputeViewMatrix();
 
-  view = glm::rotate(view, m_mainCamera.GetElevation(), glm::vec3(1.0f, 0.0f, 0.0f));
-  view = glm::rotate(view, m_mainCamera.GetAzimuth(), glm::vec3(0.0f, 1.0f, 0.0f));
-  view = glm::translate(view, -m_mainCamera.GetPosition());
+  //view = glm::rotate(view, m_mainCamera.GetElevation(), glm::vec3(1.0f, 0.0f, 0.0f));
+  //view = glm::rotate(view, m_mainCamera.GetAzimuth(), glm::vec3(0.0f, 1.0f, 0.0f));
+  //view = glm::translate(view, -m_mainCamera.GetPosition());
   glm::mat4 VP = projection * view;
 
   m_invProjMatrix = glm::inverse(projection);

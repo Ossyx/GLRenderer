@@ -16,6 +16,9 @@ in float elevation;
 in vec4 quadColor;
 in vec3 normal;
 in vec3 position;
+in vec2 patchCoord;
+in vec3 tan1;
+in vec3 tan2;
 
 // ========= Hash ===========
 
@@ -85,7 +88,7 @@ float noise_sum_M(vec3 p)
     float f = 0.0;
     p = p * 8.0;
     float s = 1.0;
-    for(int i=0; i < 16; ++i)
+    for(int i=0; i < 10; ++i)
     {
       f += s * abs(noise(p)); p = 2.0 * p;
       s = s / 2.0;
@@ -98,7 +101,7 @@ float noise_sum_L(vec3 p)
     float f = 0.0;
     p = p * 1.0;
     float s = 1.0;
-    for(int i=0; i < 8; ++i)
+    for(int i=0; i < 4; ++i)
     {
       f += s * noise(p); p = 2.0 * p;
       s = s / 2.0;
@@ -126,17 +129,20 @@ float calcElevation(vec3 pos)
 vec3 calcNormal(vec3 posReal, vec3 posNorm)
 {
     float d = length(cameraPos - posReal);
-    const float eps = max((d - 0.01), 0.003) / 2307.0;
+    const float eps = max((d - 0.01), 0.1) / 2307.0;
+    //const float eps = 0.00005;
     vec2 spCoord = cartToSphere(posNorm);
 
-    vec3 v1 = sphereToCart(spCoord + vec2(1.0,0.0) *eps);
-    vec3 v3 = sphereToCart(spCoord + vec2(0.0,1.0) *eps);
+    //vec3 v1 = sphereToCart(spCoord + vec2(1.0,0.0) *eps);
+    //vec3 v3 = sphereToCart(spCoord + vec2(0.0,1.0) *eps);
+    vec3 v1 = normalize(posNorm + tan1 * eps);
+    vec3 v3 = normalize(posNorm + tan2 * eps);
 
     float elevV1 = calcElevation(v1*size);
     float elevV3 = calcElevation(v3*size);
 
-    vec3 p1 = v1*size + v1 * elevV1;
-    vec3 p3 = v3*size + v3 * elevV3;
+    vec3 p1 = v1 * size + v1 * elevV1;
+    vec3 p3 = v3 * size + v3 * elevV3;
     vec3 n = normalize(cross(p1 - posReal, p3 - posReal));
     if(dot(n, posNorm) > 0)
     {
@@ -161,6 +167,6 @@ void main()
   vec3 pNormal = packNormal(calcNormal(interPos, renormPosition));
   outAlbedo = quadColor;
   outNormal = vec4(pNormal, 1.0);
-  outSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+  outSpecular = vec4(patchCoord.x, patchCoord.y, 0.0, 1.0);
   outDepth = gl_FragCoord.z;
 }

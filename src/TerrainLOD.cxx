@@ -184,7 +184,7 @@ void TerrainLOD::RecomputeTree(glm::vec3 const& p_cameraPosition)
     }
     else
     {
-      if(dist < m_levelDistances[last->level])
+      if(dist < m_levelDistances[last->level] && last->level < 1024)
       {
         last->Split();
         nodeToExplore.push_back(last->childs[0]);
@@ -290,8 +290,44 @@ int TerrainLOD::DrawTerrain(glm::mat4 const& p_vpMat,
   unsigned int surfdist_location = m_renderShader.GetUniformLocation("surface_distance");
   glUniform1f(surfdist_location, ComputeDistanceToSurface(p_cameraPos));
 
-  SetupUniformAndTextures(m_renderShader, p_vpMat, *terrainMaterial,
-    p_view, p_projection, p_model, p_light, p_cameraPos);
+  if(isSurfaceMode(p_cameraPos))
+  {
+    m_origin = sphereProjectedPosition(p_cameraPos);
+    m_scale = 1000.0f;
+
+    glm::mat4 view = glm::translate(p_view, p_cameraPos);
+    view = glm::translate(view, - (p_cameraPos - m_origin) * m_scale);
+    //glm::mat4 view = glm::scale(p_view, glm::vec3(1.01f, 1.01f, 1.01f));
+
+    unsigned int scaleorigin_location = m_renderShader.GetUniformLocation("scaleOrigin");
+    glUniform1f(scaleorigin_location, m_scale);
+
+    unsigned int translateorigin_location = m_renderShader.GetUniformLocation("translateOrigin");
+    glUniform3fv(translateorigin_location, 1,  glm::value_ptr(m_origin));
+
+    SetupUniformAndTextures(m_renderShader, p_vpMat, *terrainMaterial,
+    view, p_projection, p_model, p_light, p_cameraPos);
+    rxLogInfo("Surface mode !");
+  }
+  else
+  {
+    m_origin = glm::vec3(0.0f, 0.0f, 0.0f);
+    m_scale = 1.0f;
+    unsigned int scaleorigin_location = m_renderShader.GetUniformLocation("scaleOrigin");
+    glUniform1f(scaleorigin_location, 1.0f);
+
+    unsigned int translateorigin_location = m_renderShader.GetUniformLocation("translateOrigin");
+    glUniform3fv(translateorigin_location, 1,  glm::value_ptr(m_origin));
+
+    SetupUniformAndTextures(m_renderShader, p_vpMat, *terrainMaterial,
+      p_view, p_projection, p_model, p_light, p_cameraPos);
+  }
+
+  unsigned int near_location = m_renderShader.GetUniformLocation("near");
+  glUniform1f(near_location, m_near);
+
+  unsigned int far_location = m_renderShader.GetUniformLocation("far");
+  glUniform1f(far_location, m_far);
 
   glPatchParameteri(GL_PATCH_VERTICES, 4);
   glBindVertexArray(m_vertexArrayId);
@@ -543,6 +579,16 @@ float TerrainLOD::ComputeDistanceToSurface(glm::vec3 const& p_position)
   return std::fabs(glm::length(p_position) - m_size);
 }
 
+bool TerrainLOD::isSurfaceMode(glm::vec3 const& p_position)
+{
+  return ComputeDistanceToSurface(p_position) < 0.01f;
+}
+
+glm::vec3 TerrainLOD::sphereProjectedPosition(glm::vec3 const& p_position)
+{
+  return glm::normalize(p_position) * m_size;
+}
+
 void TerrainLOD::ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const& p_direction, std::vector<QuadTreeNode*>& p_leafs)
 {
 
@@ -566,9 +612,17 @@ void TerrainLOD::ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const&
     }
   }
 
-  m_near = std::max(minDistance - 0.04f, 0.000001f);
-  m_far = maxDistance;
+  m_near = std::max(minDistance, 0.000001f) * m_scale;
+  m_far = maxDistance * m_scale;
   rxLogInfo("Computed near and far " << m_near << " " << m_far << " in sight " << leafInSight );
+
+  if(isSurfaceMode(p_position))
+  {
+    float distTerrain = ComputeDistanceToSurface(p_position);
+    m_near = 0.001;
+    m_far = sqrt((distTerrain + m_size ) * (distTerrain + m_size ) - m_size  * m_size );
+    m_far = 300.0f;
+  }
 }
 
 QuadTreeNode::QuadTreeNode(unsigned p_level, glm::vec3 const& p_position)
