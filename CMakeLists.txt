@@ -43,16 +43,16 @@ file(COPY ${CMAKE_SOURCE_DIR}/shaders DESTINATION ${CMAKE_BINARY_DIR})
 
 add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/main.cxx
-  ${CMAKE_SOURCE_DIR}/src/EventInterface.cxx
-  ${CMAKE_SOURCE_DIR}/src/EventDispatcher.cxx
-  ${CMAKE_SOURCE_DIR}/src/Camera.cxx
-  ${CMAKE_SOURCE_DIR}/src/Shader.cxx
-  ${CMAKE_SOURCE_DIR}/src/DrawableItem.cxx
-  ${CMAKE_SOURCE_DIR}/src/SceneRenderer.cxx
-  ${CMAKE_SOURCE_DIR}/src/FrustumCulling.cxx
-  ${CMAKE_SOURCE_DIR}/src/TerrainLOD.cxx
+  ${CMAKE_SOURCE_DIR}/src/event/EventInterface.cxx
+  ${CMAKE_SOURCE_DIR}/src/event/EventDispatcher.cxx
+  ${CMAKE_SOURCE_DIR}/src/scene/Camera.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Shader.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/DrawableItem.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/SceneRenderer.cxx
+  ${CMAKE_SOURCE_DIR}/src/scene/FrustumCulling.cxx
+  ${CMAKE_SOURCE_DIR}/src/terrain/TerrainLOD.cxx
   ${CMAKE_SOURCE_DIR}/src/gui/TerrainGenGui.cxx
-  ${CMAKE_SOURCE_DIR}/src/SceneGraph.cxx
+  ${CMAKE_SOURCE_DIR}/src/scene/SceneGraph.cxx
   ${CMAKE_SOURCE_DIR}/imgui/imgui.cpp
   ${CMAKE_SOURCE_DIR}/imgui/imgui_draw.cpp
   ${CMAKE_SOURCE_DIR}/imgui/imgui_widgets.cpp
@@ -62,7 +62,7 @@ add_executable(GLRenderer
 
 add_executable(TestFrustumCulling
   ${CMAKE_SOURCE_DIR}/test/testFrustumCulling.cxx
-  ${CMAKE_SOURCE_DIR}/src/FrustumCulling.cxx)
+  ${CMAKE_SOURCE_DIR}/src/scene/FrustumCulling.cxx)
 
 # add_executable(TestTerrainLOD
 #   ${CMAKE_SOURCE_DIR}/test/testTerrainLOD.cxx
@@ -70,7 +70,7 @@ add_executable(TestFrustumCulling
 
 add_executable(generateHeightmap
   ${CMAKE_SOURCE_DIR}/test/generateHeightmap.cxx
-  ${CMAKE_SOURCE_DIR}/src/HeightmapGenerator.cxx)
+  ${CMAKE_SOURCE_DIR}/src/terrain/HeightmapGenerator.cxx)
 
 
 target_compile_definitions(GLRenderer PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)
