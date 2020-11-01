@@ -25,9 +25,11 @@ set(MESHLIB_LIBRARY "${MESHLIB_INSTALL_DIR}/lib/libMeshLib.so")
 set(OCEANSURFACE_INCLUDE "/home/bertrand/Work/FFTWater/OceanSurface")
 set(OCEANSURFACE_LIBRARY "/home/bertrand/Work/FFTWater/build/libOceanSurface.so")
 
-include_directories(${CMAKE_SOURCE_DIR}/include
-${CMAKE_SOURCE_DIR}/src/gui
-${CMAKE_SOURCE_DIR}/src/terrain
+include_directories(${CMAKE_SOURCE_DIR}/include/event
+${CMAKE_SOURCE_DIR}/include/gui
+${CMAKE_SOURCE_DIR}/include/render
+${CMAKE_SOURCE_DIR}/include/scene
+${CMAKE_SOURCE_DIR}/include/terrain
 ${GLFW_INCLUDE_DIR}
 ${Glad_INCLUDE_DIR}
 ${GLM_INCLUDE_DIRS}
