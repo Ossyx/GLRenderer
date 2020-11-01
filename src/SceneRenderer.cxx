@@ -1,5 +1,6 @@
 #include "SceneRenderer.hxx"
 #include "Primitives.hxx"
+#include "TerrainGenGui.hxx"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -11,10 +12,12 @@
 #include <boost/lexical_cast.hpp>
 
 SceneRenderer::SceneRenderer(GLFWwindow* p_window):
-m_mainCamera()
+m_mainCamera(),
+m_terrainGUI(p_window)
 {
   EventDispatcher* dispatcher = EventDispatcher::Get();
   dispatcher->AddEventListener("MainCamera", &m_mainCamera);
+  dispatcher->AddEventListener("SceneRenderer", this);
 
   m_renderShader.SetVertexShaderSrc("shaders/deferred/renderVS.shader");
   m_renderShader.SetFragmentShaderSrc("shaders/deferred/renderFS.shader");
@@ -51,6 +54,8 @@ m_mainCamera()
   PrepareShadowMapFrameBufferObject(width, height);
 
   m_sunLightDirection = glm::normalize(glm::vec3(10.0, 3.0, 10.0));
+
+  m_renderParam = RenderingDebugInfo::Get();
 }
 
 SceneRenderer::~SceneRenderer()
@@ -129,7 +134,7 @@ void SceneRenderer::AddModel()
 void SceneRenderer::AddTerrain()
 {
   m_terrain.PrepareBufferQuad(m_mainCamera);
-  //m_water.PrepareBufferQuad(m_mainCamera.GetPosition());
+  m_water.PrepareBufferQuad(m_mainCamera);
 
   //Build texture for water surface
   glGenTextures(1, &m_watersurfTex);
@@ -138,13 +143,47 @@ void SceneRenderer::AddTerrain()
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  float* dummy = new float[128*128];
+  float dummy[128*128];
   for(int i=0; i < 128*128; ++i) dummy[i] = 0.5;
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 128, 128, 0, GL_RED, GL_FLOAT, dummy);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 128, 128, 0, GL_RED, GL_FLOAT, &dummy);
   glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void SceneRenderer::Render(GLFWwindow* p_window)
+{
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_DEPTH_TEST);
+
+  auto frameTimer = std::chrono::steady_clock::now();
+  while (glfwWindowShouldClose(p_window) == false)
+  {
+    auto newTime = std::chrono::steady_clock::now();
+    float millis = std::chrono::duration_cast<std::chrono::milliseconds>(newTime - frameTimer).count();
+    m_renderParam->m_fps = 1000.0f / millis;
+
+    m_terrainGUI.InitGuiFrame();
+
+    UpdateCamera(millis);
+    //renderer.RenderShadowMap(window);
+    //renderer.Render(window);
+    RenderTerrain(p_window);
+    RenderGBufferDebug(p_window);
+    m_terrainGUI.RenderGui();
+
+    glfwSwapBuffers(p_window);
+    glfwPollEvents();
+
+    frameTimer = newTime;
+  }
+
+  glfwDestroyWindow(p_window);
+  glfwTerminate();
+}
+
+void SceneRenderer::RenderObjects(GLFWwindow* p_window)
 {
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
@@ -158,7 +197,6 @@ void SceneRenderer::Render(GLFWwindow* p_window)
   view = glm::rotate(view, m_mainCamera.GetElevation(), glm::vec3(1.0f, 0.0f, 0.0f));
   view = glm::rotate(view, m_mainCamera.GetAzimuth(), glm::vec3(0.0f, 1.0f, 0.0f));
   view = glm::translate(view, m_mainCamera.GetPosition());
-  glm::mat4 VP = projection * view;
 
   m_invProjMatrix = glm::inverse(projection);
   m_invViewMatrix = glm::inverse(view);
@@ -195,7 +233,7 @@ void SceneRenderer::Render(GLFWwindow* p_window)
       Shader const& shader = m_gbufferShaders[itShaderId->second];
       glUseProgram(shader.GetProgram());
       m_drawableItems[i]->SetTransform(model);
-      m_drawableItems[i]->Draw(shader, VP, *materialPtr, view, projection,
+      m_drawableItems[i]->Draw(shader, *materialPtr, view, projection,
         model, m_sunLightDirection, m_mainCamera.GetPosition());
     }
 
@@ -206,34 +244,40 @@ void SceneRenderer::Render(GLFWwindow* p_window)
 
 void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
 {
-
   if(m_mainCamera.m_wireframe)
   {
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
   }
 
+  bool surfaceMode = m_terrain.ComputeDistanceToSurface(m_mainCamera.GetPosition()) < 0.01f;
+  float scale = 1.0f;
+  glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
+  if(surfaceMode)
+  {
+    scale = 1000.0f;
+    origin = m_terrain.sphereProjectedPosition(m_mainCamera.GetPosition());
+  }
+  m_terrain.SetScale(scale);
+  m_terrain.SetOrigin(origin);
+  m_water.SetScale(scale);
+  m_water.SetOrigin(origin);
+
   m_surf.ComputeHeightmap(glfwGetTime());
-  float distTerrain = m_terrain.ComputeDistanceToSurface(m_mainCamera.GetPosition());
+  ComputeNearFarProjection();
 
-  float near = m_terrain.GetNear();
-  float far = m_terrain.GetFar();
-
-  rxLogInfo(" Distance " << distTerrain <<" near|far "<< near <<" | "<< far);
+  m_mainCamera.SetNear(m_mainCamera.GetNear() * scale);
+  m_mainCamera.SetFar(m_mainCamera.GetFar() * scale);
+  m_renderParam->m_near = m_mainCamera.GetNear();
+  m_renderParam->m_far = m_mainCamera.GetFar();
 
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-    (float)width / (float)height, near, far);
+    (float)width / (float)height, m_mainCamera.GetNear(), m_mainCamera.GetFar());
 
-  //float time = glfwGetTime();
-  glm::mat4 identity = glm::mat4(1.0f);
-  glm::mat4 view = m_mainCamera.ComputeViewMatrix();
+  m_mainCamera.SetProjectionMatrix(projection);
 
-  //view = glm::rotate(view, m_mainCamera.GetElevation(), glm::vec3(1.0f, 0.0f, 0.0f));
-  //view = glm::rotate(view, m_mainCamera.GetAzimuth(), glm::vec3(0.0f, 1.0f, 0.0f));
-  //view = glm::translate(view, -m_mainCamera.GetPosition());
-  glm::mat4 VP = projection * view;
-
+  glm::mat4 view = m_mainCamera.GetViewMatrix();
   m_invProjMatrix = glm::inverse(projection);
   m_invViewMatrix = glm::inverse(view);
 
@@ -255,19 +299,21 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
   glClearColor(0.25, 0.5, 1.0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glm::mat4 model = identity;
+  glm::mat4 model = glm::mat4(1.0f);
 
-  m_terrain.SetTransform(model);
-  //m_water.SetTransform(model);
-  if(m_mainCamera.m_treeRecompute)
+  if( m_mainCamera.m_treeRecompute )
   {
     m_terrain.RecomputeTree(m_mainCamera.GetPosition());
-    //m_water.RecomputeTree(m_mainCamera.GetPosition());
+    m_water.RecomputeTree(m_mainCamera.GetPosition());
   }
   m_terrain.PrepareBufferQuad(m_mainCamera);
-  m_terrain.DrawTerrain(VP, view, projection, model, m_sunLightDirection, m_mainCamera.GetPosition());
-  //m_water.PrepareBufferQuad(m_mainCamera.GetPosition());
-  //m_water.DrawWater(VP, view, projection, model, m_sunLightDirection, m_mainCamera.GetPosition(), m_surf, m_watersurfTex);
+  m_terrain.DrawTerrain(m_mainCamera, model, m_sunLightDirection);
+
+  if( m_renderParam->m_renderWater )
+  {
+    m_water.PrepareBufferQuad(m_mainCamera);
+    m_water.DrawWater(m_mainCamera, model, m_sunLightDirection, m_surf, m_watersurfTex);
+  }
 
   rxLogInfo(m_mainCamera.GetPosition().x<<" "<<m_mainCamera.GetPosition().y<<" "<<m_mainCamera.GetPosition().z);
 
@@ -382,9 +428,6 @@ void SceneRenderer::RenderGBufferDebug(GLFWwindow* p_window)
   glBindVertexArray(m_renderVertexArray);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_iBufferId);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-  glfwSwapBuffers(p_window);
-  glfwPollEvents();
-
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -589,4 +632,39 @@ void SceneRenderer::PrepareShadowMapFrameBufferObject(int p_width, int p_height)
   }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void SceneRenderer::ComputeNearFarProjection()
+{
+  if( m_renderParam->m_renderWater )
+  {
+    m_mainCamera.SetNear(std::min(m_terrain.GetNear(), m_water.GetNear()));
+    m_mainCamera.SetFar(std::min(m_terrain.GetFar(), m_water.GetFar()));
+  }
+  else
+  {
+    m_mainCamera.SetNear(m_terrain.GetNear());
+    m_mainCamera.SetFar(m_terrain.GetFar());
+  }
+}
+
+void SceneRenderer::HandleKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+  if(action == GLFW_PRESS && key == GLFW_KEY_P)
+  {
+    EventDispatcher* dispatcher = EventDispatcher::Get();
+    if(m_terrainGUI.showParameters == false)
+    {
+      dispatcher->RemoveEventListener("MainCamera");
+    }
+    else
+    {
+      dispatcher->AddEventListener("MainCamera", &m_mainCamera);
+    }
+    m_terrainGUI.showParameters = !m_terrainGUI.showParameters;
+  }
+}
+
+void SceneRenderer::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY)
+{
 }

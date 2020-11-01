@@ -6,9 +6,14 @@ uniform float size;
 
 uniform vec3 translateOrigin;
 uniform float scaleOrigin;
+uniform float coastKFactor;
 
 uniform float near;
 uniform float far;
+
+uniform int noiseLOctave;
+uniform int noiseMOctave;
+uniform int noiseHOctave;
 
 layout(std430, binding = 3) buffer layoutDataQuad
 {
@@ -186,8 +191,8 @@ float noise_sum_H(vec3 p)
 {
     float f = 0.0;
     p = p * 256.0;
-    float s = 0.001;
-    for(int i=0; i < 64; ++i)
+    float s = 1.0;
+    for(int i=0; i < noiseHOctave; ++i)
     {
       f += s * noise(p); p = 2.0 * p;
       s = s / 2.0;
@@ -198,9 +203,9 @@ float noise_sum_H(vec3 p)
 float noise_sum_M(vec3 p)
 {
     float f = 0.0;
-    p = p * 8.0;
+    p = p * 16.0;
     float s = 1.0;
-    for(int i=0; i < 16; ++i)
+    for(int i=0; i < noiseMOctave; ++i)
     {
       f += s * abs(noise(p)); p = 2.0 * p;
       s = s / 2.0;
@@ -211,9 +216,9 @@ float noise_sum_M(vec3 p)
 float noise_sum_L(vec3 p)
 {
     float f = 0.0;
-    p = p * 1.0;
+    p = p * 0.2;
     float s = 1.0;
-    for(int i=0; i < 4; ++i)
+    for(int i=0; i < noiseLOctave; ++i)
     {
       f += s * noise(p); p = 2.0 * p;
       s = s / 2.0;
@@ -254,9 +259,14 @@ vec3 sphereToCart(vec2 coord)
 
 float calcElevation(vec3 pos)
 {
-  float e1 = noise_sum_L(pos);
-  float e2 = 1.0 - abs(noise_sum_M(pos));
-  return e1 * e2 * 0.04 * scaleOrigin;
+  float e1 = noise_sum_L(pos) * 0.008;
+  float e2 = (1.0 - abs(noise_sum_M(pos))) * 0.008;
+
+  float value = e1;
+
+  float coastMod = 1.0f / (1.0f + exp(-coastKFactor*(value-0.001)));
+  value = coastMod * value;
+  return value * scaleOrigin;
 }
 
 vec2 calcGrad( in vec3 pos, float elev)

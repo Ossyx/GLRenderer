@@ -220,20 +220,17 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
     }
 }
 
-void DrawableItem::SetupUniformAndTextures(Shader const& p_shader, glm::mat4 const& p_vpMat,
+void DrawableItem::SetupUniformAndTextures(Shader const& p_shader,
     rx::Material& p_material, glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
-  unsigned int mvp_location = p_shader.GetUniformLocation("MVP");
   unsigned int modelLoc = p_shader.GetUniformLocation("Model");
   unsigned int viewLoc = p_shader.GetUniformLocation("View");
   unsigned int projection = p_shader.GetUniformLocation("Projection");
   unsigned int lightLoc = p_shader.GetUniformLocation("light");
   unsigned int camLoc = p_shader.GetUniformLocation("cameraPos");
 
-  glm::mat4 mvp = p_vpMat * m_transform;
-  glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
 
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(p_model));
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(p_view));
@@ -287,12 +284,12 @@ void DrawableItem::SetupUniformAndTextures(Shader const& p_shader, glm::mat4 con
   }
 }
 
-int DrawableItem::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
+int DrawableItem::Draw(Shader const& p_shader,
   rx::Material& p_material, glm::mat4 const& p_view,
   glm::mat4 const& p_projection, glm::mat4 const& p_model,
   glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
-  SetupUniformAndTextures(p_shader, p_vpMat, p_material, p_view,
+  SetupUniformAndTextures(p_shader, p_material, p_view,
     p_projection, p_model, p_light, p_cameraPos);
   DrawElements();
 }

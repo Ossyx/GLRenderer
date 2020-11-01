@@ -47,7 +47,9 @@ int main()
 
   glfwMakeContextCurrent(window);
   gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+  //Init ImGui
   EventDispatcher* dispatcher = EventDispatcher::Get();
   glfwSetKeyCallback(window, EventDispatcher::HandleKeyEvent);
   glfwSetCursorPosCallback(window, EventDispatcher::HandleCursorEvent);
@@ -55,37 +57,8 @@ int main()
   SceneRenderer renderer(window);
   //renderer.AddModel();
   renderer.AddTerrain();
+  renderer.Render(window);
 
-  int maxSize;
-  glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxSize);
-  rxLogInfo("GL_MAX_UNIFORM_BLOCK_SIZE : "<<maxSize);
-
-  int maxtessgenlvl;
-  glGetIntegerv(GL_MAX_TESS_GEN_LEVEL, &maxtessgenlvl);
-  rxLogInfo("GL_MAX_TESS_GEN_LEVEL : "<<maxtessgenlvl);
-
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_DEPTH_TEST);
-
-  auto frameTimer = std::chrono::steady_clock::now();
-  while (glfwWindowShouldClose(window) == false)
-  {
-    auto newTime = std::chrono::steady_clock::now();
-    float millis = std::chrono::duration_cast<std::chrono::milliseconds>(newTime - frameTimer).count();
-    rxLogInfo("FPS : " << 1000.0f / millis);
-    renderer.UpdateCamera(millis);
-    //renderer.RenderShadowMap(window);
-    //renderer.Render(window);
-    renderer.RenderTerrain(window);
-    renderer.RenderGBufferDebug(window);
-    frameTimer = newTime;
-  }
-
-  glfwDestroyWindow(window);
-  glfwTerminate();
   return 0;
 }
 

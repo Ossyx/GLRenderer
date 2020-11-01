@@ -39,14 +39,14 @@ void EventDispatcher::HandleCursorEvent(GLFWwindow* window, double xpos, double 
   {
     EventInterface* listener = it->second;
     listener->HandleCursorEvent(xpos, ypos, xpos - m_cursorX, ypos - m_cursorY);
-    m_cursorX = xpos;
-    m_cursorY = ypos;
   }
+  m_cursorX = xpos;
+  m_cursorY = ypos;
 }
 
 EventDispatcher* EventDispatcher::Get()
 {
-  if (m_singleton == false)
+  if ( !m_singleton )
   {
     m_singleton = new EventDispatcher();
   }

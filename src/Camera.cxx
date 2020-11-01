@@ -27,6 +27,7 @@ Camera::~Camera()
 void Camera::Translate(glm::vec3 const& p_direction)
 {
   m_position += p_direction;
+  ComputeViewMatrix();
 }
 
 void Camera::ChangeAzimuth(float p_delta)
@@ -52,13 +53,12 @@ float Camera::GetElevation() const
   return m_elevation;
 }
 
-glm::mat4 Camera::ComputeViewMatrix() const
+void Camera::ComputeViewMatrix()
 {
-  glm::mat4 view = glm::mat4(1.0f);
-  view = glm::rotate(view, m_elevation, glm::vec3(1.0f, 0.0f, 0.0f));
-  view = glm::rotate(view, m_azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-  view = glm::translate(view, -m_position);
-  return view;
+  m_viewMatrix = glm::mat4(1.0f);
+  m_viewMatrix = glm::rotate(m_viewMatrix, m_elevation, glm::vec3(1.0f, 0.0f, 0.0f));
+  m_viewMatrix = glm::rotate(m_viewMatrix, m_azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
+  m_viewMatrix = glm::translate(m_viewMatrix, -m_position);
 }
 
 glm::vec3 Camera::GetDirection() const
@@ -69,9 +69,6 @@ glm::vec3 Camera::GetDirection() const
 
   glm::vec4 vVect = glm::vec4(0.0, 0.0, -1.0, 1.0) * view;
   return glm::vec3(vVect.x, vVect.y, vVect.z);
-  /*return glm::vec3(sin(m_elevation) * cos(m_azimuth),
-                   sin(m_elevation) * sin(m_azimuth),
-                   cos(m_elevation));*/
 }
 
 void Camera::SmoothMovement(float p_deltaT)
@@ -100,6 +97,7 @@ void Camera::SmoothMovement(float p_deltaT)
   dir.z = dirH.z;
 
   m_position = m_position + (m_translationSpeed * dir);
+  ComputeViewMatrix();
 }
 
 void Camera::MoveCamera(float p_deltaT, float p_speed)
@@ -133,6 +131,7 @@ void Camera::MoveCamera(float p_deltaT, float p_speed)
   factor = std::min(1.0f, factor);
 
   m_position = m_position + (m_translationSpeed * factor * dir);
+  ComputeViewMatrix();
 }
 
 void Camera::ReadDirectionFromKeys()
@@ -252,9 +251,45 @@ void Camera::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, do
   {
     m_elevation = (-M_PI/2.0 + epsilon);
   }
+  ComputeViewMatrix();
 }
 
 void Camera::SetScaleFactor( float p_scaleFactor )
 {
   m_scaleFactor = p_scaleFactor;
+}
+
+glm::mat4 Camera::GetViewMatrix() const
+{
+  return m_viewMatrix;
+}
+
+void Camera::SetProjectionMatrix(glm::mat4 const& p_mat)
+{
+  m_projectionMatrix = p_mat;
+}
+
+glm::mat4 Camera::GetProjectionMatrix() const
+{
+  return m_projectionMatrix;
+}
+
+float Camera::GetNear() const
+{
+  return m_near;
+}
+
+float Camera::GetFar() const
+{
+  return m_far;
+}
+
+void Camera::SetNear(float p_near)
+{
+  m_near = p_near;
+}
+
+void Camera::SetFar(float p_far)
+{
+  m_far = p_far;
 }

@@ -48,19 +48,16 @@ public:
 
   void PrepareBufferQuad(Camera const& p_cam);
 
-  virtual int Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
-    rx::Material& p_material, glm::mat4 const& p_view,
-    glm::mat4 const& p_projection, glm::mat4 const& p_model,
-    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
+  virtual int Draw(Shader const& p_shader, rx::Material& p_material,
+    glm::mat4 const& p_view, glm::mat4 const& p_projection,
+    glm::mat4 const& p_model, glm::vec3 const& p_light,
+    glm::vec3 const& p_cameraPos);
 
-  int DrawTerrain(glm::mat4 const& p_vpMat, glm::mat4 const& p_view,
-    glm::mat4 const& p_projection, glm::mat4 const& p_model,
-    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
+  int DrawTerrain(Camera const& p_cam, glm::mat4 const& p_model,
+    glm::vec3 const& p_light);
 
-  int DrawWater(glm::mat4 const& p_vpMat, glm::mat4 const& p_view,
-    glm::mat4 const& p_projection, glm::mat4 const& p_model,
-    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos,
-    rx::OceanSurface const& p_surf, unsigned int p_waterSurfTex);
+  int DrawWater(Camera const& p_cam, glm::mat4 const& p_model,
+    glm::vec3 const& p_light, rx::OceanSurface const& p_surf, unsigned int p_waterSurfTex);
 
   void RecomputeTree(glm::vec3 const& p_cameraPosition);
 
@@ -76,9 +73,11 @@ public:
 
   float ComputeDistanceToSurface(glm::vec3 const& p_position);
 
-  bool isSurfaceMode(glm::vec3 const& p_position);
-
   glm::vec3 sphereProjectedPosition(glm::vec3 const& p_position);
+
+  void SetOrigin(glm::vec3 const& p_origin);
+
+  void SetScale(float p_scale);
 
 private:
   void FindLeafs(std::vector<QuadTreeNode*>& p_leafs);
@@ -92,7 +91,7 @@ private:
   QuadTreeNode* FindClosestTree(glm::vec3 const& p_pos);
   QuadTreeNode* FindClosestLeaf(glm::vec3 const& p_pos, QuadTreeNode* p_node);
 
-  QuadTreeNode* m_cubeRoots[8];
+  QuadTreeNode* m_cubeRoots[6];
   typedef std::unordered_map<unsigned int, float> IntFloatMap;
   IntFloatMap m_levelDistances;
   IntFloatMap m_tessellationLevel;

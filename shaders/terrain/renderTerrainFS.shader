@@ -10,6 +10,7 @@ uniform vec3 diffuse_color;
 
 uniform float size;
 uniform float surface_distance;
+uniform float coastKFactor;
 
 in vec2 gradient;
 in float elevation;
@@ -19,6 +20,10 @@ in vec3 position;
 in vec2 patchCoord;
 in vec3 tan1;
 in vec3 tan2;
+
+uniform int noiseLOctave;
+uniform int noiseMOctave;
+uniform int noiseHOctave;
 
 // ========= Hash ===========
 
@@ -82,13 +87,25 @@ float noise(vec3 p) {
     return simplex_noise(p);
 }
 
+float noise_sum_H(vec3 p)
+{
+    float f = 0.0;
+    p = p * 256.0;
+    float s = 0.001;
+    for(int i=0; i < noiseHOctave; ++i)
+    {
+      f += s * noise(p); p = 2.0 * p;
+      s = s / 2.0;
+    }
+    return f;
+}
 
 float noise_sum_M(vec3 p)
 {
     float f = 0.0;
-    p = p * 8.0;
+    p = p * 16.0;
     float s = 1.0;
-    for(int i=0; i < 10; ++i)
+    for(int i=0; i < noiseMOctave; ++i)
     {
       f += s * abs(noise(p)); p = 2.0 * p;
       s = s / 2.0;
@@ -99,9 +116,9 @@ float noise_sum_M(vec3 p)
 float noise_sum_L(vec3 p)
 {
     float f = 0.0;
-    p = p * 1.0;
+    p = p * 0.2;
     float s = 1.0;
-    for(int i=0; i < 4; ++i)
+    for(int i=0; i < noiseLOctave; ++i)
     {
       f += s * noise(p); p = 2.0 * p;
       s = s / 2.0;
@@ -121,9 +138,10 @@ vec3 sphereToCart(vec2 coord)
 
 float calcElevation(vec3 pos)
 {
-  float e1 = noise_sum_L(pos);
-  float e2 = 1.0 - abs(noise_sum_M(pos));
-  return e1 * e2 * 0.04;
+  float e1 = noise_sum_L(pos) * 0.008;
+  float coastMod = 1.0f / (1.0f + exp(-coastKFactor*(e1-0.001)));
+  e1 = coastMod * e1;
+  return e1;
 }
 
 vec3 calcNormal(vec3 posReal, vec3 posNorm)

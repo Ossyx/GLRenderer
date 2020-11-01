@@ -5,6 +5,7 @@
 
 #include "EventInterface.hxx"
 #include <GLFW/glfw3.h>
+#include <string>
 
 class EventDispatcher
 {

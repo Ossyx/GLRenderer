@@ -1,5 +1,6 @@
 #include "TerrainLOD.hxx"
 #include <glm/gtc/type_ptr.hpp>
+#include "TerrainGenGui.hxx"
 
 #define sqrt2rx 1.41421356237f
 
@@ -40,29 +41,47 @@ TerrainLOD::TerrainLOD()
   m_cubeRoots[5]->parent = nullptr;
   m_cubeRoots[5]->SetGeometry(p7, p4, p5, p6);
 
-  m_levelDistances[1] = 16.0;
-  m_levelDistances[2] = 8.0;
-  m_levelDistances[4] = 4.0;
-  m_levelDistances[8] = 2.0;
-  m_levelDistances[16] = 1.5;
-  m_levelDistances[32] = 0.75;
-  m_levelDistances[64] = 0.325;
-  m_levelDistances[128] = 0.15125;
-  m_levelDistances[256] = 0.07;
-  m_levelDistances[512] = 0.035;
-  m_levelDistances[1024] = 0.015;
+//   m_levelDistances[1] = 16.0;
+//   m_levelDistances[2] = 8.0;
+//   m_levelDistances[4] = 4.0;
+//   m_levelDistances[8] = 2.0;
+//   m_levelDistances[16] = 1.5;
+//   m_levelDistances[32] = 0.75;
+//   m_levelDistances[64] = 0.325;
+//   m_levelDistances[128] = 0.15125;
+//   m_levelDistances[256] = 0.07;
+//   m_levelDistances[512] = 0.035;
+//   m_levelDistances[1024] = 0.015;
 
-  m_tessellationLevel[1] = 8.0;
-  m_tessellationLevel[2] = 8.0;
-  m_tessellationLevel[4] = 8.0;
-  m_tessellationLevel[8] = 8.0;
-  m_tessellationLevel[16] = 16.0;
-  m_tessellationLevel[32] = 16.0;
-  m_tessellationLevel[64] = 16.0;
-  m_tessellationLevel[128] = 16.0;
-  m_tessellationLevel[256] = 32.0;
-  m_tessellationLevel[512] = 32.0;
-  m_tessellationLevel[1024] = 64.0;
+  float start = 32.0f;
+  int level = 1;
+  for(int i=0; i < 24; ++i)
+  {
+    m_levelDistances[level] = start;
+    m_tessellationLevel[level] = 16.0;
+    if(level > 12)
+    {
+      m_tessellationLevel[level] = 32.0;
+    }
+    if(level > 14)
+    {
+      m_tessellationLevel[level] = 64.0;
+    }
+    level = level * 2;
+    start = start / 2.0f;
+  }
+
+//   m_tessellationLevel[1] = 16.0;
+//   m_tessellationLevel[2] = 16.0;
+//   m_tessellationLevel[4] = 16.0;
+//   m_tessellationLevel[8] = 16.0;
+//   m_tessellationLevel[16] = 32.0;
+//   m_tessellationLevel[32] = 32.0;
+//   m_tessellationLevel[64] = 32.0;
+//   m_tessellationLevel[128] = 32.0;
+//   m_tessellationLevel[256] = 32.0;
+//   m_tessellationLevel[512] = 64.0;
+//   m_tessellationLevel[1024] = 64.0;
 
   terrainMaterial = new rx::Material();
   terrainMaterial->SetName("CubeMaterial");
@@ -91,8 +110,10 @@ void TerrainLOD::PrepareBufferQuad(Camera const& p_cam)
     return a->level > b->level;
   });
 
+  RenderingDebugInfo* debugInfo = RenderingDebugInfo::Get();
+
   SetOuterTessellationLvl(leafs);
-  CullLeaves(leafs, p_cam.GetPosition());
+  if( debugInfo->m_culling ) CullLeaves(leafs, p_cam.GetPosition());
   ComputeNearAndFar(p_cam.GetPosition(), p_cam.GetDirection(), leafs);
   BuildPrimitiveBuffers(leafs);
 }
@@ -166,7 +187,7 @@ void TerrainLOD::RecomputeTree(glm::vec3 const& p_cameraPosition)
     QuadTreeNode* last = nodeToExplore.back();
     nodeToExplore.pop_back();
 
-    float dist = glm::distance(last->center * m_size, p_cameraPosition);
+    float dist = glm::distance(glm::normalize(last->center) * m_size, p_cameraPosition);
     dist = dist - (1.0f/last->level);
     if(last->leaf == false)
     {
@@ -184,7 +205,7 @@ void TerrainLOD::RecomputeTree(glm::vec3 const& p_cameraPosition)
     }
     else
     {
-      if(dist < m_levelDistances[last->level] && last->level < 1024)
+      if(dist < m_levelDistances[last->level] && last->level)
       {
         last->Split();
         nodeToExplore.push_back(last->childs[0]);
@@ -261,17 +282,72 @@ void TerrainLOD::DestroySubtree(QuadTreeNode* p_node)
   }
 }
 
-int TerrainLOD::Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
+int TerrainLOD::Draw(Shader const& p_shader,
     rx::Material& p_material, glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
 }
 
-int TerrainLOD::DrawTerrain(glm::mat4 const& p_vpMat,
-    glm::mat4 const& p_view, glm::mat4 const& p_projection,
-    glm::mat4 const& p_model, glm::vec3 const& p_light,
-    glm::vec3 const& p_cameraPos)
+int TerrainLOD::DrawTerrain(Camera const& p_cam, glm::mat4 const& p_model, glm::vec3 const& p_light)
+{
+  RenderingDebugInfo* debugInfo = RenderingDebugInfo::Get();
+
+  glUseProgram(m_renderShader.GetProgram());
+  unsigned block_index = 0;
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 3);
+
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 4);
+
+  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
+  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 5);
+
+  unsigned int size_location = m_renderShader.GetUniformLocation("size");
+  glUniform1f(size_location, m_size);
+
+  unsigned int coastK_location = m_renderShader.GetUniformLocation("coastKFactor");
+  glUniform1f(coastK_location, debugInfo->m_coastKFactor);
+
+  unsigned int surfdist_location = m_renderShader.GetUniformLocation("surface_distance");
+  glUniform1f(surfdist_location, ComputeDistanceToSurface(p_cam.GetPosition()));
+
+  glm::mat4 view = glm::translate(p_cam.GetViewMatrix(), p_cam.GetPosition());
+  view = glm::translate(view, - (p_cam.GetPosition() - m_origin) * m_scale);
+
+  unsigned int scaleorigin_location = m_renderShader.GetUniformLocation("scaleOrigin");
+  glUniform1f(scaleorigin_location, m_scale);
+
+  unsigned int translateorigin_location = m_renderShader.GetUniformLocation("translateOrigin");
+  glUniform3fv(translateorigin_location, 1,  glm::value_ptr(m_origin));
+
+  unsigned int noiseL_location = m_renderShader.GetUniformLocation("noiseLOctave");
+  glUniform1i(noiseL_location, debugInfo->m_noiseLOctave);
+
+  unsigned int noiseM_location = m_renderShader.GetUniformLocation("noiseMOctave");
+  glUniform1i(noiseM_location, debugInfo->m_noiseMOctave);
+
+  unsigned int noiseH_location = m_renderShader.GetUniformLocation("noiseHOctave");
+  glUniform1i(noiseH_location, debugInfo->m_noiseHOctave);
+
+  SetupUniformAndTextures(m_renderShader, *terrainMaterial,
+  view, p_cam.GetProjectionMatrix(), p_model, p_light, p_cam.GetPosition());
+  rxLogInfo("Surface mode !");
+
+  unsigned int near_location = m_renderShader.GetUniformLocation("near");
+  glUniform1f(near_location, p_cam.GetNear());
+
+  unsigned int far_location = m_renderShader.GetUniformLocation("far");
+  glUniform1f(far_location, p_cam.GetFar());
+
+  glPatchParameteri(GL_PATCH_VERTICES, 4);
+  glBindVertexArray(m_vertexArrayId);
+  glDrawArrays(GL_PATCHES, 0, 4*m_leafCount);
+}
+
+int TerrainLOD::DrawWater(Camera const& p_cam, glm::mat4 const& p_model,
+    glm::vec3 const& p_light, rx::OceanSurface const& p_surf, unsigned int p_waterSurfTex)
 {
   glUseProgram(m_renderShader.GetProgram());
   unsigned block_index = 0;
@@ -288,73 +364,26 @@ int TerrainLOD::DrawTerrain(glm::mat4 const& p_vpMat,
   glUniform1f(size_location, m_size);
 
   unsigned int surfdist_location = m_renderShader.GetUniformLocation("surface_distance");
-  glUniform1f(surfdist_location, ComputeDistanceToSurface(p_cameraPos));
+  glUniform1f(surfdist_location, ComputeDistanceToSurface(p_cam.GetPosition()));
 
-  if(isSurfaceMode(p_cameraPos))
-  {
-    m_origin = sphereProjectedPosition(p_cameraPos);
-    m_scale = 1000.0f;
+  glm::mat4 view = glm::translate(p_cam.GetViewMatrix(), p_cam.GetPosition());
+  view = glm::translate(view, - (p_cam.GetPosition() - m_origin) * m_scale);
 
-    glm::mat4 view = glm::translate(p_view, p_cameraPos);
-    view = glm::translate(view, - (p_cameraPos - m_origin) * m_scale);
-    //glm::mat4 view = glm::scale(p_view, glm::vec3(1.01f, 1.01f, 1.01f));
+  unsigned int scaleorigin_location = m_renderShader.GetUniformLocation("scaleOrigin");
+  glUniform1f(scaleorigin_location, m_scale);
 
-    unsigned int scaleorigin_location = m_renderShader.GetUniformLocation("scaleOrigin");
-    glUniform1f(scaleorigin_location, m_scale);
+  unsigned int translateorigin_location = m_renderShader.GetUniformLocation("translateOrigin");
+  glUniform3fv(translateorigin_location, 1,  glm::value_ptr(m_origin));
 
-    unsigned int translateorigin_location = m_renderShader.GetUniformLocation("translateOrigin");
-    glUniform3fv(translateorigin_location, 1,  glm::value_ptr(m_origin));
-
-    SetupUniformAndTextures(m_renderShader, p_vpMat, *terrainMaterial,
-    view, p_projection, p_model, p_light, p_cameraPos);
-    rxLogInfo("Surface mode !");
-  }
-  else
-  {
-    m_origin = glm::vec3(0.0f, 0.0f, 0.0f);
-    m_scale = 1.0f;
-    unsigned int scaleorigin_location = m_renderShader.GetUniformLocation("scaleOrigin");
-    glUniform1f(scaleorigin_location, 1.0f);
-
-    unsigned int translateorigin_location = m_renderShader.GetUniformLocation("translateOrigin");
-    glUniform3fv(translateorigin_location, 1,  glm::value_ptr(m_origin));
-
-    SetupUniformAndTextures(m_renderShader, p_vpMat, *terrainMaterial,
-      p_view, p_projection, p_model, p_light, p_cameraPos);
-  }
+  SetupUniformAndTextures(m_renderShader, *terrainMaterial,
+  view, p_cam.GetProjectionMatrix(), p_model, p_light, p_cam.GetPosition());
+  rxLogInfo("Surface mode !");
 
   unsigned int near_location = m_renderShader.GetUniformLocation("near");
-  glUniform1f(near_location, m_near);
+  glUniform1f(near_location, p_cam.GetNear());
 
   unsigned int far_location = m_renderShader.GetUniformLocation("far");
-  glUniform1f(far_location, m_far);
-
-  glPatchParameteri(GL_PATCH_VERTICES, 4);
-  glBindVertexArray(m_vertexArrayId);
-  glDrawArrays(GL_PATCHES, 0, 4*m_leafCount);
-}
-
-int TerrainLOD::DrawWater(glm::mat4 const& p_vpMat, glm::mat4 const& p_view,
-    glm::mat4 const& p_projection, glm::mat4 const& p_model,
-    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos,
-    rx::OceanSurface const& p_surf, unsigned int p_waterSurfTex)
-{
-  glUseProgram(m_renderShader.GetProgram());
-  unsigned block_index = 0;
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 3);
-
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 4);
-
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 5);
-
-  unsigned int size_location = m_renderShader.GetUniformLocation("size");
-  glUniform1f(size_location, m_size);
-
-  SetupUniformAndTextures(m_renderShader, p_vpMat, *terrainMaterial,
-    p_view, p_projection, p_model, p_light, p_cameraPos);
+  glUniform1f(far_location, p_cam.GetFar());
 
   //Bind water heightmap to tex 0
   unsigned hLocation = m_renderShader.GetUniformLocation("toto");
@@ -391,7 +420,6 @@ void TerrainLOD::SetOuterTessellationLvl(std::vector<QuadTreeNode*>& p_leafs)
 
 void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs)
 {
-  rxLogDebug("Prepare buffer for "<< p_leafs.size()<< " leafs");
   float* dataQuad = new float[12*p_leafs.size()];
   float* dataSSBO = new float[4*p_leafs.size()];
   float* dataColorSSBO = new float[4*p_leafs.size()];
@@ -533,14 +561,28 @@ void TerrainLOD::CullLeaves(std::vector<QuadTreeNode*>& p_leafs, glm::vec3 const
   glm::vec3 viewVec = glm::normalize(p_cameraPosition);
   for(unsigned int i=0; i < p_leafs.size(); ++i)
   {
-    glm::vec3 centerReal = glm::normalize(p_leafs[i]->center) * m_size;
-    float distNode = glm::distance(centerReal, p_cameraPosition);
-    float cdotv = glm::dot(p_leafs[i]->center, viewVec);
-    if( cdotv > 0 && distNode < horizon)
+    float minDist = glm::distance(glm::normalize(p_leafs[i]->geometry[0]) * m_size, p_cameraPosition);
+    for(int j=1; j < 4; ++j)
+    {
+      float dist = glm::distance(glm::normalize(p_leafs[i]->geometry[j]) * m_size, p_cameraPosition);
+      if(dist < minDist)
+      {
+        minDist = dist;
+      }
+    }
+    float cdotv = glm::dot(glm::normalize(p_leafs[i]->center), viewVec);
+    if( cdotv > 0 && minDist < horizon)
     {
       notculled.push_back(p_leafs[i]);
     }
   }
+  RenderingDebugInfo* debugInfo = RenderingDebugInfo::Get();
+
+  debugInfo->m_surfaceDistance = surfaceDist;
+  debugInfo->m_horizonThreshold = horizon;
+  debugInfo->m_nbLeafTotal = p_leafs.size();
+  debugInfo->m_nbShowedLeaf = notculled.size();
+  debugInfo->m_nbCulledLeaf = p_leafs.size() - notculled.size();
   rxLogInfo("SurfaceDist " << surfaceDist << " threshold "<< horizon <<" "<<p_leafs.size() - notculled.size() << " culled");
   p_leafs = notculled;
 }
@@ -579,11 +621,6 @@ float TerrainLOD::ComputeDistanceToSurface(glm::vec3 const& p_position)
   return std::fabs(glm::length(p_position) - m_size);
 }
 
-bool TerrainLOD::isSurfaceMode(glm::vec3 const& p_position)
-{
-  return ComputeDistanceToSurface(p_position) < 0.01f;
-}
-
 glm::vec3 TerrainLOD::sphereProjectedPosition(glm::vec3 const& p_position)
 {
   return glm::normalize(p_position) * m_size;
@@ -601,28 +638,26 @@ void TerrainLOD::ComputeNearAndFar(glm::vec3 const& p_position, glm::vec3 const&
   {
     for(unsigned int j = 0; j < 4; ++j)
     {
-      glm::vec3 dirG = (p_leafs[i]->geometry[j] * m_size) - p_position;
-      float h = glm::length(dirG);
-      dirG = glm::normalize(dirG);
-      float cosA = glm::dot(p_direction, dirG);
-      if ( cosA < 0.707 ) continue;
-      float d = h * cosA;
+      glm::vec3 dirG = (glm::normalize(p_leafs[i]->geometry[j]) * m_size) - p_position;
+      float d = glm::length(dirG);;
       if( d < minDistance ) minDistance = d;
       if( d > maxDistance ) maxDistance = d;
     }
   }
 
-  m_near = std::max(minDistance, 0.000001f) * m_scale;
-  m_far = maxDistance * m_scale;
+  m_near = std::max(minDistance, 0.000001f);
+  m_far = maxDistance;
   rxLogInfo("Computed near and far " << m_near << " " << m_far << " in sight " << leafInSight );
+}
 
-  if(isSurfaceMode(p_position))
-  {
-    float distTerrain = ComputeDistanceToSurface(p_position);
-    m_near = 0.001;
-    m_far = sqrt((distTerrain + m_size ) * (distTerrain + m_size ) - m_size  * m_size );
-    m_far = 300.0f;
-  }
+void TerrainLOD::SetOrigin(glm::vec3 const& p_origin)
+{
+  m_origin = p_origin;
+}
+
+void TerrainLOD::SetScale(float p_scale)
+{
+  m_scale = p_scale;
 }
 
 QuadTreeNode::QuadTreeNode(unsigned p_level, glm::vec3 const& p_position)
@@ -639,10 +674,10 @@ QuadTreeNode::QuadTreeNode(unsigned p_level, glm::vec3 const& p_position)
 void QuadTreeNode::SetGeometry(glm::vec3 const& p_1, glm::vec3 const& p_2,
     glm::vec3 const& p_3, glm::vec3 const& p_4)
 {
-  geometry[0] = glm::normalize(p_1);
-  geometry[1] = glm::normalize(p_2);
-  geometry[2] = glm::normalize(p_3);
-  geometry[3] = glm::normalize(p_4);
+  geometry[0] = p_1;
+  geometry[1] = p_2;
+  geometry[2] = p_3;
+  geometry[3] = p_4;
 }
 
 void QuadTreeNode::Split()
