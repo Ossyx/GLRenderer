@@ -100,19 +100,17 @@ void SceneRenderer::PrepareTwoTrianglesBuffer()
 
 void SceneRenderer::AddModel()
 {
-  rx::ModelLoader loader;
-  loader.LoadOBJModel("/home/bertrand/Work/models/sponza", "sponza.obj", "sponza");
-  rx::Model* myModel = loader.FindModel("sponza");
+  auto myModel = rx::ModelLoader::LoadOBJModel("/home/bertrand/Work/models/sponza/sponza.obj", "sponza");
 
   for (unsigned int i = 0; i < myModel->GetMeshCount(); ++i)
   {
     DrawableItem* item = new DrawableItem();
-    rx::Mesh* meshPtr = myModel->GetMesh(i);
+    auto meshPtr = myModel->GetMesh(i);
     rx::Material* materialPtr = myModel->GetMaterialForMesh(i);
     assert(meshPtr != NULL && materialPtr != NULL);
 
     //find the shader for this mesh
-    GenerateGBufferShader(meshPtr, materialPtr);
+    GenerateGBufferShader(*meshPtr, materialPtr);
     UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
     if (itShaderId != m_shaderForMaterial.end())
     {
@@ -438,7 +436,7 @@ void SceneRenderer::UpdateCamera(float p_elapsedMs)
   m_mainCamera.MoveCamera(p_elapsedMs/1000.0f, 0.05);
 }
 
-void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_material)
+void SceneRenderer::GenerateGBufferShader(rx::Mesh const& p_mesh, rx::Material* p_material)
 {
   unsigned int gBufferFlags = 0;
 
@@ -480,7 +478,7 @@ void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_mate
   {
     gBufferFlags |= GBufferShaderFlag::displacementTexture;
   }
-  if (p_mesh->HasUVCoords())
+  if (p_mesh.HasUVCoords())
   {
     gBufferFlags |= GBufferShaderFlag::uvCoords;
   }

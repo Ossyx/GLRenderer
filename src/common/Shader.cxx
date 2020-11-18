@@ -151,6 +151,7 @@ bool Shader::LinkProgram()
     rxLogInfo("Found uniform "<< name <<" of type "<< type);
     m_uniforms[name] = type;
   }
+  return true;
 }
 
 unsigned int Shader::GetProgram() const

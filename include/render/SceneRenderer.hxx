@@ -65,7 +65,7 @@ private:
   //Disable copy
   SceneRenderer(SceneRenderer const& p_other);
 
-  void GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_material);
+  void GenerateGBufferShader(rx::Mesh const& p_mesh, rx::Material* p_material);
 
   std::string GeneratePreprocessorDefine(unsigned int p_gBufferFlags);
 

@@ -1,0 +1,31 @@
+{
+  "resources": [
+    {
+      "name" : "Fan",
+      "type" : "MODEL",
+      "path" : "/home/bertrand/Work/models/fan/untitled-scene.obj",
+      "id" : 0
+    },
+    {
+      "name" : "Stanford_bunny",
+      "type" : "MESH",
+      "path" : "/home/bertrand/Work/models/stanford_bunny/bunny.obj",
+      "id" : 1
+    },
+    {
+      "name" : "Sponza_lion_texture",
+      "type" : "TEXTURE",
+      "path" : "/home/bertrand/Work/models/sponza/textures/lion.png",
+      "id" : 2
+    },
+    {
+      "name" : "ShaderRender",
+      "type" : "SHADERSTACK",
+      "shader_source" : {
+        "vertex_shader" : "/home/bertrand/Work/GLRenderer/shaders/deferred/renderVS.shader",
+        "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/deferred/renderFS.shader"
+      },
+      "id" : 3
+    }
+  ]
+}
