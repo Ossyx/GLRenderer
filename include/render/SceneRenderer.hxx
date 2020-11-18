@@ -6,6 +6,11 @@
 #include "Shader.hxx"
 #include "Camera.hxx"
 #include "EventDispatcher.hxx"
+#include "TerrainLOD.hxx"
+#include "EventInterface.hxx"
+
+#include "OceanSurface.h"
+#include "TerrainGenGui.hxx"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -24,7 +29,7 @@ enum GBufferShaderFlag
     displacementTexture = 0x200
 };
 
-class SceneRenderer
+class SceneRenderer : public EventInterface
 {
 public:
 
@@ -34,11 +39,24 @@ public:
 
   void AddModel();
 
-  void RenderShadowMap(GLFWwindow* p_window);
+  void AddTerrain();
 
   void Render(GLFWwindow* p_window);
 
+  void RenderShadowMap(GLFWwindow* p_window);
+
+  void RenderObjects(GLFWwindow* p_window);
+
+  void RenderTerrain(GLFWwindow* p_window);
+
   void RenderGBufferDebug(GLFWwindow* p_window);
+
+  void UpdateCamera(float p_elapsedMs);
+
+  virtual void HandleKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+  virtual void HandleCursorEvent(double p_xpos, double p_ypos,
+    double p_deltaX, double p_deltaY);
 
   typedef std::map<std::string, unsigned int> UintMap;
 
@@ -47,7 +65,7 @@ private:
   //Disable copy
   SceneRenderer(SceneRenderer const& p_other);
 
-  void GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_material);
+  void GenerateGBufferShader(rx::Mesh const& p_mesh, rx::Material* p_material);
 
   std::string GeneratePreprocessorDefine(unsigned int p_gBufferFlags);
 
@@ -57,7 +75,11 @@ private:
 
   void PrepareShadowMapFrameBufferObject(int p_width, int p_height);
 
-  std::vector<DrawableItem> m_drawableItems;
+  void ComputeNearFarProjection();
+
+  TerrainGenGui m_terrainGUI;
+
+  std::vector<DrawableItem*> m_drawableItems;
 
   typedef std::map<unsigned int, Shader> GBufferShaderMap;
   GBufferShaderMap m_gbufferShaders;
@@ -71,6 +93,11 @@ private:
   Shader m_renderShader;
 
   Shader m_shadowMapShader;
+
+  TerrainLOD m_terrain;
+  TerrainLOD m_water;
+  rx::OceanSurface m_surf;
+  unsigned int m_watersurfTex;
 
   //For 2 triangles support render
   unsigned int m_vBufferId;
@@ -92,6 +119,8 @@ private:
   glm::mat4 m_invViewMatrix;
 
   glm::vec3 m_sunLightDirection;
+
+  RenderingDebugInfo* m_renderParam;
 };
 
 #endif

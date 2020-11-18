@@ -23,6 +23,10 @@ public:
 
   void SetFragmentShaderSrc(std::string const& p_file);
 
+  void SetTessControlSrc(std::string const& p_file);
+
+  void SetTessEvalSrc(std::string const& p_file);
+
   void SetPreprocessorConfig(std::string const& p_config);
 
   bool LinkProgram();
@@ -46,11 +50,19 @@ private:
 
   std::string m_fragmentShaderSrc;
 
+  std::string m_tessControlSrc;
+
+  std::string m_tessEvalSrc;
+
   std::string m_preprocessorConfig;
 
   unsigned int m_vertexShader;
 
   unsigned int m_fragmentShader;
+
+  unsigned int m_tessControlShader;
+
+  unsigned int m_tessEvalShader;
 
   unsigned int m_program;
 

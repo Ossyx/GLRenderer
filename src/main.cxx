@@ -36,6 +36,7 @@ int main()
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+  //glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE );
   GLFWwindow* window = glfwCreateWindow(1920, 1080, "SpaceWar2 !", NULL, NULL);
 
   if (window == NULL)
@@ -46,29 +47,18 @@ int main()
 
   glfwMakeContextCurrent(window);
   gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+  //Init ImGui
   EventDispatcher* dispatcher = EventDispatcher::Get();
   glfwSetKeyCallback(window, EventDispatcher::HandleKeyEvent);
   glfwSetCursorPosCallback(window, EventDispatcher::HandleCursorEvent);
 
   SceneRenderer renderer(window);
-  renderer.AddModel();
+  //renderer.AddModel();
+  renderer.AddTerrain();
+  renderer.Render(window);
 
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_DEPTH_TEST);
-
-  while (glfwWindowShouldClose(window) == false)
-  {
-    renderer.RenderShadowMap(window);
-    renderer.Render(window);
-    renderer.RenderGBufferDebug(window);
-  }
-
-  glfwDestroyWindow(window);
-  glfwTerminate();
   return 0;
 }
 

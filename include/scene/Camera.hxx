@@ -23,23 +23,49 @@ public:
   glm::vec3 GetPosition() const;
   float GetAzimuth() const;
   float GetElevation() const;
-  glm::mat4 ComputeViewMatrix() const;
+  glm::vec3 GetDirection() const;
 
+  glm::mat4 GetViewMatrix() const;
+
+  void SetProjectionMatrix(glm::mat4 const& p_mat);
+  glm::mat4 GetProjectionMatrix() const;
 
   void SmoothMovement(float p_deltaT);
+
+  void MoveCamera(float p_deltaT, float p_speed);
 
   virtual void HandleKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
 
   virtual void HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY);
 
+  void SetScaleFactor(float p_scale);
+
+  float GetNear() const;
+
+  float GetFar() const;
+
+  void SetNear(float p_near);
+
+  void SetFar(float p_far);
+
+  bool m_wireframe;
+
+  bool m_treeRecompute;
+
 
 private:
+
+  void ComputeViewMatrix();
 
   void ReadDirectionFromKeys();
 
   glm::vec3 m_position;
 
   glm::vec3 m_direction;
+
+  glm::mat4 m_viewMatrix;
+
+  glm::mat4 m_projectionMatrix;
 
   //Speed in unit/s
   float m_translationSpeed;
@@ -51,6 +77,14 @@ private:
   float m_elevation;
 
   int m_keyPressed;
+
+  float m_speedFactor;
+
+  float m_scaleFactor;
+
+  float m_near;
+
+  float m_far;
 };
 
 #endif

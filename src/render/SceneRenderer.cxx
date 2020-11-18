@@ -1,24 +1,51 @@
 #include "SceneRenderer.hxx"
+#include "Primitives.hxx"
+#include "TerrainGenGui.hxx"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <sstream>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/lexical_cast.hpp>
+
 SceneRenderer::SceneRenderer(GLFWwindow* p_window):
-m_mainCamera()
+m_mainCamera(),
+m_terrainGUI(p_window)
 {
   EventDispatcher* dispatcher = EventDispatcher::Get();
   dispatcher->AddEventListener("MainCamera", &m_mainCamera);
+  dispatcher->AddEventListener("SceneRenderer", this);
 
-  m_renderShader.SetVertexShaderSrc("renderVS.shader");
-  m_renderShader.SetFragmentShaderSrc("renderFS.shader");
+  m_renderShader.SetVertexShaderSrc("shaders/deferred/renderVS.shader");
+  m_renderShader.SetFragmentShaderSrc("shaders/deferred/renderFS.shader");
   m_renderShader.LinkProgram();
   PrepareTwoTrianglesBuffer();
 
-  m_shadowMapShader.SetVertexShaderSrc("shadowMapVS.shader");
-  m_shadowMapShader.SetFragmentShaderSrc("shadowMapFS.shader");
+  m_shadowMapShader.SetVertexShaderSrc("shaders/shadow/shadowMapVS.shader");
+  m_shadowMapShader.SetFragmentShaderSrc("shaders/shadow/shadowMapFS.shader");
   m_shadowMapShader.LinkProgram();
+
+  Shader terrainRendering;
+  terrainRendering.SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
+  terrainRendering.SetFragmentShaderSrc("shaders/terrain/renderTerrainFS.shader");
+  terrainRendering.SetTessControlSrc("shaders/terrain/terrainTC.shader");
+  terrainRendering.SetTessEvalSrc("shaders/terrain/terrainTE.shader");
+  terrainRendering.LinkProgram();
+  m_terrain.SetShader(terrainRendering);
+  m_terrain.SetSize(6.4f);
+
+  Shader waterRendering;
+  waterRendering.SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
+  waterRendering.SetFragmentShaderSrc("shaders/water/renderWaterFS.shader");
+  waterRendering.SetTessControlSrc("shaders/terrain/terrainTC.shader");
+  waterRendering.SetTessEvalSrc("shaders/water/waterTE.shader");
+  waterRendering.LinkProgram();
+  m_water.SetShader(waterRendering);
+  m_water.SetSize(6.401f);
+  m_surf.PrecomputeFields();
 
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
@@ -26,11 +53,17 @@ m_mainCamera()
   PrepareGBufferFrameBufferObject(width, height);
   PrepareShadowMapFrameBufferObject(width, height);
 
-  m_sunLightDirection = glm::normalize(glm::vec3(1.0, 10.0, 1.0));
+  m_sunLightDirection = glm::normalize(glm::vec3(10.0, 3.0, 10.0));
+
+  m_renderParam = RenderingDebugInfo::Get();
 }
 
 SceneRenderer::~SceneRenderer()
 {
+  for(unsigned i; i < m_drawableItems.size(); ++i)
+  {
+    delete m_drawableItems[i];
+  }
 }
 
 void SceneRenderer::PrepareTwoTrianglesBuffer()
@@ -67,25 +100,23 @@ void SceneRenderer::PrepareTwoTrianglesBuffer()
 
 void SceneRenderer::AddModel()
 {
-  rx::ModelLoader loader;
-  loader.LoadOBJModel("/home/bertrand/Work/models/sponza", "sponza.obj", "sponza");
-  rx::Model* myModel = loader.FindModel("sponza");
+  auto myModel = rx::ModelLoader::LoadOBJModel("/home/bertrand/Work/models/sponza/sponza.obj", "sponza");
 
   for (unsigned int i = 0; i < myModel->GetMeshCount(); ++i)
   {
-    DrawableItem item;
-    rx::Mesh* meshPtr = myModel->GetMesh(i);
+    DrawableItem* item = new DrawableItem();
+    auto meshPtr = myModel->GetMesh(i);
     rx::Material* materialPtr = myModel->GetMaterialForMesh(i);
     assert(meshPtr != NULL && materialPtr != NULL);
 
     //find the shader for this mesh
-    GenerateGBufferShader(meshPtr, materialPtr);
+    GenerateGBufferShader(*meshPtr, materialPtr);
     UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
     if (itShaderId != m_shaderForMaterial.end())
     {
       GBufferShaderMap::iterator itShader = m_gbufferShaders.find(itShaderId->second);
       assert(itShader != m_gbufferShaders.end());
-      item.PrepareBuffer(*meshPtr, *materialPtr, itShader->second);
+      item->PrepareBuffer(*meshPtr, *materialPtr, itShader->second);
       m_drawableItems.push_back(item);
       m_materialPtrs.push_back(materialPtr);
     }
@@ -98,27 +129,86 @@ void SceneRenderer::AddModel()
   }
 }
 
+void SceneRenderer::AddTerrain()
+{
+  m_terrain.PrepareBufferQuad(m_mainCamera);
+  m_water.PrepareBufferQuad(m_mainCamera);
+
+  //Build texture for water surface
+  glGenTextures(1, &m_watersurfTex);
+  glBindTexture(GL_TEXTURE_2D, m_watersurfTex);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  float dummy[128*128];
+  for(int i=0; i < 128*128; ++i) dummy[i] = 0.5;
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 128, 128, 0, GL_RED, GL_FLOAT, &dummy);
+  glGenerateMipmap(GL_TEXTURE_2D);
+}
+
 void SceneRenderer::Render(GLFWwindow* p_window)
 {
-  auto theTime = std::chrono::steady_clock::now();
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_DEPTH_TEST);
+
+  auto frameTimer = std::chrono::steady_clock::now();
+  while (glfwWindowShouldClose(p_window) == false)
+  {
+    auto newTime = std::chrono::steady_clock::now();
+    float millis = std::chrono::duration_cast<std::chrono::milliseconds>(newTime - frameTimer).count();
+    m_renderParam->m_fps = 1000.0f / millis;
+
+    m_terrainGUI.InitGuiFrame();
+
+    UpdateCamera(millis);
+    //renderer.RenderShadowMap(window);
+    //renderer.Render(window);
+    RenderTerrain(p_window);
+    RenderGBufferDebug(p_window);
+    m_terrainGUI.RenderGui();
+
+    glfwSwapBuffers(p_window);
+    glfwPollEvents();
+
+    frameTimer = newTime;
+  }
+
+  glfwDestroyWindow(p_window);
+  glfwTerminate();
+}
+
+void SceneRenderer::RenderObjects(GLFWwindow* p_window)
+{
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
   glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-    (float)width / (float)height, 0.5f, 3000.f);
+    (float)width / (float)height, 0.001f, 1000.f);
 
-  float time = glfwGetTime();
+  //float time = glfwGetTime();
   glm::mat4 identity = glm::mat4(1.0f);
   glm::mat4 view = identity;
 
   view = glm::rotate(view, m_mainCamera.GetElevation(), glm::vec3(1.0f, 0.0f, 0.0f));
   view = glm::rotate(view, m_mainCamera.GetAzimuth(), glm::vec3(0.0f, 1.0f, 0.0f));
   view = glm::translate(view, m_mainCamera.GetPosition());
-  glm::mat4 VP = projection * view;
 
   m_invProjMatrix = glm::inverse(projection);
   m_invViewMatrix = glm::inverse(view);
 
   glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
+  glDepthFunc(GL_LEQUAL);
+  glDepthRange(0.0f, 1.0f);
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
   glBindFramebuffer(GL_FRAMEBUFFER, m_gbufferFBO);
   GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
   glDrawBuffers(3, buffers);
@@ -130,7 +220,7 @@ void SceneRenderer::Render(GLFWwindow* p_window)
 
   glm::mat4 model = identity;
   model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
-  model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+  model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
 
   for (unsigned int i = 0; i < m_drawableItems.size(); ++i)
   {
@@ -140,20 +230,95 @@ void SceneRenderer::Render(GLFWwindow* p_window)
     {
       Shader const& shader = m_gbufferShaders[itShaderId->second];
       glUseProgram(shader.GetProgram());
-      m_drawableItems[i].SetTransform(model);
-      m_drawableItems[i].Draw(shader, VP, *materialPtr, view, projection,
+      m_drawableItems[i]->SetTransform(model);
+      m_drawableItems[i]->Draw(shader, *materialPtr, view, projection,
         model, m_sunLightDirection, m_mainCamera.GetPosition());
     }
 
   }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  //Calc elapsed time
-  auto newTime = std::chrono::steady_clock::now();
-  float millis = std::chrono::duration_cast<std::chrono::milliseconds>(newTime - theTime).count();
-  theTime = newTime;
-  m_mainCamera.SmoothMovement(1.0f/1000.0f);
   glfwPollEvents();
+}
+
+void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
+{
+  if(m_mainCamera.m_wireframe)
+  {
+    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+  }
+
+  bool surfaceMode = m_terrain.ComputeDistanceToSurface(m_mainCamera.GetPosition()) < 0.01f;
+  float scale = 1.0f;
+  glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
+  if(surfaceMode)
+  {
+    scale = 1000.0f;
+    origin = m_terrain.sphereProjectedPosition(m_mainCamera.GetPosition());
+  }
+  m_terrain.SetScale(scale);
+  m_terrain.SetOrigin(origin);
+  m_water.SetScale(scale);
+  m_water.SetOrigin(origin);
+
+  m_surf.ComputeHeightmap(glfwGetTime());
+  ComputeNearFarProjection();
+
+  m_mainCamera.SetNear(m_mainCamera.GetNear() * scale);
+  m_mainCamera.SetFar(m_mainCamera.GetFar() * scale);
+  m_renderParam->m_near = m_mainCamera.GetNear();
+  m_renderParam->m_far = m_mainCamera.GetFar();
+
+  int width, height;
+  glfwGetFramebufferSize(p_window, &width, &height);
+  glm::mat4 projection = glm::perspective(glm::radians(45.0f),
+    (float)width / (float)height, m_mainCamera.GetNear(), m_mainCamera.GetFar());
+
+  m_mainCamera.SetProjectionMatrix(projection);
+
+  glm::mat4 view = m_mainCamera.GetViewMatrix();
+  m_invProjMatrix = glm::inverse(projection);
+  m_invViewMatrix = glm::inverse(view);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
+  glDepthFunc(GL_LEQUAL);
+  glDepthRange(0.0f, 1.0f);
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_gbufferFBO);
+  GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+  glDrawBuffers(3, buffers);
+
+  glViewport(0, 0, width, height);
+  glClearColor(0.25, 0.5, 1.0, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glm::mat4 model = glm::mat4(1.0f);
+
+  if( m_mainCamera.m_treeRecompute )
+  {
+    m_terrain.RecomputeTree(m_mainCamera.GetPosition());
+    m_water.RecomputeTree(m_mainCamera.GetPosition());
+  }
+  m_terrain.PrepareBufferQuad(m_mainCamera);
+  m_terrain.DrawTerrain(m_mainCamera, model, m_sunLightDirection);
+
+  if( m_renderParam->m_renderWater )
+  {
+    m_water.PrepareBufferQuad(m_mainCamera);
+    m_water.DrawWater(m_mainCamera, model, m_sunLightDirection, m_surf, m_watersurfTex);
+  }
+
+  rxLogInfo(m_mainCamera.GetPosition().x<<" "<<m_mainCamera.GetPosition().y<<" "<<m_mainCamera.GetPosition().z);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glfwPollEvents();
+
+  glPolygonMode( GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void SceneRenderer::RenderShadowMap(GLFWwindow* p_window)
@@ -167,15 +332,16 @@ void SceneRenderer::RenderShadowMap(GLFWwindow* p_window)
 
   glm::mat4 identity = glm::mat4(1.0f);
   float time = glfwGetTime();
-  auto rotYMat = glm::rotate(identity, time/10000.0f, glm::vec3(0.3, 0.0, 1.0));
-  m_sunLightDirection = glm::vec3(rotYMat * glm::vec4(m_sunLightDirection, 1.0f));
+  auto rotYMat = glm::rotate(identity, time/50000.0f, glm::vec3(0.0, 1.0, 0.0));
+  //m_sunLightDirection = glm::vec3(rotYMat * glm::vec4(m_sunLightDirection, 1.0f));
   m_sunLightDirection = glm::normalize(m_sunLightDirection);
   glm::mat4 view = glm::lookAt(m_sunLightDirection * 100.0f,
     glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
   m_shadowMapMatrix = projection * view;
 
   glEnable(GL_DEPTH_TEST);
-  //glCullFace(GL_BACK);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
   glBindFramebuffer(GL_FRAMEBUFFER, m_shadowMapFBO);
   GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
   glDrawBuffers(1, buffers);
@@ -186,16 +352,15 @@ void SceneRenderer::RenderShadowMap(GLFWwindow* p_window)
 
   glm::mat4 model = identity;
   model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f));
-  model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+  model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
 
   for (unsigned int i = 0; i < m_drawableItems.size(); ++i)
   {
       glUseProgram(m_shadowMapShader.GetProgram());
-      m_drawableItems[i].SetTransform(model);
-      m_drawableItems[i].DrawSimple(m_shadowMapShader, m_shadowMapMatrix, view, projection, model);
+      m_drawableItems[i]->SetTransform(model);
+      m_drawableItems[i]->DrawSimple(m_shadowMapShader, m_shadowMapMatrix, view, projection, model);
   }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  //glCullFace(GL_BACK);
   glfwPollEvents();
 
 }
@@ -205,6 +370,8 @@ void SceneRenderer::RenderGBufferDebug(GLFWwindow* p_window)
   int width, height;
   glfwGetFramebufferSize(p_window, &width, &height);
   glDisable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
   glUseProgram(m_renderShader.GetProgram());
   glViewport(0, 0, width, height);
 
@@ -259,13 +426,17 @@ void SceneRenderer::RenderGBufferDebug(GLFWwindow* p_window)
   glBindVertexArray(m_renderVertexArray);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_iBufferId);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-  glfwSwapBuffers(p_window);
-  glfwPollEvents();
-
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_material)
+void SceneRenderer::UpdateCamera(float p_elapsedMs)
+{
+  //Calc elapsed time
+  //m_mainCamera.SmoothMovement(1.0f/1000.0f);
+  m_mainCamera.MoveCamera(p_elapsedMs/1000.0f, 0.05);
+}
+
+void SceneRenderer::GenerateGBufferShader(rx::Mesh const& p_mesh, rx::Material* p_material)
 {
   unsigned int gBufferFlags = 0;
 
@@ -307,7 +478,7 @@ void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_mate
   {
     gBufferFlags |= GBufferShaderFlag::displacementTexture;
   }
-  if (p_mesh->HasUVCoords())
+  if (p_mesh.HasUVCoords())
   {
     gBufferFlags |= GBufferShaderFlag::uvCoords;
   }
@@ -317,10 +488,11 @@ void SceneRenderer::GenerateGBufferShader(rx::Mesh* p_mesh, rx::Material* p_mate
   //Do not generate a new shader for a configuration that already exists
   if (itShader == m_gbufferShaders.end())
   {
+    rxLogInfo("Creating shader for material : "<< p_material->GetName());
     Shader& shaderGBuffer = m_gbufferShaders[gBufferFlags];
     shaderGBuffer.SetName("GBufferGenerationShader");
-    shaderGBuffer.SetVertexShaderSrc("gbufferVS.shader");
-    shaderGBuffer.SetFragmentShaderSrc("gbufferFS.shader");
+    shaderGBuffer.SetVertexShaderSrc("shaders/deferred/gbufferVS.shader");
+    shaderGBuffer.SetFragmentShaderSrc("shaders/deferred/gbufferFS.shader");
     shaderGBuffer.SetPreprocessorConfig(preprocSrc);
     shaderGBuffer.LinkProgram();
   }
@@ -458,4 +630,39 @@ void SceneRenderer::PrepareShadowMapFrameBufferObject(int p_width, int p_height)
   }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void SceneRenderer::ComputeNearFarProjection()
+{
+  if( m_renderParam->m_renderWater )
+  {
+    m_mainCamera.SetNear(std::min(m_terrain.GetNear(), m_water.GetNear()));
+    m_mainCamera.SetFar(std::min(m_terrain.GetFar(), m_water.GetFar()));
+  }
+  else
+  {
+    m_mainCamera.SetNear(m_terrain.GetNear());
+    m_mainCamera.SetFar(m_terrain.GetFar());
+  }
+}
+
+void SceneRenderer::HandleKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+  if(action == GLFW_PRESS && key == GLFW_KEY_P)
+  {
+    EventDispatcher* dispatcher = EventDispatcher::Get();
+    if(m_terrainGUI.showParameters == false)
+    {
+      dispatcher->RemoveEventListener("MainCamera");
+    }
+    else
+    {
+      dispatcher->AddEventListener("MainCamera", &m_mainCamera);
+    }
+    m_terrainGUI.showParameters = !m_terrainGUI.showParameters;
+  }
+}
+
+void SceneRenderer::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY)
+{
 }

@@ -21,8 +21,8 @@ public:
 
   void SetTransform(glm::mat4 const& p_transform);
 
-  int Draw(Shader const& p_shader, glm::mat4 const& p_vpMat,
-    rx::Material const& p_material, glm::mat4 const& p_view,
+  virtual int Draw(Shader const& p_shader,
+    rx::Material& p_material, glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
 
@@ -30,8 +30,16 @@ public:
     glm::mat4 const& p_view, glm::mat4 const& p_projection,
      glm::mat4 const& p_model);
 
+protected:
 
-private:
+  void SetupUniformAndTextures(Shader const& p_shader,
+    rx::Material& p_material, glm::mat4 const& p_view,
+    glm::mat4 const& p_projection, glm::mat4 const& p_model,
+    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
+
+  void DrawElements();
+
+  void DrawElementsInstanced(unsigned p_count);
 
   //Transformation matrix
   glm::mat4 m_transform;

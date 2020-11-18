@@ -64,9 +64,9 @@ void main()
 #endif
 
 #ifdef ALBEDO_TEXTURE
-  vec3 albedo = texture2D(map_diffuse, iuvcoords).xyz;
+  vec4 albedo = texture2D(map_diffuse, iuvcoords);
 #elif defined ALBEDO_COLOR
-  vec3 albedo = diffuse_color;
+  vec4 albedo = vec4(diffuse_color, 1.0);
 #endif
 
 #ifdef SPECULAR_TEXTURE
@@ -87,7 +87,7 @@ void main()
   float roughness = 1.0;
 #endif
 
-  outAlbedo = vec4(albedo, 1.0);
+  outAlbedo = albedo;
   outNormal = vec4(packNormal(finalNormal), 1.0);
   outSpecular = vec4(specCoeff, ao, roughness, 1.0);
   outDepth = gl_FragCoord.z;
