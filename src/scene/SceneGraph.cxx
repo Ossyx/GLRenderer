@@ -2,6 +2,9 @@
 #include "math.h"
 #include "MathTools.hxx"
 
+namespace rx
+{
+
 SgNode::SgNode():
 mId(0),
 mType(NodeType::Unknown)
@@ -133,12 +136,12 @@ ObjectNode::~ObjectNode()
 {
 }
 
-std::shared_ptr<rx::Model> ObjectNode::ModelRef()
+ModelPtr ObjectNode::ModelRef()
 {
   return mModelRef;
 }
 
-void ObjectNode::SetModelRef(std::shared_ptr<rx::Model> pModelRef)
+void ObjectNode::SetModelRef(ModelPtr pModelRef)
 {
   mModelRef = pModelRef;
 }
@@ -164,6 +167,19 @@ SceneGraph::NodePtr SceneGraph::GetRoot()
 SceneGraph::NodeHashMap& SceneGraph::GetNodes()
 {
   return mNodes;
+}
+
+void SceneGraph::AssociateResources(const ResourcesHolder& pHolder)
+{
+  auto itNode = mNodes.begin();
+  for(; itNode != mNodes.end(); ++itNode)
+  {
+    NodePtr node = (*itNode).second;
+    if( node->Type().get() == NodeType::Object )
+    {
+      ObjectNodePtr objetNode = std::static_pointer_cast<ObjectNode>(node);
+    }
+  }
 }
 
 NodeType::NodeType():
@@ -225,6 +241,8 @@ std::string NodeType::ToString() const
 NodeType::NType NodeType::get() const
 {
   return mType;
+}
+
 }
 
 

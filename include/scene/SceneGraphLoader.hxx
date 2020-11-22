@@ -8,6 +8,9 @@
 
 #include "SceneGraph.hxx"
 
+namespace rx
+{
+  
 class SceneGraphLoader
 {
 public:
@@ -45,4 +48,6 @@ private:
   
   std::vector<unsigned int> ReadAsUIntArray(Json::Value& pData);
 };
+
+}
 #endif

@@ -1,6 +1,9 @@
 #include "ResourceDescription.hxx"
 #include <sstream>
 
+namespace rx
+{
+  
 ResourceDescription::ResourceDescription():
 mType(ResourceType::Unknown),
 mData(Json::Value())
@@ -77,6 +80,10 @@ ResourceType ResourceType::FromString(const std::string& ptype)
   {
     return ResourceType(ResourceType::ShaderStack);
   }
+  else if ( ptype == "MATERIAL" )
+  {
+    return ResourceType(ResourceType::Material);
+  }
   else
   {
     return ResourceType(ResourceType::Unknown);
@@ -95,6 +102,8 @@ std::string ResourceType::ToString() const
       return "TEXTURE";
     case ResourceType::ShaderStack:
       return "SHADERSTACK";
+    case ResourceType::Material:
+      return "MATERIAL";
     case ResourceType::Unknown:
       return "UNKNOWN";
     default:
@@ -105,4 +114,6 @@ std::string ResourceType::ToString() const
 ResourceType::RType ResourceType::get() const
 {
   return mType;
+}
+
 }

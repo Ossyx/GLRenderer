@@ -2,6 +2,9 @@
 #include <fstream>
 #include <glm/gtc/type_ptr.hpp>
 
+namespace rx
+{
+
 SceneGraphLoader::SceneGraphLoader()
 {
 }
@@ -290,6 +293,8 @@ Json::Value SceneGraphLoader::Serialize(const std::vector<int>& pData)
     vec.append(pData[i]);
   }
   return vec;
+}
+
 }
 
 

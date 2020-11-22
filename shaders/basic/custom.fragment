@@ -1,0 +1,16 @@
+in vec3 inormal;
+in vec3 itangent;
+in vec3 ibitangent;
+in vec2 iuvcoords;
+in vec3 ipos;
+
+uniform sampler2D map_diffuse;
+
+void main()
+{
+  mat3 tbnMat = mat3(itangent, ibitangent, inormal);
+  vec3 finalNormal = inormal;
+  vec4 albedo = texture2D(map_diffuse, iuvcoords);
+
+  gl_FragColor = albedo;
+}

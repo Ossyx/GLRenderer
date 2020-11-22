@@ -2,9 +2,14 @@
 #define SCENEGRAPH_HXX
 
 #include "Model.hxx"
+#include "ResourcesHolder.hxx"
+
 #include <glm/gtc/type_ptr.hpp>
 #include <list>
 
+namespace rx
+{
+  
 class NodeType
 {
 public:
@@ -85,7 +90,6 @@ private:
 class ObjectNode : public SgNode
 {
 public:
-  using ModelPtr = std::shared_ptr<rx::Model>;
   ObjectNode();
   ObjectNode(ModelPtr pModelRef);
   ~ObjectNode();
@@ -117,9 +121,15 @@ public:
   
   NodeHashMap& GetNodes();
   
+  void AssociateResources(ResourcesHolder const& pHolder);
+  
 private:
     
   NodeHashMap mNodes;
   NodePtr mRoot;
 };
+
+using SceneGraphPtr = std::shared_ptr<SceneGraph>;
+
+}
 #endif

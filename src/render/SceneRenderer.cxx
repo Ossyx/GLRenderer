@@ -60,7 +60,7 @@ m_terrainGUI(p_window)
 
 SceneRenderer::~SceneRenderer()
 {
-  for(unsigned i; i < m_drawableItems.size(); ++i)
+  for(unsigned i = 0; i < m_drawableItems.size(); ++i)
   {
     delete m_drawableItems[i];
   }
@@ -106,7 +106,7 @@ void SceneRenderer::AddModel()
   {
     DrawableItem* item = new DrawableItem();
     auto meshPtr = myModel->GetMesh(i);
-    rx::Material* materialPtr = myModel->GetMaterialForMesh(i);
+    rx::MaterialPtr materialPtr = myModel->GetMaterialForMesh(i);
     assert(meshPtr != NULL && materialPtr != NULL);
 
     //find the shader for this mesh
@@ -224,7 +224,7 @@ void SceneRenderer::RenderObjects(GLFWwindow* p_window)
 
   for (unsigned int i = 0; i < m_drawableItems.size(); ++i)
   {
-    rx::Material* materialPtr = m_materialPtrs[i];
+    rx::MaterialPtr materialPtr = m_materialPtrs[i];
     UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
     if (itShaderId != m_shaderForMaterial.end())
     {
@@ -436,7 +436,7 @@ void SceneRenderer::UpdateCamera(float p_elapsedMs)
   m_mainCamera.MoveCamera(p_elapsedMs/1000.0f, 0.05);
 }
 
-void SceneRenderer::GenerateGBufferShader(rx::Mesh const& p_mesh, rx::Material* p_material)
+void SceneRenderer::GenerateGBufferShader(rx::Mesh const& p_mesh, rx::MaterialPtr p_material)
 {
   unsigned int gBufferFlags = 0;
 

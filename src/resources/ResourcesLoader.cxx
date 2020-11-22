@@ -2,6 +2,9 @@
 #include <fstream>
 #include <filesystem>
 
+namespace rx
+{
+  
 ResourcesLoader::ResourcesLoader()
 {
 }
@@ -45,7 +48,7 @@ void ResourcesLoader::LoadDescription(Json::Value& pJsonDescription, ResourcesHo
     std::string type = resource["type"].asString();
     
     ResourceDescription res(ResourceType(type), resource);
-    pHolder.AddResource(res, resource["id"].asInt());
+    pHolder.AddResource(res, resource["id"].asString());
   }  
 }
 
@@ -70,6 +73,9 @@ void ResourcesLoader::LoadResources(ResourcesHolder& pHolder)
       case ResourceType::ShaderStack:
         LoadShaderStack(res, pHolder);
         break;
+      case ResourceType::Material:
+        LoadMaterial(res, pHolder);
+        break;
       case ResourceType::Unknown:
         rxLogWarning("Try to load Unknown resource type, skipping");
         break;
@@ -79,10 +85,9 @@ void ResourcesLoader::LoadResources(ResourcesHolder& pHolder)
 
 void ResourcesLoader::LoadModel(ResourceDescription const& pDesc, ResourcesHolder& pHolder)
 {
-  auto model = std::make_shared<rx::Model>();
-  model = rx::ModelLoader::LoadOBJModel(pDesc.mData["path"].asString(),
+  auto model = rx::ModelLoader::LoadOBJModel(pDesc.mData["path"].asString(),
                                         pDesc.mData["name"].asString());
-  pHolder.RegisterModel(model, pDesc.mData["id"].asInt());
+  pHolder.RegisterModel(model, pDesc.mData["id"].asString());
 }
 
 void ResourcesLoader::LoadTexture(ResourceDescription const& pDesc, ResourcesHolder& pHolder)
@@ -112,8 +117,21 @@ void ResourcesLoader::LoadShaderStack(const ResourceDescription& pDesc, Resource
     shader->SetTessEvalSrc(shaderSources["tesselationevaluation_shader"].asString());
   }
   //Do I link here ?
-  //shader->LinkProgram();  
+  //shader->LinkProgram();
+  pHolder.RegisterShader(shader, pDesc.mData["id"].asString());
 }
+
+void ResourcesLoader::LoadMaterial(const ResourceDescription& pDesc, ResourcesHolder& pHolder)
+{
+  auto materials = rx::ModelLoader::LoadMaterialCollection(pDesc.mData["material_file"].asString());
+  for(rx::MaterialPtr mat: materials)
+  {
+    pHolder.RegisterMaterial(mat, mat->GetName());
+  }
+}
+
+}
+
 
 
 

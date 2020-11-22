@@ -26,6 +26,12 @@
         "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/deferred/renderFS.shader"
       },
       "id" : 3
+    },
+    {
+      "name" : "SponzaMaterials",
+      "type" : "MATERIAL",
+      "material_file" : "/home/bertrand/Work/models/sponza/sponza.json",
+      "id" : 4
     }
   ]
 }

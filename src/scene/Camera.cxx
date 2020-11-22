@@ -5,7 +5,7 @@
 #include <math.h>
 
 Camera::Camera():
-m_position(glm::vec3(0.0f, 12.8f, 0.0f)),
+m_position(glm::vec3(10.0f, 0.0f, 0.0f)),
 m_direction(glm::vec3(0.0f, 0.0f, 0.0f)),
 m_translationSpeed(0.0f),
 m_translationAcceleration(0.0f),
@@ -16,8 +16,7 @@ m_speedFactor(1.0),
 m_scaleFactor(1.0)
 {
   m_wireframe = false;
-
-  m_treeRecompute = true;;
+  m_treeRecompute = true;
 }
 
 Camera::~Camera()

@@ -14,7 +14,7 @@ public:
 
   DrawableItem();
 
-  ~DrawableItem();
+  virtual ~DrawableItem();
 
   int PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_material,
     Shader const& p_shader);
@@ -67,5 +67,7 @@ protected:
 
   unsigned int m_textureId;
 };
+
+using DrawableItemPtr = std::shared_ptr<DrawableItem>;
 
 #endif
