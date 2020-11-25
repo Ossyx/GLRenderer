@@ -14,7 +14,8 @@ m_verterShaderSrc(""),
 m_fragmentShaderSrc(""),
 m_program(-1),
 m_name(""),
-m_preprocessorConfig("")
+m_preprocessorConfig(""),
+m_linked(false)
 {
 }
 
@@ -25,7 +26,8 @@ m_verterShaderSrc(""),
 m_fragmentShaderSrc(""),
 m_program(-1),
 m_name(p_name),
-m_preprocessorConfig("")
+m_preprocessorConfig(""),
+m_linked(false)
 {
 }
 
@@ -86,7 +88,7 @@ unsigned int Shader::CompileShader(unsigned int p_shaderType, std::string const&
     glGetShaderInfoLog(shaderId, InfoLogLength, &InfoLogLength, rawLog);
     rxLogError(rawLog);
     delete [] rawLog;
-    return -1;
+    assert(false);
   }
   return shaderId;
 }
@@ -134,11 +136,25 @@ bool Shader::LinkProgram()
   }
   glAttachShader(m_program, m_fragmentShader);
   glLinkProgram(m_program);
+  
+  GLint isLinked = GL_FALSE;  
+  glGetProgramiv(m_program, GL_LINK_STATUS, &isLinked);  
+  if( isLinked == 0 )
+  {
+    rxLogError("Program for shader " << m_name << " did not linked.");
+    int InfoLogLength;
+    glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    char* rawLog = new char[InfoLogLength+1];
+    glGetProgramInfoLog(m_program, InfoLogLength, &InfoLogLength, rawLog);
+    rxLogError(rawLog);
+    assert(false);
+  }
 
   //Then retrieve the uniforms
   int activeUniforms = 0;
   glGetProgramInterfaceiv(m_program, GL_UNIFORM, GL_ACTIVE_RESOURCES, &activeUniforms);
 
+  rxLogInfo("Uniform list for shader "<< m_name);
   std::vector<GLchar> nameData(256);
   for (int uniformIdx = 0; uniformIdx < activeUniforms; ++uniformIdx)
   {
@@ -151,7 +167,13 @@ bool Shader::LinkProgram()
     rxLogInfo("Found uniform "<< name <<" of type "<< type);
     m_uniforms[name] = type;
   }
+  m_linked = true;
   return true;
+}
+
+std::string Shader::GetName() const
+{
+  return m_name;
 }
 
 unsigned int Shader::GetProgram() const
@@ -177,4 +199,9 @@ Shader::UniformMap const& Shader::GetUniformMap() const
 void Shader::SetPreprocessorConfig(std::string const& p_config)
 {
   m_preprocessorConfig = p_config;
+}
+
+bool Shader::GetLinked()
+{
+  return m_linked;
 }

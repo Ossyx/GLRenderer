@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <memory>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -30,6 +31,8 @@ public:
   void SetPreprocessorConfig(std::string const& p_config);
 
   bool LinkProgram();
+  
+  std::string GetName() const;
 
   unsigned int GetProgram() const;
 
@@ -39,6 +42,8 @@ public:
 
   typedef std::unordered_map<std::string, GLenum> UniformMap;
   UniformMap const& GetUniformMap() const;
+  
+  bool GetLinked();
 
 private:
 
@@ -55,6 +60,8 @@ private:
   std::string m_tessEvalSrc;
 
   std::string m_preprocessorConfig;
+  
+  bool m_linked;
 
   unsigned int m_vertexShader;
 
@@ -68,5 +75,7 @@ private:
 
   UniformMap m_uniforms;
 };
+
+using ShaderPtr = std::shared_ptr<Shader>;
 
 #endif
