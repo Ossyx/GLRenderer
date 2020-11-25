@@ -16,6 +16,12 @@
       "id" : "fan_custom_shader"
     },
     {
+      "name" : "cubemap_c1",
+      "type" : "MATERIAL",
+      "material_file" : "/home/bertrand/Work/models/cubemap/c1/material.json",
+      "id" : "cubemap_c1"
+    },
+    {
       "name" : "cubemap_shader",
       "type" : "SHADERSTACK",
       "shader_source" : {

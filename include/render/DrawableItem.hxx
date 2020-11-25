@@ -4,6 +4,7 @@
 #include "Mesh.hxx"
 #include "Material.hxx"
 #include "Shader.hxx"
+#include "GLAbstraction.hxx"
 
 #include <unordered_map>
 #include <glm/mat4x4.hpp> // glm::mat4
@@ -31,6 +32,11 @@ public:
      glm::mat4 const& p_model);
 
 protected:
+  
+  virtual void PrepareBufferFromMesh(rx::Mesh const& p_mesh, Shader const& p_shader);
+  
+  virtual void PrepareTextureFromMaterial(rx::Material const& p_material,
+  Shader const& p_shader);
 
   void SetupUniformAndTextures(Shader const& p_shader,
     rx::Material& p_material, glm::mat4 const& p_view,
@@ -44,19 +50,19 @@ protected:
   //Transformation matrix
   glm::mat4 m_transform;
 
-  unsigned int m_vertexBufferId;
+  ArrayBuffer mVertex;
 
-  unsigned int m_indexBufferId;
+  ArrayBuffer mIndex;
 
-  unsigned int m_vertexArrayId;
+  VertexArray mVertexArray;
 
-  unsigned int m_normalBufferId;
+  ArrayBuffer mNormal;
 
-  unsigned int m_tangentBufferId;
+  ArrayBuffer mTangent;
 
-  unsigned int m_bitangentBufferId;
+  ArrayBuffer mBitangent;
 
-  unsigned int m_uvBufferId;
+  ArrayBuffer mUV;
 
   unsigned int m_elementCount;
 
@@ -64,8 +70,6 @@ protected:
   IntIntMap m_textureIdsLocation;
 
   static std::unordered_map<std::string, IntIntMap> m_savedIdsAndLocations;
-
-  unsigned int m_textureId;
 };
 
 using DrawableItemPtr = std::shared_ptr<DrawableItem>;

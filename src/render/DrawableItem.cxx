@@ -24,8 +24,7 @@ void DrawableItem::SetTransform(glm::mat4 const& p_transform)
   m_transform = p_transform;
 }
 
-int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_material,
-  Shader const& p_shader)
+void DrawableItem::PrepareBufferFromMesh(rx::Mesh const& p_mesh, Shader const& p_shader)
 {
   unsigned int vpos_location = p_shader.GetAttributeLocation("vPos");
   unsigned int normal_location = p_shader.GetAttributeLocation("normal");
@@ -34,76 +33,55 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
   rxLogInfo("PrepareBuffer with ");
   rxLogInfo("Triangle Count : "<< p_mesh.GetTriangleCount());
   rxLogInfo("Vertex Count : "<< p_mesh.GetVertexCount());
-  glGenBuffers(1, &m_vertexBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-  glBufferData(GL_ARRAY_BUFFER, p_mesh.GetVertexCount()*3*sizeof(float),
-    p_mesh.GetVertices(), GL_STATIC_DRAW);
+  
+  mVertex.Build(GL_ARRAY_BUFFER, p_mesh.GetVertexCount()*3*sizeof(float),
+    p_mesh.GetVertices());
 
-  glGenBuffers(1, &m_normalBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, m_normalBufferId);
-  glBufferData(GL_ARRAY_BUFFER, p_mesh.GetNormalCount()*3*sizeof(float),
-    p_mesh.GetNormals(), GL_STATIC_DRAW);
+  mNormal.Build(GL_ARRAY_BUFFER, p_mesh.GetNormalCount()*3*sizeof(float),
+    p_mesh.GetNormals());
 
   if (p_mesh.HasTangents())
   {
-    glGenBuffers(1, &m_tangentBufferId);
-    glBindBuffer(GL_ARRAY_BUFFER, m_tangentBufferId);
-    glBufferData(GL_ARRAY_BUFFER, p_mesh.GetTangentCount()*3*sizeof(float),
-    p_mesh.GetTangents(), GL_STATIC_DRAW);
+    mTangent.Build(GL_ARRAY_BUFFER, p_mesh.GetTangentCount()*3*sizeof(float),
+      p_mesh.GetTangents());
   }
 
   if (p_mesh.HasBitangents())
   {
-    glGenBuffers(1, &m_bitangentBufferId);
-    glBindBuffer(GL_ARRAY_BUFFER, m_bitangentBufferId);
-    glBufferData(GL_ARRAY_BUFFER, p_mesh.GetBitangentCount()*3*sizeof(float),
-    p_mesh.GetBitangents(), GL_STATIC_DRAW);
+    mBitangent.Build(GL_ARRAY_BUFFER, p_mesh.GetBitangentCount()*3*sizeof(float),
+      p_mesh.GetBitangents());
   }
 
-  glGenBuffers(1, &m_uvBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, m_uvBufferId);
-  glBufferData(GL_ARRAY_BUFFER, p_mesh.GetUVCoordsCount()*2*sizeof(float),
-    p_mesh.GetUVCoords(), GL_STATIC_DRAW);
-
-  glGenBuffers(1, &m_indexBufferId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, p_mesh.GetTriangleCount()*3*sizeof(unsigned int),
-    p_mesh.GetTrianglesIndex(), GL_STATIC_DRAW);
-
-  glGenVertexArrays(1, &m_vertexArrayId);
-  glBindVertexArray(m_vertexArrayId);
-
-  glEnableVertexAttribArray(vpos_location);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-  glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-  glEnableVertexAttribArray(normal_location);
-  glBindBuffer(GL_ARRAY_BUFFER, m_normalBufferId);
-  glVertexAttribPointer(normal_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+  mUV.Build(GL_ARRAY_BUFFER, p_mesh.GetUVCoordsCount()*2*sizeof(float),
+    p_mesh.GetUVCoords());
+  
+  mIndex.Build(GL_ELEMENT_ARRAY_BUFFER, p_mesh.GetTriangleCount()*3*sizeof(unsigned int),
+    p_mesh.GetTrianglesIndex());
+  
+  mVertexArray.Build();
+  mVertexArray.Bind();  
+  mVertexArray.BindBufferToLocation(mVertex, vpos_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+  mVertexArray.BindBufferToLocation(mNormal, normal_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
   if (p_mesh.HasTangents())
   {
     unsigned int tangent_location = p_shader.GetAttributeLocation("tangent");
-    glEnableVertexAttribArray(tangent_location);
-    glBindBuffer(GL_ARRAY_BUFFER, m_tangentBufferId);
-    glVertexAttribPointer(tangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    mVertexArray.BindBufferToLocation(mTangent, tangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
   }
 
   if (p_mesh.HasBitangents())
   {
     unsigned int bitangent_location = p_shader.GetAttributeLocation("bitangent");
-    glEnableVertexAttribArray(bitangent_location);
-    glBindBuffer(GL_ARRAY_BUFFER, m_bitangentBufferId);
-    glVertexAttribPointer(bitangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    mVertexArray.BindBufferToLocation(mBitangent, bitangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
   }
 
-  glEnableVertexAttribArray(uv_location);
-  glBindBuffer(GL_ARRAY_BUFFER, m_uvBufferId);
-  glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-
+  mVertexArray.BindBufferToLocation(mUV, uv_location, 2, GL_FLOAT, GL_FALSE, 0, NULL);
   m_elementCount = p_mesh.GetTriangleCount()*3;
+}
 
-  //Iterate on the shader Uniforms
+void DrawableItem::PrepareTextureFromMaterial(const rx::Material& p_material, const Shader& p_shader)
+{
+    //Iterate on the shader Uniforms
   Shader::UniformMap const& shaderUniforms = p_shader.GetUniformMap();
 
   Shader::UniformMap::const_iterator it = shaderUniforms.begin();
@@ -142,8 +120,9 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
           <<attributeKey<<" of type GL_SAMPLER_2D");
         //Setup the textures
 
-        glGenTextures(1, &m_textureId);
-        glBindTexture(GL_TEXTURE_2D, m_textureId);
+        unsigned int textureId;
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -209,7 +188,7 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
 //           rxLogInfo("tex.m_height " << tex.m_height);
 //           rxLogInfo("tex.m_channelCount " << tex.m_channelCount);
 
-          m_textureIdsLocation[m_textureId] = p_shader.GetUniformLocation(uniformName);
+          m_textureIdsLocation[textureId] = p_shader.GetUniformLocation(uniformName);
         }
       }
     }
@@ -218,6 +197,13 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
     {
       DrawableItem::m_savedIdsAndLocations[p_material.GetName()] = m_textureIdsLocation;
     }
+}
+
+int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_material,
+  Shader const& p_shader)
+{
+  PrepareBufferFromMesh(p_mesh, p_shader);
+  PrepareTextureFromMaterial(p_material, p_shader);
 }
 
 void DrawableItem::SetupUniformAndTextures(Shader const& p_shader,
@@ -230,8 +216,7 @@ void DrawableItem::SetupUniformAndTextures(Shader const& p_shader,
   unsigned int projection = p_shader.GetUniformLocation("Projection");
   unsigned int lightLoc = p_shader.GetUniformLocation("light");
   unsigned int camLoc = p_shader.GetUniformLocation("cameraPos");
-
-
+  
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(p_model));
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(p_view));
   glUniformMatrix4fv(projection, 1, GL_FALSE, glm::value_ptr(p_projection));
@@ -296,15 +281,15 @@ int DrawableItem::Draw(Shader const& p_shader,
 
 void DrawableItem::DrawElements()
 {
-  glBindVertexArray(m_vertexArrayId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
+  mVertexArray.Bind();
+  mIndex.Bind();
   glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
 }
 
 void DrawableItem::DrawElementsInstanced(unsigned p_count)
 {
-  glBindVertexArray(m_vertexArrayId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
+  mVertexArray.Bind();
+  mIndex.Bind();
   glDrawElementsInstanced(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0, p_count);
 }
 
@@ -323,8 +308,8 @@ int DrawableItem::DrawSimple(Shader const& p_shader, glm::mat4 const& p_vpMat,
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(p_view));
   glUniformMatrix4fv(projection, 1, GL_FALSE, glm::value_ptr(p_projection));
 
-  glBindVertexArray(m_vertexArrayId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
+  mVertexArray.Bind();
+  mIndex.Bind();
   glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
 }
 

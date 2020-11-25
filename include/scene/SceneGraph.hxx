@@ -18,6 +18,7 @@ public:
     Object,
     MatrixTransform,
     PositionAttitude,
+    EnvironmentMap,
     Unknown
   };
   
@@ -51,6 +52,8 @@ protected:
   std::list<NodePtr> mChildrens;
   NodeType mType;
 };
+
+using NodePtr = std::shared_ptr<SgNode>;
 
 class MatrixTransform : public SgNode
 {
@@ -96,9 +99,26 @@ public:
   
   ModelPtr ModelRef();
   void SetModelRef(ModelPtr pModelRef);
+  ShaderPtr ShaderRef();
+  void SetShaderRef(ShaderPtr pShaderRef);
   
 private:
   ModelPtr mModelRef;
+  ShaderPtr mShaderRef;
+};
+
+class EnvironmentMapNode : public SgNode
+{
+public:
+  EnvironmentMapNode();
+  EnvironmentMapNode(MaterialPtr pMaterial);
+  ~EnvironmentMapNode();
+  
+  void SetCubeMapMaterial(MaterialPtr pMaterial);
+  MaterialPtr GetCubeMapMaterial();
+  
+private:
+  MaterialPtr mCubeMapMaterial;
 };
 
 
@@ -111,6 +131,7 @@ public:
   using ObjectNodePtr = std::shared_ptr<ObjectNode>;
   using PositionAttitudeTransformPtr = std::shared_ptr<PositionAttitudeTransform>;
   using MatrixTransformPtr = std::shared_ptr<MatrixTransform>;
+  using EnvironmentMapPtr = std::shared_ptr<EnvironmentMapNode>;
   using NodeHashMap = std::unordered_map<unsigned int, NodePtr>;
   
   SceneGraph();

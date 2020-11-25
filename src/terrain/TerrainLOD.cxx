@@ -127,16 +127,11 @@ void TerrainLOD::BuildSimple()
 
   unsigned int vpos_location = m_renderShader.GetAttributeLocation("vPos");
 
-  glGenBuffers(1, &m_vertexBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-  glBufferData(GL_ARRAY_BUFFER, 12*sizeof(float), posPri, GL_STATIC_DRAW);
+  mVertex.Build(GL_ARRAY_BUFFER, 12*sizeof(float), posPri);
 
-  glGenVertexArrays(1, &m_vertexArrayId);
-  glBindVertexArray(m_vertexArrayId);
-
-  glEnableVertexAttribArray(vpos_location);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-  glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+  mVertexArray.Build();
+  mVertexArray.Bind();
+  mVertexArray.BindBufferToLocation(mVertex, vpos_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
   float testDataQuad[4] = {0.0, 3.0, 0.0, 1.0};
 
@@ -342,7 +337,7 @@ int TerrainLOD::DrawTerrain(Camera const& p_cam, glm::mat4 const& p_model, glm::
   glUniform1f(far_location, p_cam.GetFar());
 
   glPatchParameteri(GL_PATCH_VERTICES, 4);
-  glBindVertexArray(m_vertexArrayId);
+  mVertexArray.Bind();
   glDrawArrays(GL_PATCHES, 0, 4*m_leafCount);
 }
 
@@ -393,7 +388,7 @@ int TerrainLOD::DrawWater(Camera const& p_cam, glm::mat4 const& p_model,
   glUniform1i(hLocation, 0);
 
   glPatchParameteri(GL_PATCH_VERTICES, 4);
-  glBindVertexArray(m_vertexArrayId);
+  mVertexArray.Bind();
   glDrawArrays(GL_PATCHES, 0, 4*m_leafCount);
 }
 
@@ -517,16 +512,11 @@ void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs
   std::cout<<std::endl;
 
   unsigned int vpos_location = m_renderShader.GetAttributeLocation("vPos");
-  glGenBuffers(1, &m_vertexBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-  glBufferData(GL_ARRAY_BUFFER, p_leafs.size()*12*sizeof(float), dataQuad, GL_STATIC_DRAW);
+  mVertex.Build(GL_ARRAY_BUFFER, p_leafs.size()*12*sizeof(float), dataQuad);
 
-  glGenVertexArrays(1, &m_vertexArrayId);
-  glBindVertexArray(m_vertexArrayId);
-
-  glEnableVertexAttribArray(vpos_location);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-  glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+  mVertexArray.Build();
+  mVertexArray.Bind();
+  mVertexArray.BindBufferToLocation(mVertex, vpos_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
   glGenBuffers(1, &m_quadDataSSBO);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_quadDataSSBO);

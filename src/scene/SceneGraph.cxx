@@ -146,6 +146,41 @@ void ObjectNode::SetModelRef(ModelPtr pModelRef)
   mModelRef = pModelRef;
 }
 
+ShaderPtr ObjectNode::ShaderRef()
+{
+  return mShaderRef;
+}
+
+void ObjectNode::SetShaderRef(ShaderPtr pShaderRef)
+{
+  mShaderRef = pShaderRef;
+}
+
+EnvironmentMapNode::EnvironmentMapNode():
+SgNode(NodeType::EnvironmentMap)
+{
+}
+
+EnvironmentMapNode::EnvironmentMapNode(MaterialPtr pMaterial):
+SgNode(NodeType::EnvironmentMap),
+mCubeMapMaterial(pMaterial)
+{
+}
+
+EnvironmentMapNode::~EnvironmentMapNode()
+{
+}
+
+void EnvironmentMapNode::SetCubeMapMaterial(MaterialPtr pMaterial)
+{
+  mCubeMapMaterial = pMaterial;
+}
+
+MaterialPtr EnvironmentMapNode::GetCubeMapMaterial()
+{
+  return mCubeMapMaterial;
+}
+
 SceneGraph::SceneGraph()
 {
 }
@@ -215,6 +250,10 @@ NodeType NodeType::FromString(const std::string& ptype)
   {
     return NodeType(NodeType::PositionAttitude);
   }
+  else if ( ptype == "ENVIRONMENTMAP" )
+  {
+    return NodeType(NodeType::EnvironmentMap);
+  }
   else
   {
     return NodeType(NodeType::Unknown);
@@ -231,6 +270,8 @@ std::string NodeType::ToString() const
       return "MATRIXTRANSFORM";
     case NodeType::PositionAttitude:
       return "POSITIONATTITUDE";
+    case NodeType::EnvironmentMap:
+      return "ENVIRONMENTMAP";
     case NodeType::Unknown:
       return "UNKNOWN";
     default:

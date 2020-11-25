@@ -75,6 +75,7 @@ add_library(Event SHARED
 add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/main.cxx
   ${CMAKE_SOURCE_DIR}/src/render/DrawableItem.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/EnvironmentMap.cxx
   ${CMAKE_SOURCE_DIR}/src/render/SceneRenderer.cxx
   ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx
   ${CMAKE_SOURCE_DIR}/src/render/GLAbstraction.cxx
@@ -108,6 +109,7 @@ add_executable(testSimpleRenderer
   ${CMAKE_SOURCE_DIR}/test/simpleRendererTest.cxx
   ${CMAKE_SOURCE_DIR}/src/render/GLAbstraction.cxx
   ${CMAKE_SOURCE_DIR}/src/render/DrawableItem.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/EnvironmentMap.cxx
   ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx)
 
 
@@ -131,6 +133,7 @@ ${JsonCpp_LIBRARY}
 target_link_libraries(Scene
 Common
 Event
+Resource
 ${JsonCpp_LIBRARY}
 )
 
@@ -177,6 +180,7 @@ Common
 target_link_libraries(sceneGraphLoaderTest
 Common
 Scene
+Resource
 )
 
 file(GLOB_RECURSE srcs

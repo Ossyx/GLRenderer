@@ -116,8 +116,6 @@ void ResourcesLoader::LoadShaderStack(const ResourceDescription& pDesc, Resource
   {
     shader->SetTessEvalSrc(shaderSources["tesselationevaluation_shader"].asString());
   }
-  //Do I link here ?
-  //shader->LinkProgram();
   pHolder.RegisterShader(shader, pDesc.mData["id"].asString());
 }
 

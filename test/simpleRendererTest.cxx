@@ -7,6 +7,8 @@
 #include "SceneRenderer.hxx"
 #include "SimpleRenderer.hxx"
 #include "ResourcesLoader.hxx"
+#include "SceneGraph.hxx"
+#include "SceneGraphLoader.hxx"
 
 void error_callback(int error, const char* description);
 
@@ -40,11 +42,17 @@ int main()
   glfwSetKeyCallback(window, EventDispatcher::HandleKeyEvent);
   glfwSetCursorPosCallback(window, EventDispatcher::HandleCursorEvent);
   
-  rx::SceneGraphPtr graph = std::make_shared<rx::SceneGraph>();  
+  //Load resources
   rx::ResourcesHolderPtr holder = std::make_shared<rx::ResourcesHolder>();
   rx::ResourcesLoader loader;
-  loader.LoadDescription("/home/bertrand/Work/GLRenderer/test/data/resources_fanscene.json", *holder);
+  loader.LoadDescription("/home/bertrand/Work/GLRenderer/test/data/resources_scenegraphtest.json", *holder);
   loader.LoadResources(*holder);
+  
+  //Load scene graph
+  rx::SceneGraphLoader graphLoder;
+  rx::SceneGraphPtr graph = std::make_shared<rx::SceneGraph>();
+  
+  graphLoder.Load("/home/bertrand/Work/GLRenderer/test/data/scenegraph.json", *graph, *holder);
 
   SimpleRenderer renderer;
   renderer.Init(graph, holder);
