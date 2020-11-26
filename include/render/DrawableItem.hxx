@@ -15,15 +15,15 @@ public:
 
   DrawableItem();
 
+  DrawableItem(rx::MeshPtr pMesh, rx::MaterialPtr pMaterial, ShaderPtr pShader);
+
   virtual ~DrawableItem();
 
-  int PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_material,
-    Shader const& p_shader);
+  void PrepareBuffer();
 
   void SetTransform(glm::mat4 const& p_transform);
 
-  virtual int Draw(Shader const& p_shader,
-    rx::Material& p_material, glm::mat4 const& p_view,
+  virtual void Draw(glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
 
@@ -33,13 +33,11 @@ public:
 
 protected:
   
-  virtual void PrepareBufferFromMesh(rx::Mesh const& p_mesh, Shader const& p_shader);
+  virtual void PrepareBufferFromMesh();
   
-  virtual void PrepareTextureFromMaterial(rx::Material const& p_material,
-  Shader const& p_shader);
+  virtual void PrepareTextureFromMaterial();
 
-  void SetupUniformAndTextures(Shader const& p_shader,
-    rx::Material& p_material, glm::mat4 const& p_view,
+  void SetupUniformAndTextures(glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
 
@@ -70,6 +68,10 @@ protected:
   IntIntMap m_textureIdsLocation;
 
   static std::unordered_map<std::string, IntIntMap> m_savedIdsAndLocations;
+  
+  rx::MeshPtr mMesh;
+  rx::MaterialPtr mMaterial;  
+  ShaderPtr mShader;
 };
 
 using DrawableItemPtr = std::shared_ptr<DrawableItem>;

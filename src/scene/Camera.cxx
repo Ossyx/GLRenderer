@@ -4,8 +4,8 @@
 #include <iostream>
 #include <math.h>
 
-Camera::Camera():
-m_position(glm::vec3(0.0f, 0.0f, 0.0f)),
+Camera::Camera(glm::vec3 p_position):
+m_position(p_position),
 m_direction(glm::vec3(0.0f, 0.0f, 0.0f)),
 m_translationSpeed(0.0f),
 m_translationAcceleration(0.0f),

@@ -2,7 +2,7 @@
 #include "EventDispatcher.hxx"
 
 SimpleRenderer::SimpleRenderer():
-mCamera(Camera()),
+mCamera(glm::vec3(0.0f, 0.0f, 0.0f)),
 mTime(std::chrono::steady_clock::now()),
 envMap(NULL)
 {
@@ -45,11 +45,12 @@ void SimpleRenderer::Init(rx::SceneGraphPtr pSceneGraph,
       mCustomShader->LinkProgram();
       for (unsigned int i = 0; i < model->GetMeshCount(); ++i)
       {        
-        DrawableItem* item = new DrawableItem();
+        
         auto meshPtr = model->GetMesh(i);
         rx::MaterialPtr materialPtr = model->GetMaterialForMesh(i);
         assert(meshPtr != NULL && materialPtr != NULL);
-        item->PrepareBuffer(*meshPtr, *materialPtr, *mCustomShader);      
+        DrawableItem* item = new DrawableItem(meshPtr, materialPtr, mCustomShader);
+        item->PrepareBuffer();      
         mItems.push_back(item);
         mMaterials.push_back(materialPtr);
       }
@@ -61,8 +62,9 @@ void SimpleRenderer::Init(rx::SceneGraphPtr pSceneGraph,
       if( auto shader = pResourcesHolder->FindShader("cubemap_shader") )
       {
         (*shader)->LinkProgram();
-        envMap = new EnvironmentMap(envMapNode->GetCubeMapMaterial(), *shader);
-        envMap->InitCubeMap();
+        rx::MeshPtr baseCube = std::make_shared<rx::Cube>();
+        envMap = new EnvironmentMap(baseCube, envMapNode->GetCubeMapMaterial(), *shader);
+        envMap->PrepareBuffer();
       }
       else
       {
@@ -119,7 +121,8 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   
   if( envMap )
   {
-    envMap->DrawCubeMap(view, projection, model);
+    envMap->Draw(view, projection, model, glm::vec3(0.0, -1.0, 0.0),
+      mCamera.GetPosition());
   }
   
   glEnable(GL_DEPTH_TEST);
@@ -135,11 +138,9 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
     rx::MaterialPtr materialPtr = mMaterials[i];
     glUseProgram(mCustomShader->GetProgram());
     mItems[i]->SetTransform(model);
-    mItems[i]->Draw(*mCustomShader, *materialPtr, view, projection,
-      model, glm::vec3(0.0, -1.0, 0.0) , mCamera.GetPosition());
+    mItems[i]->Draw(view, projection, model, glm::vec3(0.0, -1.0, 0.0),
+      mCamera.GetPosition());
   }
-  
-
   
   mTime = newTime;
   glfwSwapBuffers(pWindow);

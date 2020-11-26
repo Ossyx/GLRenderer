@@ -12,7 +12,7 @@
 #include <boost/lexical_cast.hpp>
 
 SceneRenderer::SceneRenderer(GLFWwindow* p_window):
-m_mainCamera(),
+m_mainCamera(glm::vec3(10.0f, 0.0f, 0.0f)),
 m_terrainGUI(p_window)
 {
   EventDispatcher* dispatcher = EventDispatcher::Get();
@@ -28,23 +28,33 @@ m_terrainGUI(p_window)
   m_shadowMapShader.SetFragmentShaderSrc("shaders/shadow/shadowMapFS.shader");
   m_shadowMapShader.LinkProgram();
 
-  Shader terrainRendering;
-  terrainRendering.SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
-  terrainRendering.SetFragmentShaderSrc("shaders/terrain/renderTerrainFS.shader");
-  terrainRendering.SetTessControlSrc("shaders/terrain/terrainTC.shader");
-  terrainRendering.SetTessEvalSrc("shaders/terrain/terrainTE.shader");
-  terrainRendering.LinkProgram();
-  m_terrain.SetShader(terrainRendering);
-  m_terrain.SetSize(6.4f);
+  ShaderPtr terrainRendering = std::make_shared<Shader>();
+  terrainRendering->SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
+  terrainRendering->SetFragmentShaderSrc("shaders/terrain/renderTerrainFS.shader");
+  terrainRendering->SetTessControlSrc("shaders/terrain/terrainTC.shader");
+  terrainRendering->SetTessEvalSrc("shaders/terrain/terrainTE.shader");
+  terrainRendering->LinkProgram();
+  
+  rx::MaterialPtr terrainMaterial = std::make_shared<rx::Material>();
+  terrainMaterial->SetName("CubeMaterial");
+  terrainMaterial->SetData("Ka", glm::vec3(0.2,0.0,0.0));
+  terrainMaterial->SetData("Ks", glm::vec3(1.0,0.0,0.0));
+  terrainMaterial->SetData("Kd", glm::vec3(1.0,0.0,0.0));
+  terrainMaterial->SetUniformData("ambient_color", "Ka");
+  terrainMaterial->SetUniformData("specular_color", "Ks");
+  terrainMaterial->SetUniformData("diffuse_color", "Kd");
+  
+  m_terrain = std::make_shared<TerrainLOD>(nullptr, terrainMaterial, terrainRendering);
+  m_terrain->SetSize(6.4f);
 
-  Shader waterRendering;
-  waterRendering.SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
-  waterRendering.SetFragmentShaderSrc("shaders/water/renderWaterFS.shader");
-  waterRendering.SetTessControlSrc("shaders/terrain/terrainTC.shader");
-  waterRendering.SetTessEvalSrc("shaders/water/waterTE.shader");
-  waterRendering.LinkProgram();
-  m_water.SetShader(waterRendering);
-  m_water.SetSize(6.401f);
+  ShaderPtr waterRendering = std::make_shared<Shader>();
+  waterRendering->SetVertexShaderSrc("shaders/terrain/renderTerrainVS.shader");
+  waterRendering->SetFragmentShaderSrc("shaders/water/renderWaterFS.shader");
+  waterRendering->SetTessControlSrc("shaders/terrain/terrainTC.shader");
+  waterRendering->SetTessEvalSrc("shaders/water/waterTE.shader");
+  waterRendering->LinkProgram();
+  m_water = std::make_shared<TerrainLOD>(nullptr, terrainMaterial, waterRendering);
+  m_water->SetSize(6.401f);
   m_surf.PrecomputeFields();
 
   int width, height;
@@ -104,7 +114,7 @@ void SceneRenderer::AddModel()
 
   for (unsigned int i = 0; i < myModel->GetMeshCount(); ++i)
   {
-    DrawableItem* item = new DrawableItem();
+    
     auto meshPtr = myModel->GetMesh(i);
     rx::MaterialPtr materialPtr = myModel->GetMaterialForMesh(i);
     assert(meshPtr != NULL && materialPtr != NULL);
@@ -116,7 +126,8 @@ void SceneRenderer::AddModel()
     {
       GBufferShaderMap::iterator itShader = m_gbufferShaders.find(itShaderId->second);
       assert(itShader != m_gbufferShaders.end());
-      item->PrepareBuffer(*meshPtr, *materialPtr, itShader->second);
+      DrawableItem* item = new DrawableItem(meshPtr, materialPtr, itShader->second);
+      item->PrepareBuffer();
       m_drawableItems.push_back(item);
       m_materialPtrs.push_back(materialPtr);
     }
@@ -131,8 +142,8 @@ void SceneRenderer::AddModel()
 
 void SceneRenderer::AddTerrain()
 {
-  m_terrain.PrepareBufferQuad(m_mainCamera);
-  m_water.PrepareBufferQuad(m_mainCamera);
+  m_terrain->PrepareBufferQuad(m_mainCamera);
+  m_water->PrepareBufferQuad(m_mainCamera);
 
   //Build texture for water surface
   glGenTextures(1, &m_watersurfTex);
@@ -228,11 +239,11 @@ void SceneRenderer::RenderObjects(GLFWwindow* p_window)
     UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
     if (itShaderId != m_shaderForMaterial.end())
     {
-      Shader const& shader = m_gbufferShaders[itShaderId->second];
-      glUseProgram(shader.GetProgram());
+      ShaderPtr shader = m_gbufferShaders[itShaderId->second];
+      glUseProgram(shader->GetProgram());
       m_drawableItems[i]->SetTransform(model);
-      m_drawableItems[i]->Draw(shader, *materialPtr, view, projection,
-        model, m_sunLightDirection, m_mainCamera.GetPosition());
+      m_drawableItems[i]->Draw(view, projection, model, m_sunLightDirection, 
+        m_mainCamera.GetPosition());
     }
 
   }
@@ -247,18 +258,18 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
   }
 
-  bool surfaceMode = m_terrain.ComputeDistanceToSurface(m_mainCamera.GetPosition()) < 0.01f;
+  bool surfaceMode = m_terrain->ComputeDistanceToSurface(m_mainCamera.GetPosition()) < 0.01f;
   float scale = 1.0f;
   glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
   if(surfaceMode)
   {
     scale = 1000.0f;
-    origin = m_terrain.sphereProjectedPosition(m_mainCamera.GetPosition());
+    origin = m_terrain->sphereProjectedPosition(m_mainCamera.GetPosition());
   }
-  m_terrain.SetScale(scale);
-  m_terrain.SetOrigin(origin);
-  m_water.SetScale(scale);
-  m_water.SetOrigin(origin);
+  m_terrain->SetScale(scale);
+  m_terrain->SetOrigin(origin);
+  m_water->SetScale(scale);
+  m_water->SetOrigin(origin);
 
   m_surf.ComputeHeightmap(glfwGetTime());
   ComputeNearFarProjection();
@@ -301,16 +312,16 @@ void SceneRenderer::RenderTerrain(GLFWwindow* p_window)
 
   if( m_mainCamera.m_treeRecompute )
   {
-    m_terrain.RecomputeTree(m_mainCamera.GetPosition());
-    m_water.RecomputeTree(m_mainCamera.GetPosition());
+    m_terrain->RecomputeTree(m_mainCamera.GetPosition());
+    m_water->RecomputeTree(m_mainCamera.GetPosition());
   }
-  m_terrain.PrepareBufferQuad(m_mainCamera);
-  m_terrain.DrawTerrain(m_mainCamera, model, m_sunLightDirection);
+  m_terrain->PrepareBufferQuad(m_mainCamera);
+  m_terrain->DrawTerrain(m_mainCamera, model, m_sunLightDirection);
 
   if( m_renderParam->m_renderWater )
   {
-    m_water.PrepareBufferQuad(m_mainCamera);
-    m_water.DrawWater(m_mainCamera, model, m_sunLightDirection, m_surf, m_watersurfTex);
+    m_water->PrepareBufferQuad(m_mainCamera);
+    m_water->DrawWater(m_mainCamera, model, m_sunLightDirection, m_surf, m_watersurfTex);
   }
 
   rxLogInfo(m_mainCamera.GetPosition().x<<" "<<m_mainCamera.GetPosition().y<<" "<<m_mainCamera.GetPosition().z);
@@ -489,12 +500,13 @@ void SceneRenderer::GenerateGBufferShader(rx::Mesh const& p_mesh, rx::MaterialPt
   if (itShader == m_gbufferShaders.end())
   {
     rxLogInfo("Creating shader for material : "<< p_material->GetName());
-    Shader& shaderGBuffer = m_gbufferShaders[gBufferFlags];
-    shaderGBuffer.SetName("GBufferGenerationShader");
-    shaderGBuffer.SetVertexShaderSrc("shaders/deferred/gbufferVS.shader");
-    shaderGBuffer.SetFragmentShaderSrc("shaders/deferred/gbufferFS.shader");
-    shaderGBuffer.SetPreprocessorConfig(preprocSrc);
-    shaderGBuffer.LinkProgram();
+    ShaderPtr shader = std::make_shared<Shader>();
+    m_gbufferShaders[gBufferFlags] = shader;
+    shader->SetName("GBufferGenerationShader");
+    shader->SetVertexShaderSrc("shaders/deferred/gbufferVS.shader");
+    shader->SetFragmentShaderSrc("shaders/deferred/gbufferFS.shader");
+    shader->SetPreprocessorConfig(preprocSrc);
+    shader->LinkProgram();
   }
 
   m_shaderForMaterial[p_material->GetName()] = gBufferFlags;
@@ -636,13 +648,13 @@ void SceneRenderer::ComputeNearFarProjection()
 {
   if( m_renderParam->m_renderWater )
   {
-    m_mainCamera.SetNear(std::min(m_terrain.GetNear(), m_water.GetNear()));
-    m_mainCamera.SetFar(std::min(m_terrain.GetFar(), m_water.GetFar()));
+    m_mainCamera.SetNear(std::min(m_terrain->GetNear(), m_water->GetNear()));
+    m_mainCamera.SetFar(std::min(m_terrain->GetFar(), m_water->GetFar()));
   }
   else
   {
-    m_mainCamera.SetNear(m_terrain.GetNear());
-    m_mainCamera.SetFar(m_terrain.GetFar());
+    m_mainCamera.SetNear(m_terrain->GetNear());
+    m_mainCamera.SetFar(m_terrain->GetFar());
   }
 }
 

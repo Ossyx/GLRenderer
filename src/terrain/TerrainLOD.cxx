@@ -4,7 +4,8 @@
 
 #define sqrt2rx 1.41421356237f
 
-TerrainLOD::TerrainLOD()
+TerrainLOD::TerrainLOD(rx::MeshPtr pMesh, rx::MaterialPtr pMaterial, ShaderPtr pShader):
+DrawableItem(pMesh, pMaterial, pShader)
 {
   //build eight vertex of unit cube;
   glm::vec3 p0(-0.5, 0.5, -0.5);
@@ -82,16 +83,6 @@ TerrainLOD::TerrainLOD()
 //   m_tessellationLevel[256] = 32.0;
 //   m_tessellationLevel[512] = 64.0;
 //   m_tessellationLevel[1024] = 64.0;
-
-  terrainMaterial = new rx::Material();
-  terrainMaterial->SetName("CubeMaterial");
-  terrainMaterial->SetData("Ka", glm::vec3(0.2,0.0,0.0));
-  terrainMaterial->SetData("Ks", glm::vec3(1.0,0.0,0.0));
-  terrainMaterial->SetData("Kd", glm::vec3(1.0,0.0,0.0));
-
-  terrainMaterial->SetUniformData("ambient_color", "Ka");
-  terrainMaterial->SetUniformData("specular_color", "Ks");
-  terrainMaterial->SetUniformData("diffuse_color", "Kd");
 }
 
 TerrainLOD::~TerrainLOD()
@@ -125,7 +116,7 @@ void TerrainLOD::BuildSimple()
     1.0, 0.0, 1.0,
     1.0, 0.0, -1.0};
 
-  unsigned int vpos_location = m_renderShader.GetAttributeLocation("vPos");
+  unsigned int vpos_location = mShader->GetAttributeLocation("vPos");
 
   mVertex.Build(GL_ARRAY_BUFFER, 12*sizeof(float), posPri);
 
@@ -277,8 +268,7 @@ void TerrainLOD::DestroySubtree(QuadTreeNode* p_node)
   }
 }
 
-int TerrainLOD::Draw(Shader const& p_shader,
-    rx::Material& p_material, glm::mat4 const& p_view,
+void TerrainLOD::Draw(glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
@@ -288,52 +278,52 @@ int TerrainLOD::DrawTerrain(Camera const& p_cam, glm::mat4 const& p_model, glm::
 {
   RenderingDebugInfo* debugInfo = RenderingDebugInfo::Get();
 
-  glUseProgram(m_renderShader.GetProgram());
+  glUseProgram(mShader->GetProgram());
   unsigned block_index = 0;
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 3);
+  block_index = glGetProgramResourceIndex(mShader->GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
+  glShaderStorageBlockBinding(mShader->GetProgram(), block_index, 3);
 
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 4);
+  block_index = glGetProgramResourceIndex(mShader->GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
+  glShaderStorageBlockBinding(mShader->GetProgram(), block_index, 4);
 
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 5);
+  block_index = glGetProgramResourceIndex(mShader->GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
+  glShaderStorageBlockBinding(mShader->GetProgram(), block_index, 5);
 
-  unsigned int size_location = m_renderShader.GetUniformLocation("size");
+  unsigned int size_location = mShader->GetUniformLocation("size");
   glUniform1f(size_location, m_size);
 
-  unsigned int coastK_location = m_renderShader.GetUniformLocation("coastKFactor");
+  unsigned int coastK_location = mShader->GetUniformLocation("coastKFactor");
   glUniform1f(coastK_location, debugInfo->m_coastKFactor);
 
-  unsigned int surfdist_location = m_renderShader.GetUniformLocation("surface_distance");
+  unsigned int surfdist_location = mShader->GetUniformLocation("surface_distance");
   glUniform1f(surfdist_location, ComputeDistanceToSurface(p_cam.GetPosition()));
 
   glm::mat4 view = glm::translate(p_cam.GetViewMatrix(), p_cam.GetPosition());
   view = glm::translate(view, - (p_cam.GetPosition() - m_origin) * m_scale);
 
-  unsigned int scaleorigin_location = m_renderShader.GetUniformLocation("scaleOrigin");
+  unsigned int scaleorigin_location = mShader->GetUniformLocation("scaleOrigin");
   glUniform1f(scaleorigin_location, m_scale);
 
-  unsigned int translateorigin_location = m_renderShader.GetUniformLocation("translateOrigin");
+  unsigned int translateorigin_location = mShader->GetUniformLocation("translateOrigin");
   glUniform3fv(translateorigin_location, 1,  glm::value_ptr(m_origin));
 
-  unsigned int noiseL_location = m_renderShader.GetUniformLocation("noiseLOctave");
+  unsigned int noiseL_location = mShader->GetUniformLocation("noiseLOctave");
   glUniform1i(noiseL_location, debugInfo->m_noiseLOctave);
 
-  unsigned int noiseM_location = m_renderShader.GetUniformLocation("noiseMOctave");
+  unsigned int noiseM_location = mShader->GetUniformLocation("noiseMOctave");
   glUniform1i(noiseM_location, debugInfo->m_noiseMOctave);
 
-  unsigned int noiseH_location = m_renderShader.GetUniformLocation("noiseHOctave");
+  unsigned int noiseH_location = mShader->GetUniformLocation("noiseHOctave");
   glUniform1i(noiseH_location, debugInfo->m_noiseHOctave);
 
-  SetupUniformAndTextures(m_renderShader, *terrainMaterial,
-  view, p_cam.GetProjectionMatrix(), p_model, p_light, p_cam.GetPosition());
+  SetupUniformAndTextures(view, p_cam.GetProjectionMatrix(),
+    p_model, p_light, p_cam.GetPosition());
   rxLogInfo("Surface mode !");
 
-  unsigned int near_location = m_renderShader.GetUniformLocation("near");
+  unsigned int near_location = mShader->GetUniformLocation("near");
   glUniform1f(near_location, p_cam.GetNear());
 
-  unsigned int far_location = m_renderShader.GetUniformLocation("far");
+  unsigned int far_location = mShader->GetUniformLocation("far");
   glUniform1f(far_location, p_cam.GetFar());
 
   glPatchParameteri(GL_PATCH_VERTICES, 4);
@@ -344,44 +334,44 @@ int TerrainLOD::DrawTerrain(Camera const& p_cam, glm::mat4 const& p_model, glm::
 int TerrainLOD::DrawWater(Camera const& p_cam, glm::mat4 const& p_model,
     glm::vec3 const& p_light, rx::OceanSurface const& p_surf, unsigned int p_waterSurfTex)
 {
-  glUseProgram(m_renderShader.GetProgram());
+  glUseProgram(mShader->GetProgram());
   unsigned block_index = 0;
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 3);
+  block_index = glGetProgramResourceIndex(mShader->GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutDataQuad");
+  glShaderStorageBlockBinding(mShader->GetProgram(), block_index, 3);
 
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 4);
+  block_index = glGetProgramResourceIndex(mShader->GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutColorQuad");
+  glShaderStorageBlockBinding(mShader->GetProgram(), block_index, 4);
 
-  block_index = glGetProgramResourceIndex(m_renderShader.GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
-  glShaderStorageBlockBinding(m_renderShader.GetProgram(), block_index, 5);
+  block_index = glGetProgramResourceIndex(mShader->GetProgram(), GL_SHADER_STORAGE_BLOCK, "layoutOuterTess");
+  glShaderStorageBlockBinding(mShader->GetProgram(), block_index, 5);
 
-  unsigned int size_location = m_renderShader.GetUniformLocation("size");
+  unsigned int size_location = mShader->GetUniformLocation("size");
   glUniform1f(size_location, m_size);
 
-  unsigned int surfdist_location = m_renderShader.GetUniformLocation("surface_distance");
+  unsigned int surfdist_location = mShader->GetUniformLocation("surface_distance");
   glUniform1f(surfdist_location, ComputeDistanceToSurface(p_cam.GetPosition()));
 
   glm::mat4 view = glm::translate(p_cam.GetViewMatrix(), p_cam.GetPosition());
   view = glm::translate(view, - (p_cam.GetPosition() - m_origin) * m_scale);
 
-  unsigned int scaleorigin_location = m_renderShader.GetUniformLocation("scaleOrigin");
+  unsigned int scaleorigin_location = mShader->GetUniformLocation("scaleOrigin");
   glUniform1f(scaleorigin_location, m_scale);
 
-  unsigned int translateorigin_location = m_renderShader.GetUniformLocation("translateOrigin");
+  unsigned int translateorigin_location = mShader->GetUniformLocation("translateOrigin");
   glUniform3fv(translateorigin_location, 1,  glm::value_ptr(m_origin));
 
-  SetupUniformAndTextures(m_renderShader, *terrainMaterial,
-  view, p_cam.GetProjectionMatrix(), p_model, p_light, p_cam.GetPosition());
+  SetupUniformAndTextures(view, p_cam.GetProjectionMatrix(), p_model, p_light,
+    p_cam.GetPosition());
   rxLogInfo("Surface mode !");
 
-  unsigned int near_location = m_renderShader.GetUniformLocation("near");
+  unsigned int near_location = mShader->GetUniformLocation("near");
   glUniform1f(near_location, p_cam.GetNear());
 
-  unsigned int far_location = m_renderShader.GetUniformLocation("far");
+  unsigned int far_location = mShader->GetUniformLocation("far");
   glUniform1f(far_location, p_cam.GetFar());
 
   //Bind water heightmap to tex 0
-  unsigned hLocation = m_renderShader.GetUniformLocation("toto");
+  unsigned hLocation = mShader->GetUniformLocation("toto");
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, p_waterSurfTex);
   glTexSubImage2D(GL_TEXTURE_2D,0,0,0,128,128,GL_RED,GL_FLOAT,p_surf.m_heightmapData);
@@ -511,7 +501,7 @@ void TerrainLOD::BuildPrimitiveBuffers(std::vector<QuadTreeNode*> const& p_leafs
 
   std::cout<<std::endl;
 
-  unsigned int vpos_location = m_renderShader.GetAttributeLocation("vPos");
+  unsigned int vpos_location = mShader->GetAttributeLocation("vPos");
   mVertex.Build(GL_ARRAY_BUFFER, p_leafs.size()*12*sizeof(float), dataQuad);
 
   mVertexArray.Build();
@@ -595,11 +585,6 @@ float TerrainLOD::GetNear() const
 float TerrainLOD::GetFar() const
 {
   return m_far;
-}
-
-void TerrainLOD::SetShader(Shader const& p_shader)
-{
-  m_renderShader = p_shader;
 }
 
 float TerrainLOD::ComputeDistanceToSurface(glm::vec3 const& p_position)

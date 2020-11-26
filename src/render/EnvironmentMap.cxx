@@ -2,9 +2,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-EnvironmentMap::EnvironmentMap(rx::MaterialPtr pCubeMapMaterial, ShaderPtr pShader):
-mCubeMapMaterial(pCubeMapMaterial),
-mShader(pShader)
+EnvironmentMap::EnvironmentMap(rx::MeshPtr pMesh, rx::MaterialPtr pMaterial, ShaderPtr pShader):
+DrawableItem(pMesh, pMaterial, pShader)
 {
 }
 
@@ -12,16 +11,15 @@ EnvironmentMap::~EnvironmentMap()
 {
 }
 
-void EnvironmentMap::PrepareTextureFromMaterial(rx::Material const& p_material,
-  Shader const& p_shader)
+void EnvironmentMap::PrepareTextureFromMaterial()
 {
   bool loadtex = true;
-  if(DrawableItem::m_savedIdsAndLocations.find(p_material.GetName()) != DrawableItem::m_savedIdsAndLocations.end())
+  if(DrawableItem::m_savedIdsAndLocations.find(mMaterial->GetName()) != DrawableItem::m_savedIdsAndLocations.end())
   {
     loadtex = false;
-    m_textureIdsLocation = DrawableItem::m_savedIdsAndLocations[p_material.GetName()];
+    m_textureIdsLocation = DrawableItem::m_savedIdsAndLocations[mMaterial->GetName()];
   }
-  mCubeMapLocation = p_shader.GetUniformLocation("titi");
+  mCubeMapLocation = mShader->GetUniformLocation("titi");
   
   std::string uniformName[6] = 
   {
@@ -38,15 +36,15 @@ void EnvironmentMap::PrepareTextureFromMaterial(rx::Material const& p_material,
   
   for (unsigned int i = 0; i < 6; i++)
   {
-    if (p_material.HasFloatTexData(uniformName[i]))
+    if (mMaterial->HasFloatTexData(uniformName[i]))
     {
       rxLogWarning("Loading CubeMap channel " << i );
-      rx::Material::FloatTexture const& tex = p_material.GetFloatTexture(uniformName[i]);
+      rx::Material::FloatTexture const& tex = mMaterial->GetFloatTexture(uniformName[i]);
       glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F, tex.m_width, tex.m_height, 0, GL_RGB, GL_FLOAT, tex.m_data);
     }
     else
     {
-      rxLogError("No attribute " << uniformName[i] <<" found in material " << p_material.GetName());
+      rxLogError("No attribute " << uniformName[i] <<" found in material " << mMaterial->GetName());
     }
   }
   
@@ -58,28 +56,23 @@ void EnvironmentMap::PrepareTextureFromMaterial(rx::Material const& p_material,
   glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
   
     
-  for(auto elem : p_shader.GetUniformMap())
+  for(auto elem : mShader->GetUniformMap())
   {
     rxLogDebug("Got uniform : " << elem.first );
   }
   
   if(loadtex == true)
   {
-    DrawableItem::m_savedIdsAndLocations[p_material.GetName()] = m_textureIdsLocation;
+    DrawableItem::m_savedIdsAndLocations[mMaterial->GetName()] = m_textureIdsLocation;
   }
   
   rxLogInfo("Cube map texture location " << mCubeMapLocation);
   rxLogInfo("Cube map texture id " << mCubeMapTex);
 }
 
-void EnvironmentMap::InitCubeMap()
-{
-  PrepareBufferFromMesh(mCubeMesh, *mShader);
-  PrepareTextureFromMaterial(*mCubeMapMaterial, *mShader);
-}
-
-void EnvironmentMap::DrawCubeMap(glm::mat4 const& p_view,
-  glm::mat4 const& p_projection, glm::mat4 const& p_model)
+void EnvironmentMap::Draw(glm::mat4 const& p_view,
+    glm::mat4 const& p_projection, glm::mat4 const& p_model,
+    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
   glUseProgram(mShader->GetProgram());
   

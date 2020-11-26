@@ -9,22 +9,18 @@ class EnvironmentMap : public DrawableItem
 {
 public:
 
-  EnvironmentMap(rx::MaterialPtr pCubeMapMaterial, ShaderPtr pShader);
+  EnvironmentMap(rx::MeshPtr pMesh, rx::MaterialPtr pMaterial, ShaderPtr pShader);
   ~EnvironmentMap(); 
-  void InitCubeMap();
-  void DrawCubeMap(glm::mat4 const& p_view,
-    glm::mat4 const& p_projection, glm::mat4 const& p_model);
+  virtual void Draw(glm::mat4 const& p_view,
+    glm::mat4 const& p_projection, glm::mat4 const& p_model,
+    glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
   
 protected:
 
-  virtual void PrepareTextureFromMaterial(rx::Material const& p_material,
-  Shader const& p_shader);
+  virtual void PrepareTextureFromMaterial();
   
 private:
 
-  rx::MaterialPtr mCubeMapMaterial;  
-  rx::Cube mCubeMesh;
-  ShaderPtr mShader;
   unsigned int mCubeMapTex;
   unsigned int mCubeMapLocation;
 };

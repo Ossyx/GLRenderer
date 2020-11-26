@@ -81,7 +81,7 @@ private:
 
   std::vector<DrawableItem*> m_drawableItems;
 
-  typedef std::map<unsigned int, Shader> GBufferShaderMap;
+  typedef std::map<unsigned int, ShaderPtr> GBufferShaderMap;
   GBufferShaderMap m_gbufferShaders;
 
   UintMap m_shaderForMaterial;
@@ -94,8 +94,8 @@ private:
 
   Shader m_shadowMapShader;
 
-  TerrainLOD m_terrain;
-  TerrainLOD m_water;
+  std::shared_ptr<TerrainLOD> m_terrain;
+  std::shared_ptr<TerrainLOD> m_water;
   rx::OceanSurface m_surf;
   unsigned int m_watersurfTex;
 
