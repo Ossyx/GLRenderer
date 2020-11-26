@@ -1,12 +1,11 @@
 out vec4 FragColor;
 in vec3 iuvcoords;
 
-uniform float toto;
-uniform samplerCube titi;
+uniform samplerCube cubeMap;
 
 void main()
 { 
-  vec4 tex = texture(titi, iuvcoords);
+  vec4 tex = texture(cubeMap, iuvcoords);
   vec3 v = tex.xyz / 30000;
   FragColor = vec4(v, 1.0);
 }

@@ -19,7 +19,7 @@ void EnvironmentMap::PrepareTextureFromMaterial()
     loadtex = false;
     m_textureIdsLocation = DrawableItem::m_savedIdsAndLocations[mMaterial->GetName()];
   }
-  mCubeMapLocation = mShader->GetUniformLocation("titi");
+  mCubeMapLocation = mShader->GetUniformLocation("cubeMap");
   
   std::string uniformName[6] = 
   {
@@ -79,12 +79,10 @@ void EnvironmentMap::Draw(glm::mat4 const& p_view,
   unsigned int viewLoc = mShader->GetUniformLocation("View");
   unsigned int projection = mShader->GetUniformLocation("Projection");
   unsigned int model = mShader->GetUniformLocation("Model");
-  unsigned int toto = mShader->GetUniformLocation("toto");
   
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(p_view));
   glUniformMatrix4fv(projection, 1, GL_FALSE, glm::value_ptr(p_projection));
   glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(p_model));
-  glUniform1f(toto, 0.5f);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, mCubeMapTex);
