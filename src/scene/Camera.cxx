@@ -138,32 +138,32 @@ void Camera::ReadDirectionFromKeys()
   bool keyPressed = false;
   if (m_keyPressed & eKeyD)
   {
-    m_direction += glm::vec3(1.0, 0.0, 0.0);
+    m_direction += glm::vec3(-1.0, 0.0, 0.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyA)
   {
-    m_direction += glm::vec3(-1.0, 0.0, 0.0);
+    m_direction += glm::vec3(1.0, 0.0, 0.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyW)
   {
-    m_direction += glm::vec3(0.0, 0.0, -1.0);
+    m_direction += glm::vec3(0.0, 0.0, 1.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyS)
   {
-    m_direction += glm::vec3(0.0, 0.0, 1.0);
+    m_direction += glm::vec3(0.0, 0.0, -1.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyQ)
   {
-    m_direction += glm::vec3(0.0, 1.0, 0.0);
+    m_direction += glm::vec3(0.0, -1.0, 0.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyZ)
   {
-    m_direction += glm::vec3(0.0, -1.0, 0.0);
+    m_direction += glm::vec3(0.0, 1.0, 0.0);
     keyPressed =  true;
   }
 
