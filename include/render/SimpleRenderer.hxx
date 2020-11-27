@@ -6,6 +6,7 @@
 
 #include "DrawableItem.hxx"
 #include "EnvironmentMap.hxx"
+#include "Renderable.hxx"
 
 #include "Camera.hxx"
 #include <chrono>
@@ -30,6 +31,8 @@ private:
   //Collection drawable  
   std::vector<DrawableItem*> mItems;
   std::vector<rx::MaterialPtr> mMaterials;
+  
+  std::vector<Renderable*> mRenderables;
   
   EnvironmentMap* envMap;
   std::chrono::steady_clock::time_point mTime;

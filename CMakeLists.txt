@@ -77,6 +77,9 @@ add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/render/DrawableItem.cxx
   ${CMAKE_SOURCE_DIR}/src/render/EnvironmentMap.cxx
   ${CMAKE_SOURCE_DIR}/src/render/SceneRenderer.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/GeometryHandle.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/MaterialTexturesHandle.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Renderable.cxx
   ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx
   ${CMAKE_SOURCE_DIR}/src/render/GLAbstraction.cxx
   ${CMAKE_SOURCE_DIR}/src/terrain/TerrainLOD.cxx
@@ -109,6 +112,9 @@ add_executable(testSimpleRenderer
   ${CMAKE_SOURCE_DIR}/test/simpleRendererTest.cxx
   ${CMAKE_SOURCE_DIR}/src/render/GLAbstraction.cxx
   ${CMAKE_SOURCE_DIR}/src/render/DrawableItem.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/GeometryHandle.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/MaterialTexturesHandle.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Renderable.cxx
   ${CMAKE_SOURCE_DIR}/src/render/EnvironmentMap.cxx
   ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx)
 

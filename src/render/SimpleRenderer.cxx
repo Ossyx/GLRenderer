@@ -49,10 +49,15 @@ void SimpleRenderer::Init(rx::SceneGraphPtr pSceneGraph,
         auto meshPtr = model->GetMesh(i);
         rx::MaterialPtr materialPtr = model->GetMaterialForMesh(i);
         assert(meshPtr != NULL && materialPtr != NULL);
-        DrawableItem* item = new DrawableItem(meshPtr, materialPtr, mCustomShader);
+        auto geoHandle = std::make_shared<GeometryHandle>(meshPtr);
+        auto matTexHandle = std::make_shared<MaterialTextureHandle>(materialPtr);
+        
+        Renderable* iRenderable = new Renderable(geoHandle, matTexHandle, mCustomShader, materialPtr);
+        mRenderables.push_back(iRenderable);
+/*        DrawableItem* item = new DrawableItem(meshPtr, materialPtr, mCustomShader);
         item->PrepareBuffer();      
         mItems.push_back(item);
-        mMaterials.push_back(materialPtr);
+        mMaterials.push_back(materialPtr);  */     
       }
     }
     
@@ -84,7 +89,7 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
 {  
   auto newTime = std::chrono::steady_clock::now();
   float millis = std::chrono::duration_cast<std::chrono::milliseconds>(newTime - mTime).count();
-  //mCamera.MoveCamera(millis/1000.0f, 0.05);
+  mCamera.MoveCamera(millis/1000.0f, 0.05);
   
   int width, height;
   glfwGetFramebufferSize(pWindow, &width, &height);
@@ -95,7 +100,6 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
 
   view = glm::rotate(view, mCamera.GetElevation(), glm::vec3(1.0f, 0.0f, 0.0f));
   view = glm::rotate(view, mCamera.GetAzimuth(), glm::vec3(0.0f, 1.0f, 0.0f));
-  view = glm::translate(view, mCamera.GetPosition());
 
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
@@ -125,6 +129,8 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
       mCamera.GetPosition());
   }
   
+  view = glm::translate(view, mCamera.GetPosition());
+  
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
   glDepthFunc(GL_LEQUAL);
@@ -133,13 +139,18 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   
-  for (unsigned int i = 0; i < mItems.size(); ++i)
+//   for (unsigned int i = 0; i < mItems.size(); ++i)
+//   {
+//     rx::MaterialPtr materialPtr = mMaterials[i];
+//     glUseProgram(mCustomShader->GetProgram());
+//     mItems[i]->SetTransform(model);
+//     mItems[i]->Draw(view, projection, model, glm::vec3(0.0, -1.0, 0.0),
+//       mCamera.GetPosition());
+//   }
+  for (unsigned int i = 0; i < mRenderables.size(); ++i)
   {
-    rx::MaterialPtr materialPtr = mMaterials[i];
     glUseProgram(mCustomShader->GetProgram());
-    mItems[i]->SetTransform(model);
-    mItems[i]->Draw(view, projection, model, glm::vec3(0.0, -1.0, 0.0),
-      mCamera.GetPosition());
+    mRenderables[i]->Draw(view, projection, model);
   }
   
   mTime = newTime;
