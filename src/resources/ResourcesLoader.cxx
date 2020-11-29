@@ -5,7 +5,8 @@
 namespace rx
 {
   
-ResourcesLoader::ResourcesLoader()
+ResourcesLoader::ResourcesLoader():
+mStatus(Unloaded)
 {
 }
 
@@ -52,34 +53,48 @@ void ResourcesLoader::LoadDescription(Json::Value& pJsonDescription, ResourcesHo
   }  
 }
 
-void ResourcesLoader::LoadResources(ResourcesHolder& pHolder)
+void ResourcesLoader::LoadResources(ResourcesHolder& pHolder, bool pAsync)
 {
-  ResourcesHolder::ResourceMapType const& resources = pHolder.GetResources();
-  auto itResource = resources.cbegin();
-  for( ; itResource != resources.cend(); ++itResource )
+  SetStatus(Loading);  
+  auto loadFunc = [this, &pHolder]
   {
-    rxLogInfo("Loading resource..");
-    ResourceDescription const& res = itResource->second;
-    rxLogInfo(res.AsString());
-    
-    switch(res.mType.get())
+    ResourcesHolder::ResourceMapType const& resources = pHolder.GetResources();
+    auto itResource = resources.cbegin();
+    for( ; itResource != resources.cend(); ++itResource )
     {
-      case ResourceType::Model:
-        LoadModel(res, pHolder);
-        break;
-      case ResourceType::Texture:
-        LoadTexture(res, pHolder);
-        break;
-      case ResourceType::ShaderStack:
-        LoadShaderStack(res, pHolder);
-        break;
-      case ResourceType::Material:
-        LoadMaterial(res, pHolder);
-        break;
-      case ResourceType::Unknown:
-        rxLogWarning("Try to load Unknown resource type, skipping");
-        break;
+      rxLogInfo("Loading resource..");
+      ResourceDescription const& res = itResource->second;
+      rxLogInfo(res.AsString());
+      
+      switch(res.mType.get())
+      {
+        case ResourceType::Model:
+          LoadModel(res, pHolder);
+          break;
+        case ResourceType::Texture:
+          LoadTexture(res, pHolder);
+          break;
+        case ResourceType::ShaderStack:
+          LoadShaderStack(res, pHolder);
+          break;
+        case ResourceType::Material:
+          LoadMaterial(res, pHolder);
+          break;
+        case ResourceType::Unknown:
+          rxLogWarning("Try to load Unknown resource type, skipping");
+          break;
+      }
     }
+    SetStatus(Loaded);
+  };
+  
+  if( pAsync )
+  {
+    mLoadingThread = std::thread(loadFunc);
+  }
+  else
+  {
+    loadFunc();
   }
 }
 
@@ -126,6 +141,21 @@ void ResourcesLoader::LoadMaterial(const ResourceDescription& pDesc, ResourcesHo
   {
     pHolder.RegisterMaterial(mat, mat->GetName());
   }
+}
+
+void ResourcesLoader::SetStatus(LoadingStatus pStatus)
+{
+  mSmut.lock();
+  mStatus = pStatus;
+  mSmut.unlock();
+}
+
+ResourcesLoader::LoadingStatus ResourcesLoader::GetStatus()
+{
+  mSmut.lock();
+  LoadingStatus s = mStatus;
+  mSmut.unlock();
+  return s;
 }
 
 }

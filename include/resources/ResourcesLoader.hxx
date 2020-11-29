@@ -14,19 +14,31 @@ namespace rx
   
 class ResourcesLoader
 {
-public:
+public:  
+  enum LoadingStatus
+  {
+    Unloaded,
+    Loading,
+    Loaded
+  };
   
   ResourcesLoader();
   ~ResourcesLoader();  
   void LoadDescription(std::string const& pResourceIndexPath, ResourcesHolder& pHolder);
-  void LoadResources(ResourcesHolder& pHolder);
+  void LoadResources(ResourcesHolder& pHolder, bool pAsync = false);
+  LoadingStatus GetStatus();
   
 private:
+  void SetStatus(LoadingStatus pStatus);
   void LoadDescription(Json::Value& pJsonDescription, ResourcesHolder& pHolder);
   void LoadTexture(ResourceDescription const& pDesc,ResourcesHolder& pHolder);
   void LoadModel(ResourceDescription const& pDesc,ResourcesHolder& pHolder);
   void LoadShaderStack(ResourceDescription const& pDesc,ResourcesHolder& pHolder);
-  void LoadMaterial(ResourceDescription const& pDesc,ResourcesHolder& pHolder);  
+  void LoadMaterial(ResourceDescription const& pDesc,ResourcesHolder& pHolder);
+  
+  std::mutex mSmut;
+  LoadingStatus mStatus;
+  std::thread mLoadingThread;
 };
 
 }
