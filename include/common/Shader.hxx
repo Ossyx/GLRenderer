@@ -39,15 +39,21 @@ public:
   unsigned int GetAttributeLocation(std::string const& p_parameter) const;
 
   unsigned int GetUniformLocation(std::string const& p_parameter) const;
+  
+  using UniformInfo = std::pair<GLenum, unsigned int>;
 
-  typedef std::unordered_map<std::string, GLenum> UniformMap;
+  typedef std::unordered_map<std::string, UniformInfo> UniformMap;
   UniformMap const& GetUniformMap() const;
   
   bool GetLinked();
+  
+  void SetUniform(unsigned int pLocation, unsigned int pValue);
 
 private:
 
   unsigned int CompileShader(unsigned int p_shaderType, std::string const& p_source);
+  
+  void GatherUniforms();
 
   std::string m_name;
 

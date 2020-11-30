@@ -106,13 +106,14 @@ void DrawableItem::PrepareTextureFromMaterial()
   {
     rxLogInfo("Linking uniform "<< it->first <<" to material.");
     std::string uniformName = it->first;
+    Shader::UniformInfo info = it->second;
     std::string attributeKey;
     bool exists = mMaterial->GetUniformData(it->first, attributeKey);
 
     if (exists == true)
     {
       //Handle various uniform types
-      GLenum type = it->second;
+      GLenum type = info.first;
       if (type == GL_FLOAT)
       {
         rxLogInfo("Uniform "<< uniformName <<" is attribute "
@@ -137,24 +138,24 @@ void DrawableItem::PrepareTextureFromMaterial()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-        if (mMaterial->HasUCharTexData(attributeKey))
+        if (mMaterial->HasTextureData<unsigned char>(attributeKey))
         {
-          rx::Material::ByteTexture const& tex = mMaterial->GetByteTexture(attributeKey);
-          if (tex.m_channelCount == 1)
+          auto const& tex = mMaterial->GetTextureData<unsigned char>(attributeKey);
+          if (tex->m_channelCount == 1)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex.m_width,
-              tex.m_height, 0, GL_RED, GL_UNSIGNED_BYTE, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex->m_width,
+              tex->m_height, 0, GL_RED, GL_UNSIGNED_BYTE, tex->m_data);
           }
-          else if (tex.m_channelCount == 3)
+          else if (tex->m_channelCount == 3)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex.m_width,
-              tex.m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex->m_width,
+              tex->m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex->m_data);
           }
-          else if (tex.m_channelCount == 4)
+          else if (tex->m_channelCount == 4)
           {
             rxLogWarning("Loading RGBA Texture " << attributeKey)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex.m_width,
-              tex.m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->m_width,
+              tex->m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex->m_data);
           }
           else
           {
@@ -162,23 +163,23 @@ void DrawableItem::PrepareTextureFromMaterial()
             assert(false);
           }
         }
-        else if(mMaterial->HasUShortTexData(attributeKey))
+        else if(mMaterial->HasTextureData<unsigned short>(attributeKey))
         {
-          rx::Material::UShortTexture const& tex = mMaterial->GetUShortTexture(attributeKey);
-          if (tex.m_channelCount == 1)
+          rx::Material::UShortTexture const& tex = mMaterial->GetTextureData<unsigned short>(attributeKey);
+          if (tex->m_channelCount == 1)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R16, tex.m_width,
-              tex.m_height, 0, GL_RED, GL_UNSIGNED_SHORT, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R16, tex->m_width,
+              tex->m_height, 0, GL_RED, GL_UNSIGNED_SHORT, tex->m_data);
           }
-          else if (tex.m_channelCount == 3)
+          else if (tex->m_channelCount == 3)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16, tex.m_width,
-              tex.m_height, 0, GL_RGB, GL_UNSIGNED_SHORT, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16, tex->m_width,
+              tex->m_height, 0, GL_RGB, GL_UNSIGNED_SHORT, tex->m_data);
           }
-          else if (tex.m_channelCount == 4)
+          else if (tex->m_channelCount == 4)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, tex.m_width,
-              tex.m_height, 0, GL_RGBA, GL_UNSIGNED_SHORT, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, tex->m_width,
+              tex->m_height, 0, GL_RGBA, GL_UNSIGNED_SHORT, tex->m_data);
           }
           else
           {
@@ -193,9 +194,9 @@ void DrawableItem::PrepareTextureFromMaterial()
         }
 
         glGenerateMipmap(GL_TEXTURE_2D);
-//           rxLogInfo("tex.m_width " << tex.m_width);
-//           rxLogInfo("tex.m_height " << tex.m_height);
-//           rxLogInfo("tex.m_channelCount " << tex.m_channelCount);
+//           rxLogInfo("tex->m_width " << tex->m_width);
+//           rxLogInfo("tex->m_height " << tex->m_height);
+//           rxLogInfo("tex->m_channelCount " << tex->m_channelCount);
 
           m_textureIdsLocation[textureId] = mShader->GetUniformLocation(uniformName);
         }
@@ -237,27 +238,27 @@ void DrawableItem::SetupUniformAndTextures(glm::mat4 const& p_view,
   for (; itUniformMat != shaderUniforms.end(); ++itUniformMat)
   {
     std::string uniformName = itUniformMat->first;
+    Shader::UniformInfo info = itUniformMat->second;
     std::string attributeKey;
     bool exists = mMaterial->GetUniformData(itUniformMat->first, attributeKey);
     if (exists == true)
     {
       //Handle various uniform types
-      GLenum type = itUniformMat->second;
+      GLenum type = info.first;
       if (type == GL_FLOAT)
       {
-        float unif;
-        if (mMaterial->GetData(attributeKey, unif))
+        if( mMaterial->Has<float>(attributeKey) )
         {
+          float unif = mMaterial->Get<float>(attributeKey);
           unsigned int loc = mShader->GetUniformLocation(uniformName);
           glUniform1f(loc, unif);
         }
-
       }
       else if (type == GL_FLOAT_VEC3)
       {
-        glm::vec3 univec3f;
-        if (mMaterial->GetData(attributeKey, univec3f))
+        if( mMaterial->Has<glm::vec3>(attributeKey) )
         {
+          glm::vec3 univec3f = mMaterial->Get<glm::vec3>(attributeKey);
           unsigned int loc = mShader->GetUniformLocation(uniformName);
           glUniform3fv(loc, 1,  glm::value_ptr(univec3f));
         }

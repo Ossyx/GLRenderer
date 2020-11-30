@@ -82,6 +82,7 @@ add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/render/Renderable.cxx
   ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx
   ${CMAKE_SOURCE_DIR}/src/render/GLAbstraction.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Postprocess.cxx
   ${CMAKE_SOURCE_DIR}/src/terrain/TerrainLOD.cxx
   ${CMAKE_SOURCE_DIR}/src/gui/TerrainGenGui.cxx
   ${CMAKE_SOURCE_DIR}/imgui/imgui.cpp
@@ -116,7 +117,8 @@ add_executable(testSimpleRenderer
   ${CMAKE_SOURCE_DIR}/src/render/MaterialTexturesHandle.cxx
   ${CMAKE_SOURCE_DIR}/src/render/Renderable.cxx
   ${CMAKE_SOURCE_DIR}/src/render/EnvironmentMap.cxx
-  ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx)
+  ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Postprocess.cxx)
 
 
 target_compile_definitions(GLRenderer PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)

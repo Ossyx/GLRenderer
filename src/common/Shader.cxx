@@ -151,10 +151,16 @@ bool Shader::LinkProgram()
   }
 
   //Then retrieve the uniforms
+  GatherUniforms();
+  m_linked = true;
+  return true;
+}
+
+void Shader::GatherUniforms()
+{
+  rxLogInfo("Uniform list for shader "<< m_name);
   int activeUniforms = 0;
   glGetProgramInterfaceiv(m_program, GL_UNIFORM, GL_ACTIVE_RESOURCES, &activeUniforms);
-
-  rxLogInfo("Uniform list for shader "<< m_name);
   std::vector<GLchar> nameData(256);
   for (int uniformIdx = 0; uniformIdx < activeUniforms; ++uniformIdx)
   {
@@ -165,10 +171,8 @@ bool Shader::LinkProgram()
       &actualLength, &arraySize, &type, &nameData[0]);
     std::string name((char*)&nameData[0], actualLength);
     rxLogInfo("Found uniform "<< name <<" of type "<< type);
-    m_uniforms[name] = type;
+    m_uniforms[name] = UniformInfo(type, GetUniformLocation(name));
   }
-  m_linked = true;
-  return true;
 }
 
 std::string Shader::GetName() const

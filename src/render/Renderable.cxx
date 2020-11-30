@@ -61,17 +61,19 @@ void Renderable::Draw(const glm::mat4& p_view, const glm::mat4& p_projection, co
   for (; itUniformMat != shaderUniforms.end(); ++itUniformMat)
   {
     std::string uniformName = itUniformMat->first;
+    Shader::UniformInfo info = itUniformMat->second;
     std::string attributeKey;
     bool exists = mMaterial->GetUniformData(itUniformMat->first, attributeKey);
     if (exists == true)
     {
       //Handle various uniform types
-      GLenum type = itUniformMat->second;
+      GLenum type = info.first;
       if (type == GL_FLOAT)
       {
-        float unif;
-        if (mMaterial->GetData(attributeKey, unif))
+        
+        if (mMaterial->Has<float>(attributeKey))
         {
+          float unif = mMaterial->Get<float>(attributeKey);
           unsigned int loc = mShader->GetUniformLocation(uniformName);
           glUniform1f(loc, unif);
         }
@@ -79,9 +81,10 @@ void Renderable::Draw(const glm::mat4& p_view, const glm::mat4& p_projection, co
       }
       else if (type == GL_FLOAT_VEC3)
       {
-        glm::vec3 univec3f;
-        if (mMaterial->GetData(attributeKey, univec3f))
+        
+        if (mMaterial->Has<glm::vec3>(attributeKey))
         {
+          glm::vec3 univec3f = mMaterial->Get<glm::vec3>(attributeKey);
           unsigned int loc = mShader->GetUniformLocation(uniformName);
           glUniform3fv(loc, 1,  glm::value_ptr(univec3f));
         }

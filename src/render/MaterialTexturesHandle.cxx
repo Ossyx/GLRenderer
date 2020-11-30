@@ -22,6 +22,10 @@ MaterialTextureHandle::TypeToConfig MaterialTextureHandle::smGLTextureConfig =
   }}
 };
 
+MaterialTextureHandle::MaterialTextureHandle()
+{
+}
+
 MaterialTextureHandle::MaterialTextureHandle(rx::MaterialPtr pMaterial)
 {
   for(auto uniformD : pMaterial->GetUniforms())
@@ -29,34 +33,30 @@ MaterialTextureHandle::MaterialTextureHandle(rx::MaterialPtr pMaterial)
     std::string uniform = uniformD.first;
     std::string matAttribute = uniformD.second;
     
-    if (pMaterial->HasUCharTexData(matAttribute))
+    if (pMaterial->HasTextureData<unsigned char>(matAttribute))
     {
       rxLogInfo("Uniform "<< uniform <<" is attribute " <<matAttribute<<" of type UByte");
-      GenerateTexture<rx::Material::ByteTexture>(
-        pMaterial->GetByteTexture(matAttribute), GL_UNSIGNED_BYTE, uniform);
+      GenerateTexture(pMaterial->GetTextureData<unsigned char>(matAttribute), GL_UNSIGNED_BYTE, uniform);
     }
-    else if(pMaterial->HasUShortTexData(matAttribute))
+    else if(pMaterial->HasTextureData<unsigned short>(matAttribute))
     {
       rxLogInfo("Uniform "<< uniform <<" is attribute " <<matAttribute<<" of type Texture UShort");
-      GenerateTexture<rx::Material::UShortTexture>(
-        pMaterial->GetUShortTexture(matAttribute), GL_UNSIGNED_SHORT, uniform);
+      GenerateTexture(pMaterial->GetTextureData<unsigned short>(matAttribute), GL_UNSIGNED_SHORT, uniform);
     }
-    else if(pMaterial->HasFloatTexData(matAttribute))
+    else if(pMaterial->HasTextureData<float>(matAttribute))
     {
       rxLogInfo("Uniform "<< uniform <<" is attribute " <<matAttribute<<" of type Texture Float");
-      GenerateTexture<rx::Material::FloatTexture>(
-        pMaterial->GetFloatTexture(matAttribute), GL_FLOAT, uniform);
+      GenerateTexture(pMaterial->GetTextureData<float>(matAttribute), GL_FLOAT, uniform);
     }
   }
 }
 
 MaterialTextureHandle::~MaterialTextureHandle()
 {
-  
 }
 
 template <typename T>
-void MaterialTextureHandle::GenerateTexture(T const& pTex, GLenum pType, std::string const& pUniform)
+void MaterialTextureHandle::GenerateTexture(T pTex, GLenum pType, std::string const& pUniform)
 {
   unsigned int textureId;
   glGenTextures(1, &textureId);
@@ -66,9 +66,9 @@ void MaterialTextureHandle::GenerateTexture(T const& pTex, GLenum pType, std::st
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         
-  auto texConf = smGLTextureConfig[pType][pTex.m_channelCount];
-  glTexImage2D(GL_TEXTURE_2D, 0, texConf.internalFormat, pTex.m_width,
-      pTex.m_height, 0, texConf.format, pType, pTex.m_data);
+  auto texConf = smGLTextureConfig[pType][pTex->m_channelCount];
+  glTexImage2D(GL_TEXTURE_2D, 0, texConf.internalFormat, pTex->m_width,
+      pTex->m_height, 0, texConf.format, pType, pTex->m_data);
   glGenerateMipmap(GL_TEXTURE_2D);
   
   mTexturedIds[pUniform] = textureId;

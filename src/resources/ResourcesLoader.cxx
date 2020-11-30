@@ -107,8 +107,6 @@ void ResourcesLoader::LoadModel(ResourceDescription const& pDesc, ResourcesHolde
 
 void ResourcesLoader::LoadTexture(ResourceDescription const& pDesc, ResourcesHolder& pHolder)
 {
-  auto tex = std::make_shared<rx::Texture<unsigned char>>();
-  rx::ModelLoader::LoadTextureFromFile<unsigned char>(pDesc.mData["path"].asString(), *tex);
 }
 
 void ResourcesLoader::LoadShaderStack(const ResourceDescription& pDesc, ResourcesHolder& pHolder)

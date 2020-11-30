@@ -3,8 +3,8 @@
 
 SimpleRenderer::SimpleRenderer():
 mCamera(glm::vec3(0.0f, 0.0f, 0.0f)),
-mTime(std::chrono::steady_clock::now()),
-envMap(NULL)
+envMap(NULL),
+mTime(std::chrono::steady_clock::now())
 {
   EventDispatcher* dispatcher = EventDispatcher::Get();
   dispatcher->AddEventListener("MainCamera", &mCamera);
@@ -12,10 +12,23 @@ envMap(NULL)
 
 SimpleRenderer::~SimpleRenderer()
 {
-  for(unsigned i = 0; i < mItems.size(); ++i)
+  for(unsigned i = 0; i < mRenderables.size(); ++i)
   {
-    delete mItems[i];
+    delete mRenderables[i];
   }
+}
+void SimpleRenderer::InitS(rx::ResourcesHolderPtr pResourcesHolder)
+{
+  auto geoHandle = std::make_shared<SSPlaneData>();
+  auto material = pResourcesHolder->FindMaterial("waiting_screen");
+  auto shader = pResourcesHolder->FindShader("waiting_shader");
+  mCustomShader = *shader;
+  mCustomShader->LinkProgram();
+  rx::MaterialPtr materialPtr = *material;
+  auto matTexHandle = std::make_shared<MaterialTextureHandle>(materialPtr);
+  
+  Renderable* iRenderable = new Renderable(geoHandle, matTexHandle, mCustomShader, materialPtr);
+  mRenderables.push_back(iRenderable);
 }
 
 void SimpleRenderer::Init(rx::SceneGraphPtr pSceneGraph,
@@ -50,14 +63,13 @@ void SimpleRenderer::Init(rx::SceneGraphPtr pSceneGraph,
         rx::MaterialPtr materialPtr = model->GetMaterialForMesh(i);
         assert(meshPtr != NULL && materialPtr != NULL);
         auto geoHandle = std::make_shared<GeometryHandle>(meshPtr);
+        mGeoHandles[meshPtr->GetName()] = geoHandle;
+        
         auto matTexHandle = std::make_shared<MaterialTextureHandle>(materialPtr);
+        mMatTextureHandles[materialPtr->GetName()] = matTexHandle;
         
         Renderable* iRenderable = new Renderable(geoHandle, matTexHandle, mCustomShader, materialPtr);
         mRenderables.push_back(iRenderable);
-/*        DrawableItem* item = new DrawableItem(meshPtr, materialPtr, mCustomShader);
-        item->PrepareBuffer();      
-        mItems.push_back(item);
-        mMaterials.push_back(materialPtr);  */     
       }
     }
     
@@ -138,15 +150,7 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
-  
-//   for (unsigned int i = 0; i < mItems.size(); ++i)
-//   {
-//     rx::MaterialPtr materialPtr = mMaterials[i];
-//     glUseProgram(mCustomShader->GetProgram());
-//     mItems[i]->SetTransform(model);
-//     mItems[i]->Draw(view, projection, model, glm::vec3(0.0, -1.0, 0.0),
-//       mCamera.GetPosition());
-//   }
+
   for (unsigned int i = 0; i < mRenderables.size(); ++i)
   {
     glUseProgram(mCustomShader->GetProgram());

@@ -45,17 +45,20 @@ int main()
   //Load resources
   rx::ResourcesHolderPtr holder = std::make_shared<rx::ResourcesHolder>();
   rx::ResourcesLoader loader;
-  loader.LoadDescription("/home/bertrand/Work/GLRenderer/test/data/resources_scenegraphtest.json", *holder);
+  loader.LoadDescription("/home/bertrand/Work/GLRenderer/test/data/resources_waiting.json", *holder);
   loader.LoadResources(*holder);
   
+  while(loader.GetStatus() != rx::ResourcesLoader::Loaded);
+  
   //Load scene graph
-  rx::SceneGraphLoader graphLoder;
+  rx::SceneGraphLoader graphLoader;
   rx::SceneGraphPtr graph = std::make_shared<rx::SceneGraph>();
   
-  graphLoder.Load("/home/bertrand/Work/GLRenderer/test/data/scenegraph.json", *graph, *holder);
+  graphLoader.Load("/home/bertrand/Work/GLRenderer/test/data/scenegraph.json", *graph, *holder);
 
   SimpleRenderer renderer;
-  renderer.Init(graph, holder);
+  //renderer.Init(graph, holder);
+  renderer.InitS(holder);
   
   while (glfwWindowShouldClose(window) == false)
   {

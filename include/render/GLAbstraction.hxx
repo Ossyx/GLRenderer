@@ -44,12 +44,4 @@ struct GBufferData
   unsigned int mRT4;
 };
 
-struct SSPlaneData
-{
-  ArrayBuffer mVertex;
-  ArrayBuffer mIndex;
-  VertexArray mVArray;
-  void PrepareScreenSpacePlane(unsigned int pVertexLocation);
-};
-
 #endif

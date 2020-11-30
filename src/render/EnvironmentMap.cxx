@@ -36,11 +36,11 @@ void EnvironmentMap::PrepareTextureFromMaterial()
   
   for (unsigned int i = 0; i < 6; i++)
   {
-    if (mMaterial->HasFloatTexData(uniformName[i]))
+    if (mMaterial->HasTextureData<float>(uniformName[i]))
     {
       rxLogWarning("Loading CubeMap channel " << i );
-      rx::Material::FloatTexture const& tex = mMaterial->GetFloatTexture(uniformName[i]);
-      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F, tex.m_width, tex.m_height, 0, GL_RGB, GL_FLOAT, tex.m_data);
+      rx::Material::FloatTexture const& tex = mMaterial->GetTextureData<float>(uniformName[i]);
+      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F, tex->m_width, tex->m_height, 0, GL_RGB, GL_FLOAT, tex->m_data);
     }
     else
     {

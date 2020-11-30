@@ -8,6 +8,7 @@ class GeometryHandle
 {
 public:
   
+  GeometryHandle();
   GeometryHandle(rx::MeshPtr pMesh);
   ~GeometryHandle();
   
@@ -31,5 +32,12 @@ public:
 };
 
 using GeometryHandlePtr = std::shared_ptr<GeometryHandle>;
+
+class SSPlaneData : public GeometryHandle
+{
+public:
+  SSPlaneData();
+  void PrepareScreenSpacePlane();
+};
 
 #endif

@@ -35,23 +35,3 @@ void VertexArray::BindBufferToLocation(ArrayBuffer const& pBuffer, GLuint pLocat
   glBindBuffer(pBuffer.mType, pBuffer.mId);
   glVertexAttribPointer(pLocation, pSize, pType, pNormalized, pStride, pPointer);
 }
-
-void SSPlaneData::PrepareScreenSpacePlane(unsigned int pVertexLocation)
-{
-  const float vertex_buffer_data[] =
-  {
-    -1.0f,  -1.0f,  0.0f,
-    1.0f,  -1.0f,  0.0f,
-    -1.0f,  1.0f,  0.0f,
-    1.0f,  1.0f,  0.0f
-  };
-
-  const unsigned int index_buffer[] = {0, 1, 2, 1, 3, 2};
-
-  mVertex.Build(GL_ARRAY_BUFFER, 4*3*sizeof(float), vertex_buffer_data);
-  mIndex.Build(GL_ELEMENT_ARRAY_BUFFER, 2*3*sizeof(unsigned int), index_buffer);
-  
-  mVArray.Build();
-  mVArray.Bind();
-  mVArray.BindBufferToLocation(mVertex, pVertexLocation, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-}

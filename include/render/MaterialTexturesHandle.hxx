@@ -10,9 +10,10 @@
 class MaterialTextureHandle
 {
 public:
-  MaterialTextureHandle(rx::MaterialPtr pMaterial);
+  MaterialTextureHandle();
+  MaterialTextureHandle(rx::MaterialPtr pMaterial);  
   ~MaterialTextureHandle();
-  
+
   struct GLTexConfig
   {
     GLenum internalFormat;
@@ -32,7 +33,7 @@ public:
 private:
   
   template <typename T>
-  void GenerateTexture(T const& pTex, GLenum pType, std::string const& pUniform);
+  void GenerateTexture(T pTex, GLenum pType, std::string const& pUniform);
   
   TextureIdMap mTexturedIds;
 };

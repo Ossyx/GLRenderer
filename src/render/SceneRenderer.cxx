@@ -37,9 +37,9 @@ m_terrainGUI(p_window)
   
   rx::MaterialPtr terrainMaterial = std::make_shared<rx::Material>();
   terrainMaterial->SetName("CubeMaterial");
-  terrainMaterial->SetData("Ka", glm::vec3(0.2,0.0,0.0));
-  terrainMaterial->SetData("Ks", glm::vec3(1.0,0.0,0.0));
-  terrainMaterial->SetData("Kd", glm::vec3(1.0,0.0,0.0));
+  terrainMaterial->Set("Ka", glm::vec3(0.2,0.0,0.0));
+  terrainMaterial->Set("Ks", glm::vec3(1.0,0.0,0.0));
+  terrainMaterial->Set("Kd", glm::vec3(1.0,0.0,0.0));
   terrainMaterial->SetUniformData("ambient_color", "Ka");
   terrainMaterial->SetUniformData("specular_color", "Ks");
   terrainMaterial->SetUniformData("diffuse_color", "Kd");
