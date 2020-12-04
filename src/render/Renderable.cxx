@@ -45,63 +45,91 @@ Renderable::~Renderable()
 {
 }
 
-void Renderable::Draw(const glm::mat4& p_view, const glm::mat4& p_projection, const glm::mat4& p_model)
+void Renderable::SetUniforms(rx::GLSLTypeStore const& pParameters)
 {
-  unsigned int modelLoc = mShader->GetUniformLocation("Model");
-  unsigned int viewLoc = mShader->GetUniformLocation("View");
-  unsigned int projection = mShader->GetUniformLocation("Projection");
-  
-  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(p_model));
-  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(p_view));
-  glUniformMatrix4fv(projection, 1, GL_FALSE, glm::value_ptr(p_projection));
-
-  //Set up the uniforms from material that are not textures
-  Shader::UniformMap const& shaderUniforms = mShader->GetUniformMap();
-  Shader::UniformMap::const_iterator itUniformMat = shaderUniforms.begin();
-  for (; itUniformMat != shaderUniforms.end(); ++itUniformMat)
+  for ( auto& uniformMat : mShader->GetUniformMap())
   {
-    std::string uniformName = itUniformMat->first;
-    Shader::UniformInfo info = itUniformMat->second;
+      //Handle various uniform types
+      GLenum type = uniformMat.second.first;
+      switch ( type )
+      {
+        case GL_FLOAT:
+          if (pParameters.Has<float>(uniformMat.first))
+          {
+            float unif = pParameters.Get<float>(uniformMat.first);
+            mShader->SetUniform(uniformMat.first, unif);
+          }
+        break;
+        case GL_FLOAT_VEC3:        
+          if (pParameters.Has<glm::vec3>(uniformMat.first))
+          {
+            glm::vec3 univec3f = pParameters.Get<glm::vec3>(uniformMat.first);
+            mShader->SetUniform(uniformMat.first, univec3f);
+          }
+        break;
+      }
+  }
+}
+
+void Renderable::SetMaterialUniforms()
+{
+  for ( auto& uniformMat : mShader->GetUniformMap())
+  {
     std::string attributeKey;
-    bool exists = mMaterial->GetUniformData(itUniformMat->first, attributeKey);
+    bool exists = mMaterial->GetUniformData(uniformMat.first, attributeKey);
     if (exists == true)
     {
       //Handle various uniform types
-      GLenum type = info.first;
-      if (type == GL_FLOAT)
+      GLenum type = uniformMat.second.first;
+      switch ( type )
       {
-        
-        if (mMaterial->Has<float>(attributeKey))
-        {
-          float unif = mMaterial->Get<float>(attributeKey);
-          unsigned int loc = mShader->GetUniformLocation(uniformName);
-          glUniform1f(loc, unif);
-        }
-
-      }
-      else if (type == GL_FLOAT_VEC3)
-      {
-        
-        if (mMaterial->Has<glm::vec3>(attributeKey))
-        {
-          glm::vec3 univec3f = mMaterial->Get<glm::vec3>(attributeKey);
-          unsigned int loc = mShader->GetUniformLocation(uniformName);
-          glUniform3fv(loc, 1,  glm::value_ptr(univec3f));
-        }
+        case GL_FLOAT:
+          if (mMaterial->Has<float>(attributeKey))
+          {
+            float unif = mMaterial->Get<float>(attributeKey);
+            mShader->SetUniform(attributeKey, unif);
+          }
+        break;
+        case GL_FLOAT_VEC3:        
+          if (mMaterial->Has<glm::vec3>(attributeKey))
+          {
+            glm::vec3 univec3f = mMaterial->Get<glm::vec3>(attributeKey);
+            mShader->SetUniform(attributeKey, univec3f);
+          }
+        break;
       }
     }
   }
+}
 
-  //Bind our textures
-  unsigned int idTex = 0;
-  for (auto texInfo : mMaterialTextureHandle->TextureIds() )
+void Renderable::SetTextureUniforms(TextureParameter const& pTexParameters)
+{
+  for (auto texInfo : pTexParameters )
   {    
-    unsigned int location = mShader->GetUniformLocation(texInfo.first);
-    glActiveTexture(GL_TEXTURE0 + idTex);
+    glActiveTexture(GL_TEXTURE0 + mCurrentIdTexture);
     glBindTexture(GL_TEXTURE_2D, texInfo.second);
-    glUniform1i(location, /*GL_TEXTURE*/ idTex);
-    ++idTex;
+    mShader->SetUniform(texInfo.first, mCurrentIdTexture);
+    ++mCurrentIdTexture;
   }
+}
+
+void Renderable::Draw(rx::GLSLTypeStore const& pParameters, TextureParameter const& pTexParameters)
+{
+  glUseProgram(mShader->GetProgram());
+  mShader->SetUniform("View", pParameters.Get<glm::mat4>("View"));
+  mShader->SetUniform("Projection", pParameters.Get<glm::mat4>("Projection"));
+  mShader->SetUniform("Model", pParameters.Get<glm::mat4>("Model"));
+
+  mCurrentIdTexture = 0;
+  if( mMaterial != nullptr && mMaterialTextureHandle != nullptr)
+  {
+    //Set up the uniforms from material that are not textures
+    SetMaterialUniforms();
+    //Bind our textures
+    SetTextureUniforms(mMaterialTextureHandle->TextureIds());
+  }
+  
+  SetTextureUniforms(pTexParameters);
   
   mVertexArray.Bind();
   mGeometryHandle->mIndex.Bind();

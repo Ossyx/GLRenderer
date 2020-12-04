@@ -12,9 +12,25 @@
 
 void error_callback(int error, const char* description);
 
-int main()
+int main(int argc, char** argv)
 {
+  std::filesystem::path resourcePath;
+  std::filesystem::path sceneGraphPath;
+  
+  if(argc >= 3)
+  {
+    resourcePath = argv[1];
+    sceneGraphPath = argv[2];
+  }
+  else
+  {
+    rxLogError("No resource and scengraph provided. Exiting.");
+    return 0;
+  }
+  
   rxLogDebug(" Simple renderer test ");
+  rxLogInfo("Using resource "<< resourcePath);
+  rxLogInfo("Using scene graph "<< sceneGraphPath);
 
   if (glfwInit() == false)
   {
@@ -45,7 +61,7 @@ int main()
   //Load resources
   rx::ResourcesHolderPtr holder = std::make_shared<rx::ResourcesHolder>();
   rx::ResourcesLoader loader;
-  loader.LoadDescription("/home/bertrand/Work/GLRenderer/test/data/resources_waiting.json", *holder);
+  loader.LoadDescription(resourcePath, *holder);
   loader.LoadResources(*holder);
   
   while(loader.GetStatus() != rx::ResourcesLoader::Loaded);
@@ -54,15 +70,17 @@ int main()
   rx::SceneGraphLoader graphLoader;
   rx::SceneGraphPtr graph = std::make_shared<rx::SceneGraph>();
   
-  graphLoader.Load("/home/bertrand/Work/GLRenderer/test/data/scenegraph.json", *graph, *holder);
+  graphLoader.Load(sceneGraphPath, *graph, *holder);
 
   SimpleRenderer renderer;
-  //renderer.Init(graph, holder);
+  renderer.InitFbo();
   renderer.InitS(holder);
+  renderer.InitPostprocess(holder);
+  renderer.Init(graph, holder);
   
   while (glfwWindowShouldClose(window) == false)
   {
-    renderer.Render(window);
+    renderer.RenderToFbo(window);
   }
   return 0;
 }

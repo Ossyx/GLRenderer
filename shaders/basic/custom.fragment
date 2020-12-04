@@ -6,11 +6,13 @@ in vec3 ipos;
 
 uniform sampler2D map_diffuse;
 
+out vec4 outColor;
+
 void main()
 {
   mat3 tbnMat = mat3(itangent, ibitangent, inormal);
   vec3 finalNormal = inormal;
   vec4 albedo = texture2D(map_diffuse, iuvcoords);
 
-  gl_FragColor = albedo;
+  outColor = albedo;
 }

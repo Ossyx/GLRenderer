@@ -7,6 +7,8 @@
 #include <cassert>
 #include <vector>
 
+#include <glm/gtc/type_ptr.hpp>
+
 Shader::Shader():
 m_vertexShader(-1),
 m_fragmentShader(-1),
@@ -209,3 +211,40 @@ bool Shader::GetLinked()
 {
   return m_linked;
 }
+
+void Shader::SetUniform(std::string const& pName, int pValue)
+{
+  unsigned int location = GetUniformLocation(pName);
+  glUniform1i(location, pValue);
+}
+
+void Shader::SetUniform(std::string const& pName, unsigned int pValue)
+{
+  unsigned int location = GetUniformLocation(pName);
+  glUniform1ui(location, pValue);
+}
+
+void Shader::SetUniform(std::string const& pName, float pValue)
+{
+  unsigned int location = GetUniformLocation(pName);
+  glUniform1f(location, pValue);
+}
+
+void Shader::SetUniform(std::string const& pName, glm::vec2 const& pValue)
+{
+  unsigned int loc = GetUniformLocation(pName);
+  glUniform2fv(loc, 1,  glm::value_ptr(pValue));
+}
+
+void Shader::SetUniform(std::string const& pName, glm::vec3 const& pValue)
+{
+  unsigned int loc = GetUniformLocation(pName);
+  glUniform3fv(loc, 1,  glm::value_ptr(pValue));
+}
+
+void Shader::SetUniform(std::string const& pName, glm::mat4 const& pValue)
+{
+  unsigned int loc = GetUniformLocation(pName);
+  glUniformMatrix4fv(loc, 1, GL_FALSE,  glm::value_ptr(pValue));
+}
+

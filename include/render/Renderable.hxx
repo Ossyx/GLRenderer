@@ -10,21 +10,26 @@
 class Renderable
 {
 public:
+  using TextureParameter = std::unordered_map<std::string, unsigned int>;
+  
   Renderable(GeometryHandlePtr pGeoHandle, MaterialTextureHandlePtr pMatTexHandle,
              ShaderPtr pShader, rx::MaterialPtr pMaterial);
-  ~Renderable();
+  virtual ~Renderable();
   
-  //using ShaderParameter
+  void SetMaterialUniforms();
+  void SetUniforms(rx::GLSLTypeStore const& pParameters);
+  void SetTextureUniforms(TextureParameter const& pTexParameters);
   
-  virtual void Draw(glm::mat4 const& p_view,
-    glm::mat4 const& p_projection, glm::mat4 const& p_model);
+  virtual void Draw(rx::GLSLTypeStore const& pParameters, TextureParameter const& pTexParameters);
 
-private:
+protected:
   
   VertexArray mVertexArray;
   GeometryHandlePtr mGeometryHandle;
   MaterialTextureHandlePtr mMaterialTextureHandle;
   ShaderPtr mShader;
   rx::MaterialPtr mMaterial;
+  
+  int mCurrentIdTexture;
 };
 #endif

@@ -29,6 +29,24 @@
         "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/cubemap.fragment"
       },
       "id" : "cubemap_shader"
+    },
+    {
+      "name" : "screenspaceplane_shader",
+      "type" : "SHADERSTACK",
+      "shader_source" : {
+        "vertex_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/screenspaceplane.vertex",
+        "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/screenspaceplane.fragment"
+      },
+      "id" : "screenspaceplane_shader"
+    },
+    {
+      "name" : "tonemapping_shader",
+      "type" : "SHADERSTACK",
+      "shader_source" : {
+        "vertex_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/tonemapping.vertex",
+        "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/tonemapping.fragment"
+      },
+      "id" : "tonemapping_shader"
     }
   ]
 }

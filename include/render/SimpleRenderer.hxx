@@ -7,6 +7,7 @@
 #include "DrawableItem.hxx"
 #include "EnvironmentMap.hxx"
 #include "Renderable.hxx"
+#include "Postprocess.hxx"
 
 #include "Camera.hxx"
 #include <chrono>
@@ -19,8 +20,11 @@ public:
   ~SimpleRenderer();
   
   void InitS(rx::ResourcesHolderPtr pResourcesHolder);
+  void InitPostprocess(rx::ResourcesHolderPtr pResourcesHolder);
+  void InitFbo();
   void Init(rx::SceneGraphPtr pSceneGraph, rx::ResourcesHolderPtr pResourcesHolder);
   void Render(GLFWwindow* pWindow);
+  void RenderToFbo(GLFWwindow* pWindow);
   
 private:
   
@@ -41,7 +45,12 @@ private:
   std::vector<Renderable*> mRenderables;
   
   EnvironmentMap* envMap;
+  Postprocess* mPostProcess;
   std::chrono::steady_clock::time_point mTime;
+  
+  Renderable* mSSFinalRender;  
+  unsigned int mRenderTarget;
+  unsigned int mFbo;
 };
 
 #endif

@@ -1,0 +1,50 @@
+in vec3 ipos;
+out vec4 frag_colour;
+
+uniform sampler2D input_one;
+
+vec3 reinhard_extended(vec3 v, float max_white)
+{
+    vec3 numerator = v * (1.0f + (v / vec3(max_white * max_white)));
+    return numerator / (1.0f + v);
+}
+
+vec3 aces_approx(vec3 v)
+{
+    v *= 0.6f;
+    float a = 2.51f;
+    float b = 0.03f;
+    float c = 2.43f;
+    float d = 0.59f;
+    float e = 0.14f;
+    return clamp((v*(a*v+b))/(v*(c*v+d)+e), 0.0f, 1.0f);
+}
+
+vec3 exposition_gamma(vec3 v, float e, float g)
+{
+  vec3 value = v * ( e/(1. + v / e));
+  value = pow(v, vec3(1. / g));
+  return value;
+}
+
+void main()
+{
+  vec2 uvcoord = (ipos.xy + vec2(1.0, 1.0)) / 2.0;
+  //frag_colour = texture(input_one, uvcoord);
+  vec3 value = texture(input_one, uvcoord).xyz;
+  /*float A = 0.8;
+  float G = 0.01;
+  
+  float r = A * pow(value.x, G);
+  float g = A * pow(value.y, G);
+  float b = A * pow(value.z, G);
+  vec3 v = vec3(r, g, b);*/
+  
+  //vec3 finalColor = exposition_gamma(value, 1.0, 0.0001);
+  //vec3 finalColor = aces_approx(value);
+  //vec3 finalColor = reinhard_extended(value, 300.0);
+  //vec3 finalColor = value / vec3(600000.0);
+  //vec3 finalColor = value / (value + vec3(1.0));
+  vec3 finalColor = value;
+  frag_colour = vec4(finalColor, 1.0);
+}

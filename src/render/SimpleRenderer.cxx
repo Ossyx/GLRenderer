@@ -17,18 +17,59 @@ SimpleRenderer::~SimpleRenderer()
     delete mRenderables[i];
   }
 }
+
+void SimpleRenderer::InitFbo()
+{
+  glGenFramebuffers(1, &mFbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
+  
+  glGenTextures(1, &mRenderTarget);
+  glBindTexture(GL_TEXTURE_2D, mRenderTarget);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 1920, 1080, 0, GL_RGBA, GL_FLOAT, 0);
+  
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mRenderTarget, 0);
+  
+  unsigned int depthBuffer;
+  glGenTextures(1, &depthBuffer);
+  glBindTexture(GL_TEXTURE_2D, depthBuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, 1920, 1080,
+    0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthBuffer, 0);
+  
+  GLenum completeness = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+
+  if (completeness != GL_FRAMEBUFFER_COMPLETE)
+  {
+    rxLogError("Simple renderer frambuffer incomplete! ");
+    assert(false);
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void SimpleRenderer::InitS(rx::ResourcesHolderPtr pResourcesHolder)
 {
   auto geoHandle = std::make_shared<SSPlaneData>();
-  auto material = pResourcesHolder->FindMaterial("waiting_screen");
-  auto shader = pResourcesHolder->FindShader("waiting_shader");
-  mCustomShader = *shader;
-  mCustomShader->LinkProgram();
-  rx::MaterialPtr materialPtr = *material;
-  auto matTexHandle = std::make_shared<MaterialTextureHandle>(materialPtr);
+  auto shader = pResourcesHolder->FindShader("screenspaceplane_shader");
+  (*shader)->LinkProgram();
   
-  Renderable* iRenderable = new Renderable(geoHandle, matTexHandle, mCustomShader, materialPtr);
-  mRenderables.push_back(iRenderable);
+  mSSFinalRender = new Renderable(geoHandle, nullptr, *shader, nullptr);
+}
+
+void SimpleRenderer::InitPostprocess(rx::ResourcesHolderPtr pResourcesHolder)
+{
+  auto geoHandle = std::make_shared<SSPlaneData>();
+  auto shader = pResourcesHolder->FindShader("tonemapping_shader");
+  (*shader)->LinkProgram();
+  
+  mPostProcess = new Postprocess(geoHandle, *shader, GL_UNSIGNED_BYTE, 1920, 1080);
 }
 
 void SimpleRenderer::Init(rx::SceneGraphPtr pSceneGraph,
@@ -105,6 +146,7 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   
   int width, height;
   glfwGetFramebufferSize(pWindow, &width, &height);
+
   glm::mat4 projection = glm::perspective(glm::radians(60.0f),
     (float)width / (float)height, 0.001f, 1000.f);
 
@@ -150,17 +192,48 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
+  
+  rx::GLSLTypeStore parameters;
+  parameters.Set("Model", model);
+  parameters.Set("View", view);
+  parameters.Set("Projection", projection);
 
   for (unsigned int i = 0; i < mRenderables.size(); ++i)
-  {
-    glUseProgram(mCustomShader->GetProgram());
-    mRenderables[i]->Draw(view, projection, model);
+  {    
+    mRenderables[i]->Draw(parameters, {});
   }
   
   mTime = newTime;
+  //glfwSwapBuffers(pWindow);
+  //glfwPollEvents();
+}
+
+void SimpleRenderer::RenderToFbo(GLFWwindow* pWindow)
+{
+  glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
+  GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
+  glDrawBuffers(1, buffers);
+  
+  Render(pWindow);
+  
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  
+  glDisable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  
+  int width, height;
+  glfwGetFramebufferSize(pWindow, &width, &height);
+  glViewport(0, 0, width, height);
+  
+  Postprocess::TextureParameter texParam;
+  texParam["input_one"] = mRenderTarget;
+  rx::GLSLTypeStore param;  
+  mPostProcess->Execute(texParam, param);
   glfwSwapBuffers(pWindow);
   glfwPollEvents();
 }
+
 
 
 

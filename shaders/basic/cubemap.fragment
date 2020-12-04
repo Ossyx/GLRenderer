@@ -3,9 +3,10 @@ in vec3 iuvcoords;
 
 uniform samplerCube cubeMap;
 
+
 void main()
 { 
   vec4 tex = texture(cubeMap, iuvcoords);
-  vec3 v = tex.xyz / 30000;
-  FragColor = vec4(v, 1.0);
+  //vec3 v = tex.xyz / 30000;
+  FragColor = vec4(tex.xyz, 1.0);
 }

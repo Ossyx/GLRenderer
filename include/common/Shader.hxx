@@ -8,6 +8,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "GLSLTypeStore.hxx"
+
 class Shader
 {
 public:
@@ -47,7 +49,12 @@ public:
   
   bool GetLinked();
   
-  void SetUniform(unsigned int pLocation, unsigned int pValue);
+  void SetUniform(std::string const& pName, int pValue);
+  void SetUniform(std::string const& pName, unsigned int pValue);
+  void SetUniform(std::string const& pName, float pValue);
+  void SetUniform(std::string const& pName, glm::vec2 const& pValue);
+  void SetUniform(std::string const& pName, glm::vec3 const& pValue);
+  void SetUniform(std::string const& pName, glm::mat4 const& pValue);
 
 private:
 

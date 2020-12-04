@@ -1,4 +1,5 @@
 {
+  "root" : 0,
   "nodes": [
     {
       "type" : "MATRIXTRANSFORM",

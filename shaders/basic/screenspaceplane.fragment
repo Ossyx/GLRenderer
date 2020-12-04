@@ -1,0 +1,11 @@
+in vec3 ipos;
+out vec4 frag_colour;
+
+uniform sampler2D input_one;
+
+
+void main()
+{
+  vec2 uvcoord = (ipos.xy + vec2(1.0, 1.0)) / 2.0;
+  frag_colour = texture(input_one, uvcoord);
+}
