@@ -65,7 +65,7 @@ private:
   //Disable copy
   SceneRenderer(SceneRenderer const& p_other);
 
-  void GenerateGBufferShader(rx::Mesh const& p_mesh, rx::Material* p_material);
+  void GenerateGBufferShader(rx::Mesh const& p_mesh, rx::MaterialPtr p_material);
 
   std::string GeneratePreprocessorDefine(unsigned int p_gBufferFlags);
 
@@ -81,12 +81,12 @@ private:
 
   std::vector<DrawableItem*> m_drawableItems;
 
-  typedef std::map<unsigned int, Shader> GBufferShaderMap;
+  typedef std::map<unsigned int, ShaderPtr> GBufferShaderMap;
   GBufferShaderMap m_gbufferShaders;
 
   UintMap m_shaderForMaterial;
 
-  std::vector<rx::Material*> m_materialPtrs;
+  std::vector<rx::MaterialPtr> m_materialPtrs;
 
   Camera m_mainCamera;
 
@@ -94,8 +94,8 @@ private:
 
   Shader m_shadowMapShader;
 
-  TerrainLOD m_terrain;
-  TerrainLOD m_water;
+  std::shared_ptr<TerrainLOD> m_terrain;
+  std::shared_ptr<TerrainLOD> m_water;
   rx::OceanSurface m_surf;
   unsigned int m_watersurfTex;
 

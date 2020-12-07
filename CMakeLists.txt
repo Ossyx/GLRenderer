@@ -75,7 +75,14 @@ add_library(Event SHARED
 add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/src/main.cxx
   ${CMAKE_SOURCE_DIR}/src/render/DrawableItem.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/EnvironmentMap.cxx
   ${CMAKE_SOURCE_DIR}/src/render/SceneRenderer.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/GeometryHandle.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/MaterialTexturesHandle.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Renderable.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/GLAbstraction.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Postprocess.cxx
   ${CMAKE_SOURCE_DIR}/src/terrain/TerrainLOD.cxx
   ${CMAKE_SOURCE_DIR}/src/gui/TerrainGenGui.cxx
   ${CMAKE_SOURCE_DIR}/imgui/imgui.cpp
@@ -101,6 +108,17 @@ add_executable(sceneGraphLoaderTest
 add_executable(generateHeightmap
   ${CMAKE_SOURCE_DIR}/test/generateHeightmap.cxx
   ${CMAKE_SOURCE_DIR}/src/terrain/HeightmapGenerator.cxx)
+  
+add_executable(testSimpleRenderer
+  ${CMAKE_SOURCE_DIR}/test/simpleRendererTest.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/GLAbstraction.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/DrawableItem.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/GeometryHandle.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/MaterialTexturesHandle.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Renderable.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/EnvironmentMap.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/SimpleRenderer.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/Postprocess.cxx)
 
 
 target_compile_definitions(GLRenderer PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)
@@ -123,6 +141,7 @@ ${JsonCpp_LIBRARY}
 target_link_libraries(Scene
 Common
 Event
+Resource
 ${JsonCpp_LIBRARY}
 )
 
@@ -134,6 +153,17 @@ ${CMAKE_DL_LIBS}
 ${MESHLIB_LIBRARY}
 ${CImg_LIBRARIES}
 ${OCEANSURFACE_LIBRARY}
+Common
+Resource
+Scene
+Event)
+
+target_link_libraries(testSimpleRenderer
+${GLFW_LIBRARY}
+${Glad_LIBRARIES}
+${CMAKE_DL_LIBS}
+${MESHLIB_LIBRARY}
+${CImg_LIBRARIES}
 Common
 Resource
 Scene
@@ -158,6 +188,7 @@ Common
 target_link_libraries(sceneGraphLoaderTest
 Common
 Scene
+Resource
 )
 
 file(GLOB_RECURSE srcs

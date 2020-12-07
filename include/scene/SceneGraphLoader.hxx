@@ -8,28 +8,38 @@
 
 #include "SceneGraph.hxx"
 
+namespace rx
+{
+  
 class SceneGraphLoader
 {
 public:
   SceneGraphLoader();
   ~SceneGraphLoader();
   
-  void Load(std::filesystem::path const& pSceneGraphFile, SceneGraph& pSceneGraph);
-  void Load(Json::Value& pJsonDescription, SceneGraph& pSceneGraph);
+  void Load(std::filesystem::path const& pSceneGraphFile, SceneGraph& pSceneGraph,
+    ResourcesHolder& pHolder);
+  void Load(Json::Value& pJsonDescription, SceneGraph& pSceneGraph, 
+    ResourcesHolder& pHolder);
   void Serialize(std::filesystem::path const& pSceneGraphFile, SceneGraph& pSceneGraph);
   void Serialize(Json::Value& pJsonDescription, SceneGraph& pSceneGraph);
   
 private:
   
-  SceneGraph::ObjectNodePtr LoadObjectNode(Json::Value& pDescription);
+  SceneGraph::ObjectNodePtr LoadObjectNode(Json::Value& pDescription,
+    ResourcesHolder& pHolder);
   SceneGraph::MatrixTransformPtr LoadMatrixTransformNode(Json::Value& pDescription);
   SceneGraph::PositionAttitudeTransformPtr LoadPositionAttitudeNode(Json::Value& pDescription);
+  SceneGraph::EnvironmentMapPtr LoadEnvironmentMapNode(Json::Value& pDescription, 
+    ResourcesHolder& pHolder);
   
   void SerializeObjectNode(SceneGraph::ObjectNodePtr pNode,
     Json::Value& pDescription);
   void SerializeMatrixTransformNode(SceneGraph::MatrixTransformPtr pNode,
     Json::Value& pDescription);
   void SerializePositionAttitudeNode(SceneGraph::PositionAttitudeTransformPtr pNode,
+    Json::Value& pDescription);
+  void SerializeEnvironmentMapNode(SceneGraph::EnvironmentMapPtr pNode,
     Json::Value& pDescription);
   
   glm::mat4 ReadAsMat4(Json::Value& pData);
@@ -45,4 +55,6 @@ private:
   
   std::vector<unsigned int> ReadAsUIntArray(Json::Value& pData);
 };
+
+}
 #endif

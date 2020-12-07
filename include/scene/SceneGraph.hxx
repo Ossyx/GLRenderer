@@ -2,9 +2,14 @@
 #define SCENEGRAPH_HXX
 
 #include "Model.hxx"
+#include "ResourcesHolder.hxx"
+
 #include <glm/gtc/type_ptr.hpp>
 #include <list>
 
+namespace rx
+{
+  
 class NodeType
 {
 public:
@@ -13,6 +18,7 @@ public:
     Object,
     MatrixTransform,
     PositionAttitude,
+    EnvironmentMap,
     Unknown
   };
   
@@ -46,6 +52,8 @@ protected:
   std::list<NodePtr> mChildrens;
   NodeType mType;
 };
+
+using NodePtr = std::shared_ptr<SgNode>;
 
 class MatrixTransform : public SgNode
 {
@@ -85,16 +93,32 @@ private:
 class ObjectNode : public SgNode
 {
 public:
-  using ModelPtr = std::shared_ptr<rx::Model>;
   ObjectNode();
   ObjectNode(ModelPtr pModelRef);
   ~ObjectNode();
   
   ModelPtr ModelRef();
   void SetModelRef(ModelPtr pModelRef);
+  ShaderPtr ShaderRef();
+  void SetShaderRef(ShaderPtr pShaderRef);
   
 private:
   ModelPtr mModelRef;
+  ShaderPtr mShaderRef;
+};
+
+class EnvironmentMapNode : public SgNode
+{
+public:
+  EnvironmentMapNode();
+  EnvironmentMapNode(MaterialPtr pMaterial);
+  ~EnvironmentMapNode();
+  
+  void SetCubeMapMaterial(MaterialPtr pMaterial);
+  MaterialPtr GetCubeMapMaterial();
+  
+private:
+  MaterialPtr mCubeMapMaterial;
 };
 
 
@@ -107,6 +131,7 @@ public:
   using ObjectNodePtr = std::shared_ptr<ObjectNode>;
   using PositionAttitudeTransformPtr = std::shared_ptr<PositionAttitudeTransform>;
   using MatrixTransformPtr = std::shared_ptr<MatrixTransform>;
+  using EnvironmentMapPtr = std::shared_ptr<EnvironmentMapNode>;
   using NodeHashMap = std::unordered_map<unsigned int, NodePtr>;
   
   SceneGraph();
@@ -117,9 +142,15 @@ public:
   
   NodeHashMap& GetNodes();
   
+  void AssociateResources(ResourcesHolder const& pHolder);
+  
 private:
     
   NodeHashMap mNodes;
   NodePtr mRoot;
 };
+
+using SceneGraphPtr = std::shared_ptr<SceneGraph>;
+
+}
 #endif

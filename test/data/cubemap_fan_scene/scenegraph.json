@@ -1,4 +1,5 @@
 {
+  "root" : 0,
   "nodes": [
     {
       "type" : "MATRIXTRANSFORM",
@@ -17,16 +18,17 @@
       "attitude" : [1.0, 0.0, 0.0, 0.0]
     },
     {
-      "type" : "OBJECT",
+      "type" : "ENVIRONMENTMAP",
       "id" : 2,
-      "resource" : 0,
-      "children" : []
+      "children" : [],
+      "material" : "cubemap_c1"
     },
     {
       "type" : "OBJECT",
       "id" : 3,
-      "resource" : 1,
-      "children" : []
+      "children" : [],
+      "model" : "fan",
+      "shader": "fan_custom_shader"
     }
   ]
 }

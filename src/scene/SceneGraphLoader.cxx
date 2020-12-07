@@ -2,6 +2,9 @@
 #include <fstream>
 #include <glm/gtc/type_ptr.hpp>
 
+namespace rx
+{
+
 SceneGraphLoader::SceneGraphLoader()
 {
 }
@@ -10,7 +13,8 @@ SceneGraphLoader::~SceneGraphLoader()
 {
 }
 
-void SceneGraphLoader::Load(std::filesystem::path const& pSceneGraphFile, SceneGraph& pSceneGraph)
+void SceneGraphLoader::Load(std::filesystem::path const& pSceneGraphFile, SceneGraph& pSceneGraph,
+  ResourcesHolder& pHolder)
 {
   std::ifstream inputStreamJsonMap;
   inputStreamJsonMap.open(pSceneGraphFile);
@@ -31,12 +35,15 @@ void SceneGraphLoader::Load(std::filesystem::path const& pSceneGraphFile, SceneG
     assert(false);
   }
   
-  Load(root, pSceneGraph);
+  Load(root, pSceneGraph, pHolder);
 }
 
-void SceneGraphLoader::Load(Json::Value& pJsonDescription, SceneGraph& pSceneGraph)
+void SceneGraphLoader::Load(Json::Value& pJsonDescription, SceneGraph& pSceneGraph, 
+  ResourcesHolder& pHolder)
 {
   Json::Value& nodes = pJsonDescription["nodes"];
+  unsigned int rootId = pJsonDescription["root"].asInt();
+  
   Json::Value::iterator itNodes = nodes.begin();
   
   SceneGraph::NodeHashMap& nodesStorage = pSceneGraph.GetNodes();
@@ -52,13 +59,16 @@ void SceneGraphLoader::Load(Json::Value& pJsonDescription, SceneGraph& pSceneGra
     switch(type.get())
     {
       case NodeType::Object:
-        nodeRef = LoadObjectNode(nodeData);
+        nodeRef = LoadObjectNode(nodeData, pHolder);
         break;
       case NodeType::MatrixTransform:
         nodeRef = LoadMatrixTransformNode(nodeData);
         break;
       case NodeType::PositionAttitude:
         nodeRef = LoadPositionAttitudeNode(nodeData);
+        break;
+      case NodeType::EnvironmentMap:
+        nodeRef = LoadEnvironmentMapNode(nodeData, pHolder);
         break;
       case NodeType::Unknown:
         rxLogError("Unknown scene graph node type");
@@ -82,12 +92,42 @@ void SceneGraphLoader::Load(Json::Value& pJsonDescription, SceneGraph& pSceneGra
       nodeRef->AppendChild(nodesStorage[idChild->asInt()]);
     }
   }
+  
+  if( nodesStorage.find(rootId) != nodesStorage.end() )
+  {
+    pSceneGraph.SetRoot( nodesStorage[rootId] );
+  }
+  else
+  {
+    rxLogError("No node with id " << rootId << " for root.");
+    assert(false);
+  }
 }
 
-SceneGraph::ObjectNodePtr SceneGraphLoader::LoadObjectNode(Json::Value& pDescription)
+SceneGraph::ObjectNodePtr SceneGraphLoader::LoadObjectNode(Json::Value& pDescription, 
+  ResourcesHolder& pHolder)
 {
   rxLogInfo("Loading Object Node");
   SceneGraph::ObjectNodePtr node = std::make_shared<ObjectNode>();
+  std::string modelRefName = pDescription["model"].asString();
+  if( auto m = pHolder.FindModel( modelRefName ) )
+  {
+    node->SetModelRef( *m );
+  }
+  else
+  {
+    rxLogError( "No model named " << modelRefName );
+  }
+  
+  std::string shaderRefName = pDescription["shader"].asString();
+  if( auto s = pHolder.FindShader( shaderRefName ) )
+  {
+    node->SetShaderRef( *s );
+  }
+  else
+  {
+    rxLogError( "No shader named " << shaderRefName );
+  }
   return node;
 }
 
@@ -108,6 +148,23 @@ SceneGraphLoader::LoadPositionAttitudeNode(Json::Value& pDescription)
     std::make_shared<PositionAttitudeTransform>(
     ReadAsVec3(pDescription["position"]),
     ReadAsQuat(pDescription["attitude"]));
+  return node;
+}
+
+SceneGraph::EnvironmentMapPtr SceneGraphLoader::LoadEnvironmentMapNode(
+  Json::Value& pDescription, ResourcesHolder& pHolder)
+{
+  rxLogInfo("Loading EnvironmentMap Node");
+  SceneGraph::EnvironmentMapPtr node = std::make_shared<EnvironmentMapNode>();
+  std::string materialRefName = pDescription["material"].asString();
+  if( auto m = pHolder.FindMaterial( materialRefName ) )
+  {
+    node->SetCubeMapMaterial( *m );
+  }
+  else
+  {
+    rxLogError( "No material named " << materialRefName );
+  }
   return node;
 }
 
@@ -157,6 +214,10 @@ void SceneGraphLoader::Serialize(Json::Value& pJsonDescription, SceneGraph& pSce
         SerializePositionAttitudeNode(
           std::static_pointer_cast<PositionAttitudeTransform>(node), nodeJson);
         break;
+      case NodeType::EnvironmentMap:
+        SerializeEnvironmentMapNode(
+          std::static_pointer_cast<EnvironmentMapNode>(node), nodeJson);
+        break;
       case NodeType::Unknown:
         rxLogError("Unknown scene graph node type");
         assert(false);
@@ -184,7 +245,8 @@ void SceneGraphLoader::Serialize(Json::Value& pJsonDescription, SceneGraph& pSce
 void SceneGraphLoader::SerializeObjectNode(
   SceneGraph::ObjectNodePtr pNode, Json::Value& pDescription)
 {
-  pDescription["resource"] = Json::Value(0);
+  pDescription["model"] = pNode->ModelRef()->GetName();
+  pDescription["shader"] = pNode->ShaderRef()->GetName();
 }
 
 void SceneGraphLoader::SerializeMatrixTransformNode(
@@ -198,6 +260,12 @@ void SceneGraphLoader::SerializePositionAttitudeNode(
 {
   pDescription["position"] = Serialize(pNode->Position());
   pDescription["attitude"] = Serialize(pNode->Attitude());
+}
+
+void SceneGraphLoader::SerializeEnvironmentMapNode(
+  SceneGraph::EnvironmentMapPtr pNode, Json::Value& pDescription)
+{
+  pDescription["material"] = pNode->GetCubeMapMaterial()->GetName();
 }
 
 glm::mat4 SceneGraphLoader::ReadAsMat4(Json::Value& pData)
@@ -290,6 +358,8 @@ Json::Value SceneGraphLoader::Serialize(const std::vector<int>& pData)
     vec.append(pData[i]);
   }
   return vec;
+}
+
 }
 
 

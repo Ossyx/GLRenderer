@@ -7,6 +7,8 @@
 #include <cassert>
 #include <vector>
 
+#include <glm/gtc/type_ptr.hpp>
+
 Shader::Shader():
 m_vertexShader(-1),
 m_fragmentShader(-1),
@@ -14,7 +16,8 @@ m_verterShaderSrc(""),
 m_fragmentShaderSrc(""),
 m_program(-1),
 m_name(""),
-m_preprocessorConfig("")
+m_preprocessorConfig(""),
+m_linked(false)
 {
 }
 
@@ -25,7 +28,8 @@ m_verterShaderSrc(""),
 m_fragmentShaderSrc(""),
 m_program(-1),
 m_name(p_name),
-m_preprocessorConfig("")
+m_preprocessorConfig(""),
+m_linked(false)
 {
 }
 
@@ -86,7 +90,7 @@ unsigned int Shader::CompileShader(unsigned int p_shaderType, std::string const&
     glGetShaderInfoLog(shaderId, InfoLogLength, &InfoLogLength, rawLog);
     rxLogError(rawLog);
     delete [] rawLog;
-    return -1;
+    assert(false);
   }
   return shaderId;
 }
@@ -134,11 +138,31 @@ bool Shader::LinkProgram()
   }
   glAttachShader(m_program, m_fragmentShader);
   glLinkProgram(m_program);
+  
+  GLint isLinked = GL_FALSE;  
+  glGetProgramiv(m_program, GL_LINK_STATUS, &isLinked);  
+  if( isLinked == 0 )
+  {
+    rxLogError("Program for shader " << m_name << " did not linked.");
+    int InfoLogLength;
+    glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    char* rawLog = new char[InfoLogLength+1];
+    glGetProgramInfoLog(m_program, InfoLogLength, &InfoLogLength, rawLog);
+    rxLogError(rawLog);
+    assert(false);
+  }
 
   //Then retrieve the uniforms
+  GatherUniforms();
+  m_linked = true;
+  return true;
+}
+
+void Shader::GatherUniforms()
+{
+  rxLogInfo("Uniform list for shader "<< m_name);
   int activeUniforms = 0;
   glGetProgramInterfaceiv(m_program, GL_UNIFORM, GL_ACTIVE_RESOURCES, &activeUniforms);
-
   std::vector<GLchar> nameData(256);
   for (int uniformIdx = 0; uniformIdx < activeUniforms; ++uniformIdx)
   {
@@ -149,9 +173,13 @@ bool Shader::LinkProgram()
       &actualLength, &arraySize, &type, &nameData[0]);
     std::string name((char*)&nameData[0], actualLength);
     rxLogInfo("Found uniform "<< name <<" of type "<< type);
-    m_uniforms[name] = type;
+    m_uniforms[name] = UniformInfo(type, GetUniformLocation(name));
   }
-  return true;
+}
+
+std::string Shader::GetName() const
+{
+  return m_name;
 }
 
 unsigned int Shader::GetProgram() const
@@ -178,3 +206,45 @@ void Shader::SetPreprocessorConfig(std::string const& p_config)
 {
   m_preprocessorConfig = p_config;
 }
+
+bool Shader::GetLinked()
+{
+  return m_linked;
+}
+
+void Shader::SetUniform(std::string const& pName, int pValue)
+{
+  unsigned int location = GetUniformLocation(pName);
+  glUniform1i(location, pValue);
+}
+
+void Shader::SetUniform(std::string const& pName, unsigned int pValue)
+{
+  unsigned int location = GetUniformLocation(pName);
+  glUniform1ui(location, pValue);
+}
+
+void Shader::SetUniform(std::string const& pName, float pValue)
+{
+  unsigned int location = GetUniformLocation(pName);
+  glUniform1f(location, pValue);
+}
+
+void Shader::SetUniform(std::string const& pName, glm::vec2 const& pValue)
+{
+  unsigned int loc = GetUniformLocation(pName);
+  glUniform2fv(loc, 1,  glm::value_ptr(pValue));
+}
+
+void Shader::SetUniform(std::string const& pName, glm::vec3 const& pValue)
+{
+  unsigned int loc = GetUniformLocation(pName);
+  glUniform3fv(loc, 1,  glm::value_ptr(pValue));
+}
+
+void Shader::SetUniform(std::string const& pName, glm::mat4 const& pValue)
+{
+  unsigned int loc = GetUniformLocation(pName);
+  glUniformMatrix4fv(loc, 1, GL_FALSE,  glm::value_ptr(pValue));
+}
+

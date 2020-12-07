@@ -1,12 +1,21 @@
 #include "ResourcesLoader.hxx"
 #include <iostream>
 
-int main()
+int main(int argc, char** argv)
 {
-  ResourcesLoader loader;
-  ResourcesHolder holder;
-  loader.LoadDescription("/home/bertrand/Work/GLRenderer/test/data/resources_index.json", holder);
-  loader.LoadResources(holder);
+  if(argc >= 2)
+  {
+    std::string file(argv[1]);
+    rxLogInfo( "Loading file "<< file );
+    rx::ResourcesLoader loader;
+    rx::ResourcesHolder holder;
+    loader.LoadDescription(file, holder);
+    loader.LoadResources(holder);
+  }
+  else
+  {
+    rxLogError( "No resources file provided." );
+  }
 
   return 0;
 }

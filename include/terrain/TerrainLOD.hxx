@@ -43,13 +43,12 @@ struct QuadTreeNode
 class TerrainLOD : public DrawableItem
 {
 public:
-  TerrainLOD();
+  TerrainLOD(rx::MeshPtr pMesh, rx::MaterialPtr pMaterial, ShaderPtr pShader);
   virtual ~TerrainLOD();
 
   void PrepareBufferQuad(Camera const& p_cam);
 
-  virtual int Draw(Shader const& p_shader, rx::Material& p_material,
-    glm::mat4 const& p_view, glm::mat4 const& p_projection,
+  virtual void Draw(glm::mat4 const& p_view, glm::mat4 const& p_projection,
     glm::mat4 const& p_model, glm::vec3 const& p_light,
     glm::vec3 const& p_cameraPos);
 
@@ -60,8 +59,6 @@ public:
     glm::vec3 const& p_light, rx::OceanSurface const& p_surf, unsigned int p_waterSurfTex);
 
   void RecomputeTree(glm::vec3 const& p_cameraPosition);
-
-  void SetShader(Shader const& p_shader);
 
   void SetSize(float p_size);
 
@@ -99,8 +96,7 @@ private:
   float m_size;
 
   rx::Material* terrainMaterial;
-  Shader m_renderShader;
-
+  
   unsigned m_quadDataSSBO;
   unsigned m_quadColorSSBO;
   unsigned m_quadOuterTessSSBO;

@@ -1,0 +1,19 @@
+{
+  "resources": [
+    {
+      "name" : "waiting_screen",
+      "type" : "MATERIAL",
+      "material_file" : "/home/bertrand/Work/models/waiting/material.json",
+      "id" : "waiting_screen"
+    },
+    {
+      "name" : "waiting_shader",
+      "type" : "SHADERSTACK",
+      "shader_source" : {
+        "vertex_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/screenspaceplane.vertex",
+        "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/screenspaceplane.fragment"
+      },
+      "id" : "waiting_shader"
+    }
+  ]
+}

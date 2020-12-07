@@ -12,7 +12,7 @@ class Camera : public EventInterface
 {
 public:
 
-  Camera();
+  Camera(glm::vec3 p_position);
 
   ~Camera();
 

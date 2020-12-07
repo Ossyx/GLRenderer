@@ -4,6 +4,9 @@
 #include <string>
 #include <jsoncpp/json/value.h>
 
+namespace rx
+{
+  
 class ResourceType
 {
 public:
@@ -13,7 +16,8 @@ public:
     Texture,
     Mesh,
     Model,
-    ShaderStack
+    ShaderStack,
+    Material
   };
   
   ResourceType();
@@ -41,4 +45,7 @@ public:
   ResourceType mType;
   Json::Value mData;
 };
+
+}
+
 #endif

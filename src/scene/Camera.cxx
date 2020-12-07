@@ -4,20 +4,19 @@
 #include <iostream>
 #include <math.h>
 
-Camera::Camera():
-m_position(glm::vec3(0.0f, 12.8f, 0.0f)),
+Camera::Camera(glm::vec3 p_position):
+m_position(p_position),
 m_direction(glm::vec3(0.0f, 0.0f, 0.0f)),
 m_translationSpeed(0.0f),
 m_translationAcceleration(0.0f),
-m_azimuth(0),
+m_azimuth(0.0f),
 m_elevation(0),
 m_keyPressed(0),
 m_speedFactor(1.0),
 m_scaleFactor(1.0)
 {
   m_wireframe = false;
-
-  m_treeRecompute = true;;
+  m_treeRecompute = true;
 }
 
 Camera::~Camera()
@@ -139,32 +138,32 @@ void Camera::ReadDirectionFromKeys()
   bool keyPressed = false;
   if (m_keyPressed & eKeyD)
   {
-    m_direction += glm::vec3(1.0, 0.0, 0.0);
+    m_direction += glm::vec3(-1.0, 0.0, 0.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyA)
   {
-    m_direction += glm::vec3(-1.0, 0.0, 0.0);
+    m_direction += glm::vec3(1.0, 0.0, 0.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyW)
   {
-    m_direction += glm::vec3(0.0, 0.0, -1.0);
+    m_direction += glm::vec3(0.0, 0.0, 1.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyS)
   {
-    m_direction += glm::vec3(0.0, 0.0, 1.0);
+    m_direction += glm::vec3(0.0, 0.0, -1.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyQ)
   {
-    m_direction += glm::vec3(0.0, 1.0, 0.0);
+    m_direction += glm::vec3(0.0, -1.0, 0.0);
     keyPressed =  true;
   }
   if (m_keyPressed & eKeyZ)
   {
-    m_direction += glm::vec3(0.0, -1.0, 0.0);
+    m_direction += glm::vec3(0.0, 1.0, 0.0);
     keyPressed =  true;
   }
 

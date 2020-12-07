@@ -2,6 +2,9 @@
 #include "math.h"
 #include "MathTools.hxx"
 
+namespace rx
+{
+
 SgNode::SgNode():
 mId(0),
 mType(NodeType::Unknown)
@@ -133,14 +136,49 @@ ObjectNode::~ObjectNode()
 {
 }
 
-std::shared_ptr<rx::Model> ObjectNode::ModelRef()
+ModelPtr ObjectNode::ModelRef()
 {
   return mModelRef;
 }
 
-void ObjectNode::SetModelRef(std::shared_ptr<rx::Model> pModelRef)
+void ObjectNode::SetModelRef(ModelPtr pModelRef)
 {
   mModelRef = pModelRef;
+}
+
+ShaderPtr ObjectNode::ShaderRef()
+{
+  return mShaderRef;
+}
+
+void ObjectNode::SetShaderRef(ShaderPtr pShaderRef)
+{
+  mShaderRef = pShaderRef;
+}
+
+EnvironmentMapNode::EnvironmentMapNode():
+SgNode(NodeType::EnvironmentMap)
+{
+}
+
+EnvironmentMapNode::EnvironmentMapNode(MaterialPtr pMaterial):
+SgNode(NodeType::EnvironmentMap),
+mCubeMapMaterial(pMaterial)
+{
+}
+
+EnvironmentMapNode::~EnvironmentMapNode()
+{
+}
+
+void EnvironmentMapNode::SetCubeMapMaterial(MaterialPtr pMaterial)
+{
+  mCubeMapMaterial = pMaterial;
+}
+
+MaterialPtr EnvironmentMapNode::GetCubeMapMaterial()
+{
+  return mCubeMapMaterial;
 }
 
 SceneGraph::SceneGraph()
@@ -164,6 +202,19 @@ SceneGraph::NodePtr SceneGraph::GetRoot()
 SceneGraph::NodeHashMap& SceneGraph::GetNodes()
 {
   return mNodes;
+}
+
+void SceneGraph::AssociateResources(const ResourcesHolder& pHolder)
+{
+  auto itNode = mNodes.begin();
+  for(; itNode != mNodes.end(); ++itNode)
+  {
+    NodePtr node = (*itNode).second;
+    if( node->Type().get() == NodeType::Object )
+    {
+      ObjectNodePtr objetNode = std::static_pointer_cast<ObjectNode>(node);
+    }
+  }
 }
 
 NodeType::NodeType():
@@ -199,6 +250,10 @@ NodeType NodeType::FromString(const std::string& ptype)
   {
     return NodeType(NodeType::PositionAttitude);
   }
+  else if ( ptype == "ENVIRONMENTMAP" )
+  {
+    return NodeType(NodeType::EnvironmentMap);
+  }
   else
   {
     return NodeType(NodeType::Unknown);
@@ -215,6 +270,8 @@ std::string NodeType::ToString() const
       return "MATRIXTRANSFORM";
     case NodeType::PositionAttitude:
       return "POSITIONATTITUDE";
+    case NodeType::EnvironmentMap:
+      return "ENVIRONMENTMAP";
     case NodeType::Unknown:
       return "UNKNOWN";
     default:
@@ -225,6 +282,8 @@ std::string NodeType::ToString() const
 NodeType::NType NodeType::get() const
 {
   return mType;
+}
+
 }
 
 

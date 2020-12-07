@@ -4,6 +4,7 @@
 #include "Mesh.hxx"
 #include "Material.hxx"
 #include "Shader.hxx"
+#include "GLAbstraction.hxx"
 
 #include <unordered_map>
 #include <glm/mat4x4.hpp> // glm::mat4
@@ -14,15 +15,15 @@ public:
 
   DrawableItem();
 
-  ~DrawableItem();
+  DrawableItem(rx::MeshPtr pMesh, rx::MaterialPtr pMaterial, ShaderPtr pShader);
 
-  int PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_material,
-    Shader const& p_shader);
+  virtual ~DrawableItem();
+
+  void PrepareBuffer();
 
   void SetTransform(glm::mat4 const& p_transform);
 
-  virtual int Draw(Shader const& p_shader,
-    rx::Material& p_material, glm::mat4 const& p_view,
+  virtual void Draw(glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
 
@@ -31,9 +32,12 @@ public:
      glm::mat4 const& p_model);
 
 protected:
+  
+  virtual void PrepareBufferFromMesh();
+  
+  virtual void PrepareTextureFromMaterial();
 
-  void SetupUniformAndTextures(Shader const& p_shader,
-    rx::Material& p_material, glm::mat4 const& p_view,
+  void SetupUniformAndTextures(glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos);
 
@@ -44,19 +48,19 @@ protected:
   //Transformation matrix
   glm::mat4 m_transform;
 
-  unsigned int m_vertexBufferId;
+  ArrayBuffer mVertex;
 
-  unsigned int m_indexBufferId;
+  ArrayBuffer mIndex;
 
-  unsigned int m_vertexArrayId;
+  VertexArray mVertexArray;
 
-  unsigned int m_normalBufferId;
+  ArrayBuffer mNormal;
 
-  unsigned int m_tangentBufferId;
+  ArrayBuffer mTangent;
 
-  unsigned int m_bitangentBufferId;
+  ArrayBuffer mBitangent;
 
-  unsigned int m_uvBufferId;
+  ArrayBuffer mUV;
 
   unsigned int m_elementCount;
 
@@ -64,8 +68,12 @@ protected:
   IntIntMap m_textureIdsLocation;
 
   static std::unordered_map<std::string, IntIntMap> m_savedIdsAndLocations;
-
-  unsigned int m_textureId;
+  
+  rx::MeshPtr mMesh;
+  rx::MaterialPtr mMaterial;  
+  ShaderPtr mShader;
 };
+
+using DrawableItemPtr = std::shared_ptr<DrawableItem>;
 
 #endif

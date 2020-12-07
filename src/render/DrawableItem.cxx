@@ -15,6 +15,15 @@ DrawableItem::DrawableItem()
   m_transform = glm::mat4(1.0f);
 }
 
+DrawableItem::DrawableItem(rx::MeshPtr pMesh, rx::MaterialPtr pMaterial,
+  ShaderPtr pShader):
+  mMesh(pMesh),
+  mMaterial(pMaterial),
+  mShader(pShader)
+{
+  m_transform = glm::mat4(1.0f);
+}
+
 DrawableItem::~DrawableItem()
 {
 }
@@ -24,108 +33,87 @@ void DrawableItem::SetTransform(glm::mat4 const& p_transform)
   m_transform = p_transform;
 }
 
-int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_material,
-  Shader const& p_shader)
+void DrawableItem::PrepareBufferFromMesh()
 {
-  unsigned int vpos_location = p_shader.GetAttributeLocation("vPos");
-  unsigned int normal_location = p_shader.GetAttributeLocation("normal");
-  unsigned int uv_location = p_shader.GetAttributeLocation("uvcoords");
+  unsigned int vpos_location = mShader->GetAttributeLocation("vPos");
+  unsigned int normal_location = mShader->GetAttributeLocation("normal");
+  unsigned int uv_location = mShader->GetAttributeLocation("uvcoords");
 
   rxLogInfo("PrepareBuffer with ");
-  rxLogInfo("Triangle Count : "<< p_mesh.GetTriangleCount());
-  rxLogInfo("Vertex Count : "<< p_mesh.GetVertexCount());
-  glGenBuffers(1, &m_vertexBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-  glBufferData(GL_ARRAY_BUFFER, p_mesh.GetVertexCount()*3*sizeof(float),
-    p_mesh.GetVertices(), GL_STATIC_DRAW);
+  rxLogInfo("Triangle Count : "<< mMesh->GetTriangleCount());
+  rxLogInfo("Vertex Count : "<< mMesh->GetVertexCount());
+  
+  mVertex.Build(GL_ARRAY_BUFFER, mMesh->GetVertexCount()*3*sizeof(float),
+    mMesh->GetVertices());
 
-  glGenBuffers(1, &m_normalBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, m_normalBufferId);
-  glBufferData(GL_ARRAY_BUFFER, p_mesh.GetNormalCount()*3*sizeof(float),
-    p_mesh.GetNormals(), GL_STATIC_DRAW);
+  mNormal.Build(GL_ARRAY_BUFFER, mMesh->GetNormalCount()*3*sizeof(float),
+    mMesh->GetNormals());
 
-  if (p_mesh.HasTangents())
+  if (mMesh->HasTangents())
   {
-    glGenBuffers(1, &m_tangentBufferId);
-    glBindBuffer(GL_ARRAY_BUFFER, m_tangentBufferId);
-    glBufferData(GL_ARRAY_BUFFER, p_mesh.GetTangentCount()*3*sizeof(float),
-    p_mesh.GetTangents(), GL_STATIC_DRAW);
+    mTangent.Build(GL_ARRAY_BUFFER, mMesh->GetTangentCount()*3*sizeof(float),
+      mMesh->GetTangents());
   }
 
-  if (p_mesh.HasBitangents())
+  if (mMesh->HasBitangents())
   {
-    glGenBuffers(1, &m_bitangentBufferId);
-    glBindBuffer(GL_ARRAY_BUFFER, m_bitangentBufferId);
-    glBufferData(GL_ARRAY_BUFFER, p_mesh.GetBitangentCount()*3*sizeof(float),
-    p_mesh.GetBitangents(), GL_STATIC_DRAW);
+    mBitangent.Build(GL_ARRAY_BUFFER, mMesh->GetBitangentCount()*3*sizeof(float),
+      mMesh->GetBitangents());
   }
 
-  glGenBuffers(1, &m_uvBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, m_uvBufferId);
-  glBufferData(GL_ARRAY_BUFFER, p_mesh.GetUVCoordsCount()*2*sizeof(float),
-    p_mesh.GetUVCoords(), GL_STATIC_DRAW);
+  mUV.Build(GL_ARRAY_BUFFER, mMesh->GetUVCoordsCount()*2*sizeof(float),
+    mMesh->GetUVCoords());
+  
+  mIndex.Build(GL_ELEMENT_ARRAY_BUFFER, mMesh->GetTriangleCount()*3*sizeof(unsigned int),
+    mMesh->GetTrianglesIndex());
+  
+  mVertexArray.Build();
+  mVertexArray.Bind();  
+  mVertexArray.BindBufferToLocation(mVertex, vpos_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+  mVertexArray.BindBufferToLocation(mNormal, normal_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-  glGenBuffers(1, &m_indexBufferId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, p_mesh.GetTriangleCount()*3*sizeof(unsigned int),
-    p_mesh.GetTrianglesIndex(), GL_STATIC_DRAW);
-
-  glGenVertexArrays(1, &m_vertexArrayId);
-  glBindVertexArray(m_vertexArrayId);
-
-  glEnableVertexAttribArray(vpos_location);
-  glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-  glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-  glEnableVertexAttribArray(normal_location);
-  glBindBuffer(GL_ARRAY_BUFFER, m_normalBufferId);
-  glVertexAttribPointer(normal_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-  if (p_mesh.HasTangents())
+  if (mMesh->HasTangents())
   {
-    unsigned int tangent_location = p_shader.GetAttributeLocation("tangent");
-    glEnableVertexAttribArray(tangent_location);
-    glBindBuffer(GL_ARRAY_BUFFER, m_tangentBufferId);
-    glVertexAttribPointer(tangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    unsigned int tangent_location = mShader->GetAttributeLocation("tangent");
+    mVertexArray.BindBufferToLocation(mTangent, tangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
   }
 
-  if (p_mesh.HasBitangents())
+  if (mMesh->HasBitangents())
   {
-    unsigned int bitangent_location = p_shader.GetAttributeLocation("bitangent");
-    glEnableVertexAttribArray(bitangent_location);
-    glBindBuffer(GL_ARRAY_BUFFER, m_bitangentBufferId);
-    glVertexAttribPointer(bitangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    unsigned int bitangent_location = mShader->GetAttributeLocation("bitangent");
+    mVertexArray.BindBufferToLocation(mBitangent, bitangent_location, 3, GL_FLOAT, GL_FALSE, 0, NULL);
   }
 
-  glEnableVertexAttribArray(uv_location);
-  glBindBuffer(GL_ARRAY_BUFFER, m_uvBufferId);
-  glVertexAttribPointer(uv_location, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+  mVertexArray.BindBufferToLocation(mUV, uv_location, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+  m_elementCount = mMesh->GetTriangleCount()*3;
+}
 
-  m_elementCount = p_mesh.GetTriangleCount()*3;
-
-  //Iterate on the shader Uniforms
-  Shader::UniformMap const& shaderUniforms = p_shader.GetUniformMap();
+void DrawableItem::PrepareTextureFromMaterial()
+{
+    //Iterate on the shader Uniforms
+  Shader::UniformMap const& shaderUniforms = mShader->GetUniformMap();
 
   Shader::UniformMap::const_iterator it = shaderUniforms.begin();
 
   bool loadtex = true;
-  if(DrawableItem::m_savedIdsAndLocations.find(p_material.GetName()) != DrawableItem::m_savedIdsAndLocations.end())
+  if(DrawableItem::m_savedIdsAndLocations.find(mMaterial->GetName()) != DrawableItem::m_savedIdsAndLocations.end())
   {
     loadtex = false;
-    m_textureIdsLocation = DrawableItem::m_savedIdsAndLocations[p_material.GetName()];
+    m_textureIdsLocation = DrawableItem::m_savedIdsAndLocations[mMaterial->GetName()];
   }
 
   for (; it != shaderUniforms.end(); ++it)
   {
     rxLogInfo("Linking uniform "<< it->first <<" to material.");
     std::string uniformName = it->first;
+    Shader::UniformInfo info = it->second;
     std::string attributeKey;
-    bool exists = p_material.GetUniformData(it->first, attributeKey);
+    bool exists = mMaterial->GetUniformData(it->first, attributeKey);
 
     if (exists == true)
     {
       //Handle various uniform types
-      GLenum type = it->second;
+      GLenum type = info.first;
       if (type == GL_FLOAT)
       {
         rxLogInfo("Uniform "<< uniformName <<" is attribute "
@@ -142,31 +130,32 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
           <<attributeKey<<" of type GL_SAMPLER_2D");
         //Setup the textures
 
-        glGenTextures(1, &m_textureId);
-        glBindTexture(GL_TEXTURE_2D, m_textureId);
+        unsigned int textureId;
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-        if (p_material.HasUCharTexData(attributeKey))
+        if (mMaterial->HasTextureData<unsigned char>(attributeKey))
         {
-          rx::Material::ByteTexture const& tex = p_material.GetByteTexture(attributeKey);
-          if (tex.m_channelCount == 1)
+          auto const& tex = mMaterial->GetTextureData<unsigned char>(attributeKey);
+          if (tex->m_channelCount == 1)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex.m_width,
-              tex.m_height, 0, GL_RED, GL_UNSIGNED_BYTE, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex->m_width,
+              tex->m_height, 0, GL_RED, GL_UNSIGNED_BYTE, tex->m_data);
           }
-          else if (tex.m_channelCount == 3)
+          else if (tex->m_channelCount == 3)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex.m_width,
-              tex.m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex->m_width,
+              tex->m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex->m_data);
           }
-          else if (tex.m_channelCount == 4)
+          else if (tex->m_channelCount == 4)
           {
             rxLogWarning("Loading RGBA Texture " << attributeKey)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex.m_width,
-              tex.m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->m_width,
+              tex->m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex->m_data);
           }
           else
           {
@@ -174,23 +163,23 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
             assert(false);
           }
         }
-        else if(p_material.HasUShortTexData(attributeKey))
+        else if(mMaterial->HasTextureData<unsigned short>(attributeKey))
         {
-          rx::Material::UShortTexture const& tex = p_material.GetUShortTexture(attributeKey);
-          if (tex.m_channelCount == 1)
+          rx::Material::UShortTexture const& tex = mMaterial->GetTextureData<unsigned short>(attributeKey);
+          if (tex->m_channelCount == 1)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R16, tex.m_width,
-              tex.m_height, 0, GL_RED, GL_UNSIGNED_SHORT, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R16, tex->m_width,
+              tex->m_height, 0, GL_RED, GL_UNSIGNED_SHORT, tex->m_data);
           }
-          else if (tex.m_channelCount == 3)
+          else if (tex->m_channelCount == 3)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16, tex.m_width,
-              tex.m_height, 0, GL_RGB, GL_UNSIGNED_SHORT, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16, tex->m_width,
+              tex->m_height, 0, GL_RGB, GL_UNSIGNED_SHORT, tex->m_data);
           }
-          else if (tex.m_channelCount == 4)
+          else if (tex->m_channelCount == 4)
           {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, tex.m_width,
-              tex.m_height, 0, GL_RGBA, GL_UNSIGNED_SHORT, tex.m_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, tex->m_width,
+              tex->m_height, 0, GL_RGBA, GL_UNSIGNED_SHORT, tex->m_data);
           }
           else
           {
@@ -201,37 +190,41 @@ int DrawableItem::PrepareBuffer(rx::Mesh const& p_mesh, rx::Material const& p_ma
         else
         {
           rxLogError("No attribute " << attributeKey <<" found in material "
-            << p_material.GetName());
+            << mMaterial->GetName());
         }
 
         glGenerateMipmap(GL_TEXTURE_2D);
-//           rxLogInfo("tex.m_width " << tex.m_width);
-//           rxLogInfo("tex.m_height " << tex.m_height);
-//           rxLogInfo("tex.m_channelCount " << tex.m_channelCount);
+//           rxLogInfo("tex->m_width " << tex->m_width);
+//           rxLogInfo("tex->m_height " << tex->m_height);
+//           rxLogInfo("tex->m_channelCount " << tex->m_channelCount);
 
-          m_textureIdsLocation[m_textureId] = p_shader.GetUniformLocation(uniformName);
+          m_textureIdsLocation[textureId] = mShader->GetUniformLocation(uniformName);
         }
       }
     }
 
     if(loadtex == true)
     {
-      DrawableItem::m_savedIdsAndLocations[p_material.GetName()] = m_textureIdsLocation;
+      DrawableItem::m_savedIdsAndLocations[mMaterial->GetName()] = m_textureIdsLocation;
     }
 }
 
-void DrawableItem::SetupUniformAndTextures(Shader const& p_shader,
-    rx::Material& p_material, glm::mat4 const& p_view,
+void DrawableItem::PrepareBuffer()
+{
+  PrepareBufferFromMesh();
+  PrepareTextureFromMaterial();
+}
+
+void DrawableItem::SetupUniformAndTextures(glm::mat4 const& p_view,
     glm::mat4 const& p_projection, glm::mat4 const& p_model,
     glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
-  unsigned int modelLoc = p_shader.GetUniformLocation("Model");
-  unsigned int viewLoc = p_shader.GetUniformLocation("View");
-  unsigned int projection = p_shader.GetUniformLocation("Projection");
-  unsigned int lightLoc = p_shader.GetUniformLocation("light");
-  unsigned int camLoc = p_shader.GetUniformLocation("cameraPos");
-
-
+  unsigned int modelLoc = mShader->GetUniformLocation("Model");
+  unsigned int viewLoc = mShader->GetUniformLocation("View");
+  unsigned int projection = mShader->GetUniformLocation("Projection");
+  unsigned int lightLoc = mShader->GetUniformLocation("light");
+  unsigned int camLoc = mShader->GetUniformLocation("cameraPos");
+  
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(p_model));
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(p_view));
   glUniformMatrix4fv(projection, 1, GL_FALSE, glm::value_ptr(p_projection));
@@ -240,33 +233,33 @@ void DrawableItem::SetupUniformAndTextures(Shader const& p_shader,
   glUniform3fv(camLoc, 1,  glm::value_ptr(p_cameraPos));
 
   //Set up the uniforms from material that are not textures
-  Shader::UniformMap const& shaderUniforms = p_shader.GetUniformMap();
+  Shader::UniformMap const& shaderUniforms = mShader->GetUniformMap();
   Shader::UniformMap::const_iterator itUniformMat = shaderUniforms.begin();
   for (; itUniformMat != shaderUniforms.end(); ++itUniformMat)
   {
     std::string uniformName = itUniformMat->first;
+    Shader::UniformInfo info = itUniformMat->second;
     std::string attributeKey;
-    bool exists = p_material.GetUniformData(itUniformMat->first, attributeKey);
+    bool exists = mMaterial->GetUniformData(itUniformMat->first, attributeKey);
     if (exists == true)
     {
       //Handle various uniform types
-      GLenum type = itUniformMat->second;
+      GLenum type = info.first;
       if (type == GL_FLOAT)
       {
-        float unif;
-        if (p_material.GetData(attributeKey, unif))
+        if( mMaterial->Has<float>(attributeKey) )
         {
-          unsigned int loc = p_shader.GetUniformLocation(uniformName);
+          float unif = mMaterial->Get<float>(attributeKey);
+          unsigned int loc = mShader->GetUniformLocation(uniformName);
           glUniform1f(loc, unif);
         }
-
       }
       else if (type == GL_FLOAT_VEC3)
       {
-        glm::vec3 univec3f;
-        if (p_material.GetData(attributeKey, univec3f))
+        if( mMaterial->Has<glm::vec3>(attributeKey) )
         {
-          unsigned int loc = p_shader.GetUniformLocation(uniformName);
+          glm::vec3 univec3f = mMaterial->Get<glm::vec3>(attributeKey);
+          unsigned int loc = mShader->GetUniformLocation(uniformName);
           glUniform3fv(loc, 1,  glm::value_ptr(univec3f));
         }
       }
@@ -284,27 +277,25 @@ void DrawableItem::SetupUniformAndTextures(Shader const& p_shader,
   }
 }
 
-int DrawableItem::Draw(Shader const& p_shader,
-  rx::Material& p_material, glm::mat4 const& p_view,
+void DrawableItem::Draw(glm::mat4 const& p_view,
   glm::mat4 const& p_projection, glm::mat4 const& p_model,
   glm::vec3 const& p_light, glm::vec3 const& p_cameraPos)
 {
-  SetupUniformAndTextures(p_shader, p_material, p_view,
-    p_projection, p_model, p_light, p_cameraPos);
+  SetupUniformAndTextures(p_view, p_projection, p_model, p_light, p_cameraPos);
   DrawElements();
 }
 
 void DrawableItem::DrawElements()
 {
-  glBindVertexArray(m_vertexArrayId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
+  mVertexArray.Bind();
+  mIndex.Bind();
   glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
 }
 
 void DrawableItem::DrawElementsInstanced(unsigned p_count)
 {
-  glBindVertexArray(m_vertexArrayId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
+  mVertexArray.Bind();
+  mIndex.Bind();
   glDrawElementsInstanced(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0, p_count);
 }
 
@@ -323,8 +314,8 @@ int DrawableItem::DrawSimple(Shader const& p_shader, glm::mat4 const& p_vpMat,
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(p_view));
   glUniformMatrix4fv(projection, 1, GL_FALSE, glm::value_ptr(p_projection));
 
-  glBindVertexArray(m_vertexArrayId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBufferId);
+  mVertexArray.Bind();
+  mIndex.Bind();
   glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
 }
 

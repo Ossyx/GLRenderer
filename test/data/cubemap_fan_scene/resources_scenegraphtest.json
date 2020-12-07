@@ -1,0 +1,52 @@
+{
+  "resources": [
+    {
+      "name" : "fan",
+      "type" : "MODEL",
+      "path" : "/home/bertrand/Work/models/fan/untitled-scene.obj",
+      "id" : "fan"
+    },
+    {
+      "name" : "fan_custom_shader",
+      "type" : "SHADERSTACK",
+      "shader_source" : {
+        "vertex_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/custom.vertex",
+        "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/custom.fragment"
+      },
+      "id" : "fan_custom_shader"
+    },
+    {
+      "name" : "cubemap_c1",
+      "type" : "MATERIAL",
+      "material_file" : "/home/bertrand/Work/models/cubemap/c1/material.json",
+      "id" : "cubemap_c1"
+    },
+    {
+      "name" : "cubemap_shader",
+      "type" : "SHADERSTACK",
+      "shader_source" : {
+        "vertex_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/cubemap.vertex",
+        "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/cubemap.fragment"
+      },
+      "id" : "cubemap_shader"
+    },
+    {
+      "name" : "screenspaceplane_shader",
+      "type" : "SHADERSTACK",
+      "shader_source" : {
+        "vertex_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/screenspaceplane.vertex",
+        "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/screenspaceplane.fragment"
+      },
+      "id" : "screenspaceplane_shader"
+    },
+    {
+      "name" : "tonemapping_shader",
+      "type" : "SHADERSTACK",
+      "shader_source" : {
+        "vertex_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/tonemapping.vertex",
+        "fragment_shader" : "/home/bertrand/Work/GLRenderer/shaders/basic/tonemapping.fragment"
+      },
+      "id" : "tonemapping_shader"
+    }
+  ]
+}
