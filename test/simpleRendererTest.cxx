@@ -4,7 +4,6 @@
 #include <GLFW/glfw3.h>
 
 #include "EventDispatcher.hxx"
-#include "SceneRenderer.hxx"
 #include "SimpleRenderer.hxx"
 #include "ResourcesLoader.hxx"
 #include "SceneGraph.hxx"
