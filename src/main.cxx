@@ -1,30 +1,39 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <chrono>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <glm/vec3.hpp> // glm::vec3
-#include <glm/vec4.hpp> // glm::vec4
-#include <glm/mat4x4.hpp> // glm::mat4
-#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
-#include <glm/gtc/type_ptr.hpp>
-
-#include "ModelLoader.hxx"
-#include "DrawableItem.hxx"
-#include "Shader.hxx"
-#include "Camera.hxx"
 #include "EventDispatcher.hxx"
-#include "SceneRenderer.hxx"
+#include "Renderer.hxx"
+#include "RendererFactory.hxx"
+#include "ResourcesLoader.hxx"
+#include "SceneGraph.hxx"
+#include "SceneGraphLoader.hxx"
 
 void error_callback(int error, const char* description);
 
-int main()
+int main(int argc, char** argv)
 {
-  rxLogDebug(" Hello Space War 2 !");
+  std::filesystem::path resourcePath;
+  std::filesystem::path sceneGraphPath;
+  std::string rendererType;
+  
+  if(argc >= 4)
+  {
+    resourcePath = argv[1];
+    sceneGraphPath = argv[2];
+    rendererType = argv[3];
+  }
+  else
+  {
+    rxLogError("No resource and scenegraph provided. Exiting.");
+    return 0;
+  }
+  
+  rxLogDebug(" Simple renderer test ");
+  rxLogInfo("Using resource "<< resourcePath);
+  rxLogInfo("Using scene graph "<< sceneGraphPath);
+  rxLogInfo("Using renderer "<< rendererType);
 
   if (glfwInit() == false)
   {
@@ -36,8 +45,7 @@ int main()
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-  //glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE );
-  GLFWwindow* window = glfwCreateWindow(1920, 1080, "SpaceWar2 !", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(1920, 1080, "SimpleRendererTest !", NULL, NULL);
 
   if (window == NULL)
   {
@@ -47,18 +55,33 @@ int main()
 
   glfwMakeContextCurrent(window);
   gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-  //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   //Init ImGui
   EventDispatcher* dispatcher = EventDispatcher::Get();
   glfwSetKeyCallback(window, EventDispatcher::HandleKeyEvent);
   glfwSetCursorPosCallback(window, EventDispatcher::HandleCursorEvent);
+  
+  //Load resources
+  rx::ResourcesHolderPtr holder = std::make_shared<rx::ResourcesHolder>();
+  rx::ResourcesLoader loader;
+  loader.LoadDescription(resourcePath, *holder);
+  loader.LoadResources(*holder);
+  
+  while(loader.GetStatus() != rx::ResourcesLoader::Loaded);
+  
+  //Load scene graph
+  rx::SceneGraphLoader graphLoader;
+  rx::SceneGraphPtr graph = std::make_shared<rx::SceneGraph>();
+  
+  graphLoader.Load(sceneGraphPath, *graph, *holder);
 
-  SceneRenderer renderer(window);
-  //renderer.AddModel();
-  renderer.AddTerrain();
-  renderer.Render(window);
-
+  auto renderer = RendererFactory::Create(rendererType);
+  renderer->Initialize(graph, holder);
+  
+  while (glfwWindowShouldClose(window) == false)
+  {
+    renderer->Render(window);
+  }
   return 0;
 }
 

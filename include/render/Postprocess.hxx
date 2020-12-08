@@ -11,7 +11,7 @@ class Postprocess : public Renderable
 public:
   using TextureParameter = std::unordered_map<std::string, unsigned int>;
   
-  Postprocess(GeometryHandlePtr pGeoHandle, ShaderPtr pShader, 
+  Postprocess(ShaderPtr pShader, 
     GLenum pOutputType, unsigned int pWidth, unsigned int pHeight);
   ~Postprocess();
   
@@ -23,7 +23,7 @@ private:
   
   void InitializeOutputTarget();
   TextureParameter mInput;
-  unsigned int mFbo;
+  FramebufferObject mFBO;
   unsigned int mOutput;
   
   GLenum mOutputType;

@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include "Material.hxx"
+#include "GLAbstraction.hxx"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -27,8 +28,10 @@ public:
   static TypeToConfig smGLTextureConfig;
   
   using TextureIdMap = std::unordered_map<std::string, unsigned int>;
+  using TextureMap = std::unordered_map<unsigned int, GLTexture>;
   
   TextureIdMap TextureIds();
+  TextureMap Textures();
   
 private:
   
@@ -36,6 +39,7 @@ private:
   void GenerateTexture(T pTex, GLenum pType, std::string const& pUniform);
   
   TextureIdMap mTexturedIds;
+  TextureMap mTextures;
 };
 
 using MaterialTextureHandlePtr = std::shared_ptr<MaterialTextureHandle>;

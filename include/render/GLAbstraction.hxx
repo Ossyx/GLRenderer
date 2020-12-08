@@ -2,6 +2,9 @@
 #define GLABSTRACTION_HXX
 
 #include <glad/glad.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 struct ArrayBuffer
 {
@@ -26,10 +29,21 @@ struct VertexArray
 
 struct GLTexture
 {
-  unsigned int mId;
   void Build();
   void Bind();
-  void SetParameter(GLenum pParameters, GLenum pValue);
+  void SetParameter(GLenum pParameter, GLenum pValue);
+  void SetData(GLenum pInternalFormat, GLenum pFormat, GLenum pType,
+    unsigned int pWidth, unsigned int pHeight, const void* data);
+  void GenerateMipMap();
+  
+  unsigned int mId;
+  GLenum mInternalFormat;
+  GLenum mFormat;
+  GLenum mType;
+  unsigned int mWidth;
+  unsigned int mHeight;
+  bool mMipMap = false;
+  
 };
 
 struct GBufferData
@@ -42,6 +56,20 @@ struct GBufferData
   unsigned int mRT2;
   unsigned int mRT3;
   unsigned int mRT4;
+};
+
+struct FramebufferObject
+{
+  void Build();
+  void Bind();
+  void Unbind();
+  void AddRenderTarget(std::string const& pName, GLenum pAttachment,
+    GLenum pInternalFormat, GLenum pFormat, GLenum pType,
+    unsigned int pWidth, unsigned int pHeight);
+  
+  unsigned int mId;
+  std::unordered_map<std::string, GLTexture> mRenderTargets;
+  std::vector<GLenum> mColorAttachments;
 };
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef SIMPLERENDERER_HXX
 #define SIMPLERENDERER_HXX
 
+#include "Renderer.hxx"
 #include "ResourcesHolder.hxx"
 #include "SceneGraph.hxx"
 
@@ -8,23 +9,26 @@
 #include "EnvironmentMap.hxx"
 #include "Renderable.hxx"
 #include "Postprocess.hxx"
+#include "TextureDisplay.hxx"
+#include "GLAbstraction.hxx"
 
 #include "Camera.hxx"
 #include <chrono>
 
-class SimpleRenderer
+class SimpleRenderer : public Renderer
 {
 public:
   
   SimpleRenderer();
   ~SimpleRenderer();
   
+  void Initialize(rx::SceneGraphPtr pSceneGraph, rx::ResourcesHolderPtr pResourcesHolder) override;
   void InitS(rx::ResourcesHolderPtr pResourcesHolder);
   void InitPostprocess(rx::ResourcesHolderPtr pResourcesHolder);
   void InitFbo();
-  void Init(rx::SceneGraphPtr pSceneGraph, rx::ResourcesHolderPtr pResourcesHolder);
-  void Render(GLFWwindow* pWindow);
-  void RenderToFbo(GLFWwindow* pWindow);
+  
+  void Render(GLFWwindow* pWindow) override;
+  void RenderSceneGraph(GLFWwindow* pWindow);
   
 private:
   
@@ -48,7 +52,8 @@ private:
   Postprocess* mPostProcess;
   std::chrono::steady_clock::time_point mTime;
   
-  Renderable* mSSFinalRender;  
+  TextureDisplay* mSSFinalRender;
+  FramebufferObject mFBO;
   unsigned int mRenderTarget;
   unsigned int mFbo;
 };

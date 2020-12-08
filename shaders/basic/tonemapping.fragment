@@ -31,20 +31,12 @@ void main()
 {
   vec2 uvcoord = (ipos.xy + vec2(1.0, 1.0)) / 2.0;
   //frag_colour = texture(input_one, uvcoord);
-  vec3 value = texture(input_one, uvcoord).xyz;
-  /*float A = 0.8;
-  float G = 0.01;
-  
-  float r = A * pow(value.x, G);
-  float g = A * pow(value.y, G);
-  float b = A * pow(value.z, G);
-  vec3 v = vec3(r, g, b);*/
-  
+  vec3 value = texture(input_one, uvcoord).xyz;  
   //vec3 finalColor = exposition_gamma(value, 1.0, 0.0001);
   //vec3 finalColor = aces_approx(value);
   //vec3 finalColor = reinhard_extended(value, 300.0);
   //vec3 finalColor = value / vec3(600000.0);
   //vec3 finalColor = value / (value + vec3(1.0));
-  vec3 finalColor = value;
-  frag_colour = vec4(finalColor, 1.0);
+  //value = value / 30000.0;
+  frag_colour = vec4(value, 1.0);
 }

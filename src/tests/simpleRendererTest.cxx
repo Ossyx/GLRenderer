@@ -72,14 +72,11 @@ int main(int argc, char** argv)
   graphLoader.Load(sceneGraphPath, *graph, *holder);
 
   SimpleRenderer renderer;
-  renderer.InitFbo();
-  renderer.InitS(holder);
-  renderer.InitPostprocess(holder);
-  renderer.Init(graph, holder);
+  renderer.Initialize(graph, holder);
   
   while (glfwWindowShouldClose(window) == false)
   {
-    renderer.RenderToFbo(window);
+    renderer.Render(window);
   }
   return 0;
 }

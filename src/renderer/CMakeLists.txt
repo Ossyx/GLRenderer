@@ -8,7 +8,9 @@ ${MESHLIB_INCLUDE_DIR}
 ${GLM_INCLUDE_DIRS})
 
 add_library(Renderer SHARED
-  ${CMAKE_SOURCE_DIR}/src/renderer/SimpleRenderer.cxx)
+${CMAKE_SOURCE_DIR}/src/renderer/Renderer.cxx
+${CMAKE_SOURCE_DIR}/src/renderer/RendererFactory.cxx
+${CMAKE_SOURCE_DIR}/src/renderer/SimpleRenderer.cxx)
   
 target_link_libraries(Renderer
 ${GLFW_LIBRARY}

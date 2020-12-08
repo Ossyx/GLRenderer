@@ -58,25 +58,33 @@ MaterialTextureHandle::~MaterialTextureHandle()
 template <typename T>
 void MaterialTextureHandle::GenerateTexture(T pTex, GLenum pType, std::string const& pUniform)
 {
-  unsigned int textureId;
-  glGenTextures(1, &textureId);
-  glBindTexture(GL_TEXTURE_2D, textureId);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        
-  auto texConf = smGLTextureConfig[pType][pTex->m_channelCount];
-  glTexImage2D(GL_TEXTURE_2D, 0, texConf.internalFormat, pTex->m_width,
-      pTex->m_height, 0, texConf.format, pType, pTex->m_data);
-  glGenerateMipmap(GL_TEXTURE_2D);
+  GLTexture t;
+  t.Build();
+  t.Bind();
+  t.SetParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+  t.SetParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+  t.SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  t.SetParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   
-  mTexturedIds[pUniform] = textureId;
+  auto texConf = smGLTextureConfig[pType][pTex->m_channelCount];
+  t.SetData(texConf.internalFormat, texConf.format, pType,
+    pTex->m_width, pTex->m_height, pTex->m_data);
+  
+  t.GenerateMipMap();
+  
+  mTexturedIds[pUniform] = t.mId;
+  mTextures[t.mId] = t;
 }
 
 MaterialTextureHandle::TextureIdMap MaterialTextureHandle::TextureIds()
 {
   return mTexturedIds;
 }
+
+MaterialTextureHandle::TextureMap MaterialTextureHandle::Textures()
+{
+  return mTextures;
+}
+
 
 

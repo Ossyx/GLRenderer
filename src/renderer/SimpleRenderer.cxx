@@ -20,28 +20,12 @@ SimpleRenderer::~SimpleRenderer()
 
 void SimpleRenderer::InitFbo()
 {
-  glGenFramebuffers(1, &mFbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
-  
-  glGenTextures(1, &mRenderTarget);
-  glBindTexture(GL_TEXTURE_2D, mRenderTarget);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 1920, 1080, 0, GL_RGBA, GL_FLOAT, 0);
-  
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mRenderTarget, 0);
-  
-  unsigned int depthBuffer;
-  glGenTextures(1, &depthBuffer);
-  glBindTexture(GL_TEXTURE_2D, depthBuffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, 1920, 1080,
-    0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthBuffer, 0);
+  mFBO.Build();
+  mFBO.Bind();
+  mFBO.AddRenderTarget("rt1", GL_COLOR_ATTACHMENT0, GL_RGBA32F,
+    GL_RGBA, GL_FLOAT, 1920, 1080);
+  mFBO.AddRenderTarget("depth", GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT32F,
+    GL_DEPTH_COMPONENT, GL_FLOAT, 1920, 1080);
   
   GLenum completeness = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
 
@@ -50,31 +34,31 @@ void SimpleRenderer::InitFbo()
     rxLogError("Simple renderer frambuffer incomplete! ");
     assert(false);
   }
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  mFBO.Unbind();
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void SimpleRenderer::InitS(rx::ResourcesHolderPtr pResourcesHolder)
 {
-  auto geoHandle = std::make_shared<SSPlaneData>();
   auto shader = pResourcesHolder->FindShader("screenspaceplane_shader");
-  (*shader)->LinkProgram();
-  
-  mSSFinalRender = new Renderable(geoHandle, nullptr, *shader, nullptr);
+  (*shader)->LinkProgram();  
+  mSSFinalRender = new TextureDisplay(*shader);
 }
 
 void SimpleRenderer::InitPostprocess(rx::ResourcesHolderPtr pResourcesHolder)
 {
-  auto geoHandle = std::make_shared<SSPlaneData>();
   auto shader = pResourcesHolder->FindShader("tonemapping_shader");
-  (*shader)->LinkProgram();
-  
-  mPostProcess = new Postprocess(geoHandle, *shader, GL_UNSIGNED_BYTE, 1920, 1080);
+  (*shader)->LinkProgram();  
+  mPostProcess = new Postprocess(*shader, GL_UNSIGNED_BYTE, 1920, 1080);
 }
 
-void SimpleRenderer::Init(rx::SceneGraphPtr pSceneGraph,
+void SimpleRenderer::Initialize(rx::SceneGraphPtr pSceneGraph,
   rx::ResourcesHolderPtr pResourcesHolder)
 {
+  InitFbo();
+  InitS(pResourcesHolder);
+  InitPostprocess(pResourcesHolder);
+  
   mHolder = pResourcesHolder;
   mSceneGraph = pSceneGraph;
   
@@ -138,7 +122,7 @@ void SimpleRenderer::Init(rx::SceneGraphPtr pSceneGraph,
   }
 }
 
-void SimpleRenderer::Render(GLFWwindow* pWindow)
+void SimpleRenderer::RenderSceneGraph(GLFWwindow* pWindow)
 {  
   auto newTime = std::chrono::steady_clock::now();
   float millis = std::chrono::duration_cast<std::chrono::milliseconds>(newTime - mTime).count();
@@ -148,7 +132,7 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   glfwGetFramebufferSize(pWindow, &width, &height);
 
   glm::mat4 projection = glm::perspective(glm::radians(60.0f),
-    (float)width / (float)height, 0.001f, 1000.f);
+    (float)width / (float)height, 0.1f, 10000.f);
 
   glm::mat4 view = glm::mat4(1.0f);
 
@@ -172,7 +156,6 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   
   glm::mat4 model = glm::mat4(1.0f);
   model = glm::translate(model, glm::vec3(10.0f, 0.0f, 0.0f));
-  model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
   
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
@@ -204,19 +187,14 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   }
   
   mTime = newTime;
-  //glfwSwapBuffers(pWindow);
-  //glfwPollEvents();
 }
 
-void SimpleRenderer::RenderToFbo(GLFWwindow* pWindow)
+void SimpleRenderer::Render(GLFWwindow* pWindow)
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, mFbo);
-  GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
-  glDrawBuffers(1, buffers);
-  
-  Render(pWindow);
-  
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  mFBO.Bind();
+  glDrawBuffers(mFBO.mColorAttachments.size(), mFBO.mColorAttachments.data());  
+  RenderSceneGraph(pWindow);  
+  mFBO.Unbind();
   
   glDisable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
@@ -226,10 +204,11 @@ void SimpleRenderer::RenderToFbo(GLFWwindow* pWindow)
   glfwGetFramebufferSize(pWindow, &width, &height);
   glViewport(0, 0, width, height);
   
-  Postprocess::TextureParameter texParam;
-  texParam["input_one"] = mRenderTarget;
-  rx::GLSLTypeStore param;  
-  mPostProcess->Execute(texParam, param);
+   Postprocess::TextureParameter texParam;
+   texParam["input_one"] = mFBO.mRenderTargets["rt1"].mId;
+   rx::GLSLTypeStore param;
+//   mPostProcess->Execute(texParam, param);
+  mSSFinalRender->Draw(param, texParam);
   glfwSwapBuffers(pWindow);
   glfwPollEvents();
 }

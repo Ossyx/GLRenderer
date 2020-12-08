@@ -11,7 +11,8 @@ add_library(Render SHARED
   ${CMAKE_SOURCE_DIR}/src/render/MaterialTexturesHandle.cxx
   ${CMAKE_SOURCE_DIR}/src/render/Renderable.cxx
   ${CMAKE_SOURCE_DIR}/src/render/GLAbstraction.cxx
-  ${CMAKE_SOURCE_DIR}/src/render/Postprocess.cxx)
+  ${CMAKE_SOURCE_DIR}/src/render/Postprocess.cxx
+  ${CMAKE_SOURCE_DIR}/src/render/TextureDisplay.cxx)
   
 target_link_libraries(Render
 ${GLFW_LIBRARY}
