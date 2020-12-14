@@ -17,7 +17,8 @@ public:
     Mesh,
     Model,
     ShaderStack,
-    Material
+    Material,
+    MaterialShader
   };
   
   ResourceType();

@@ -156,6 +156,16 @@ void ObjectNode::SetShaderRef(ShaderPtr pShaderRef)
   mShaderRef = pShaderRef;
 }
 
+MaterialShaderPtr ObjectNode::MaterialShaderRef()
+{
+  return mMaterialShaderRef;
+}
+
+void ObjectNode::SetMaterialShaderRef(MaterialShaderPtr pMaterialShaderRef)
+{
+  mMaterialShaderRef = pMaterialShaderRef;
+}
+
 EnvironmentMapNode::EnvironmentMapNode():
 SgNode(NodeType::EnvironmentMap)
 {

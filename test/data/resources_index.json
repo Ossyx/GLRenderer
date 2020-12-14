@@ -32,6 +32,12 @@
       "type" : "MATERIAL",
       "material_file" : "/home/bertrand/Work/models/sponza/sponza.json",
       "id" : 4
+    },
+    {
+      "name" : "MaterialSaderExample",
+      "type" : "MATERIALSHADER",
+      "path" : "/home/bertrand/Work/GLRenderer/test/data/MaterialShaderExample.json",
+      "id" : 5
     }
   ]
 }

@@ -1,4 +1,5 @@
 #include "ResourcesLoader.hxx"
+#include "MaterialShaderLoader.hxx"
 #include <fstream>
 #include <filesystem>
 
@@ -80,6 +81,9 @@ void ResourcesLoader::LoadResources(ResourcesHolder& pHolder, bool pAsync)
         case ResourceType::Material:
           LoadMaterial(res, pHolder);
           break;
+        case ResourceType::MaterialShader:
+          LoadMaterialShader(res, pHolder);
+          break;
         case ResourceType::Unknown:
           rxLogWarning("Try to load Unknown resource type, skipping");
           break;
@@ -139,6 +143,12 @@ void ResourcesLoader::LoadMaterial(const ResourceDescription& pDesc, ResourcesHo
   {
     pHolder.RegisterMaterial(mat, mat->GetName());
   }
+}
+
+void ResourcesLoader::LoadMaterialShader(ResourceDescription const& pDesc, ResourcesHolder& pHolder)
+{
+  auto matShader = MaterialShaderLoader::Load(pDesc.mData["path"].asString());
+  pHolder.RegisterMaterialShader(matShader, matShader->GetName());
 }
 
 void ResourcesLoader::SetStatus(LoadingStatus pStatus)

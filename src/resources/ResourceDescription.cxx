@@ -84,6 +84,10 @@ ResourceType ResourceType::FromString(const std::string& ptype)
   {
     return ResourceType(ResourceType::Material);
   }
+  else if ( ptype == "MATERIALSHADER" )
+  {
+    return ResourceType(ResourceType::MaterialShader);
+  }
   else
   {
     return ResourceType(ResourceType::Unknown);
@@ -104,6 +108,8 @@ std::string ResourceType::ToString() const
       return "SHADERSTACK";
     case ResourceType::Material:
       return "MATERIAL";
+    case ResourceType::MaterialShader:
+      return "MATERIALSHADER";
     case ResourceType::Unknown:
       return "UNKNOWN";
     default:

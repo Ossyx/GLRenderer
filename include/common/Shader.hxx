@@ -54,6 +54,7 @@ public:
   void SetUniform(std::string const& pName, float pValue);
   void SetUniform(std::string const& pName, glm::vec2 const& pValue);
   void SetUniform(std::string const& pName, glm::vec3 const& pValue);
+  void SetUniform(std::string const& pName, glm::vec4 const& pValue);
   void SetUniform(std::string const& pName, glm::mat4 const& pValue);
 
 private:

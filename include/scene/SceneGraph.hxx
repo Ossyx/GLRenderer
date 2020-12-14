@@ -3,6 +3,7 @@
 
 #include "Model.hxx"
 #include "ResourcesHolder.hxx"
+#include "MaterialShader.hxx"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <list>
@@ -101,10 +102,13 @@ public:
   void SetModelRef(ModelPtr pModelRef);
   ShaderPtr ShaderRef();
   void SetShaderRef(ShaderPtr pShaderRef);
+  MaterialShaderPtr MaterialShaderRef();
+  void SetMaterialShaderRef(MaterialShaderPtr pMaterialShaderRef);
   
 private:
   ModelPtr mModelRef;
   ShaderPtr mShaderRef;
+  MaterialShaderPtr mMaterialShaderRef;
 };
 
 class EnvironmentMapNode : public SgNode

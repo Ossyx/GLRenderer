@@ -35,6 +35,7 @@ private:
   void LoadModel(ResourceDescription const& pDesc,ResourcesHolder& pHolder);
   void LoadShaderStack(ResourceDescription const& pDesc,ResourcesHolder& pHolder);
   void LoadMaterial(ResourceDescription const& pDesc,ResourcesHolder& pHolder);
+  void LoadMaterialShader(ResourceDescription const& pDesc,ResourcesHolder& pHolder);
   
   std::mutex mSmut;
   LoadingStatus mStatus;

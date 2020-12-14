@@ -3,7 +3,7 @@
 
 
 TextureDisplay::TextureDisplay(ShaderPtr pShader):
-Renderable(std::make_shared<SSPlaneData>(), nullptr, pShader, nullptr)
+Renderable(std::make_shared<SSPlaneData>(), nullptr, pShader, nullptr, nullptr)
 {
 }
 
@@ -13,7 +13,8 @@ TextureDisplay::~TextureDisplay()
 
 void TextureDisplay::Draw(rx::GLSLTypeStore const& pParameters, TextureParameter const& pTexParameters)
 {
-  glUseProgram(mShader->GetProgram());  
+  glUseProgram(mShader->GetProgram());
+  SetParametersUniforms(pParameters);
   SetTextureUniforms(pTexParameters);
   mVertexArray.Bind();
   mGeometryHandle->mIndex.Bind();

@@ -66,6 +66,7 @@ struct FramebufferObject
   void AddRenderTarget(std::string const& pName, GLenum pAttachment,
     GLenum pInternalFormat, GLenum pFormat, GLenum pType,
     unsigned int pWidth, unsigned int pHeight);
+  bool CheckCompletion();
   
   unsigned int mId;
   std::unordered_map<std::string, GLTexture> mRenderTargets;

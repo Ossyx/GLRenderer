@@ -37,12 +37,9 @@ m_terrainGUI(p_window)
   
   rx::MaterialPtr terrainMaterial = std::make_shared<rx::Material>();
   terrainMaterial->SetName("CubeMaterial");
-  terrainMaterial->Set("Ka", glm::vec3(0.2,0.0,0.0));
-  terrainMaterial->Set("Ks", glm::vec3(1.0,0.0,0.0));
-  terrainMaterial->Set("Kd", glm::vec3(1.0,0.0,0.0));
-  terrainMaterial->SetUniformData("ambient_color", "Ka");
-  terrainMaterial->SetUniformData("specular_color", "Ks");
-  terrainMaterial->SetUniformData("diffuse_color", "Kd");
+  terrainMaterial->Set("ambient_color", glm::vec3(0.2,0.0,0.0));
+  terrainMaterial->Set("specular_color", glm::vec3(1.0,0.0,0.0));
+  terrainMaterial->Set("diffuse_color", glm::vec3(1.0,0.0,0.0));
   
   m_terrain = std::make_shared<TerrainLOD>(nullptr, terrainMaterial, terrainRendering);
   m_terrain->SetSize(6.4f);
@@ -110,34 +107,34 @@ void SceneRenderer::PrepareTwoTrianglesBuffer()
 
 void SceneRenderer::AddModel()
 {
-  auto myModel = rx::ModelLoader::LoadOBJModel("/home/bertrand/Work/models/sponza/sponza.obj", "sponza");
-
-  for (unsigned int i = 0; i < myModel->GetMeshCount(); ++i)
-  {
-    
-    auto meshPtr = myModel->GetMesh(i);
-    rx::MaterialPtr materialPtr = myModel->GetMaterialForMesh(i);
-    assert(meshPtr != NULL && materialPtr != NULL);
-
-    //find the shader for this mesh
-    GenerateGBufferShader(*meshPtr, materialPtr);
-    UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
-    if (itShaderId != m_shaderForMaterial.end())
-    {
-      GBufferShaderMap::iterator itShader = m_gbufferShaders.find(itShaderId->second);
-      assert(itShader != m_gbufferShaders.end());
-      DrawableItem* item = new DrawableItem(meshPtr, materialPtr, itShader->second);
-      item->PrepareBuffer();
-      m_drawableItems.push_back(item);
-      m_materialPtrs.push_back(materialPtr);
-    }
-    else
-    {
-       rxLogError("No shader "<< materialPtr->GetShaderName()
-         <<" found for material of mesh " << i);
-       assert(false);
-    }
-  }
+//   auto myModel = rx::ModelLoader::LoadOBJModel("/home/bertrand/Work/models/sponza/sponza.obj", "sponza");
+// 
+//   for (unsigned int i = 0; i < myModel->GetMeshCount(); ++i)
+//   {
+//     
+//     auto meshPtr = myModel->GetMesh(i);
+//     rx::MaterialPtr materialPtr = myModel->GetMaterialForMesh(i);
+//     assert(meshPtr != NULL && materialPtr != NULL);
+// 
+//     //find the shader for this mesh
+//     GenerateGBufferShader(*meshPtr, materialPtr);
+//     UintMap::iterator itShaderId = m_shaderForMaterial.find(materialPtr->GetName());
+//     if (itShaderId != m_shaderForMaterial.end())
+//     {
+//       GBufferShaderMap::iterator itShader = m_gbufferShaders.find(itShaderId->second);
+//       assert(itShader != m_gbufferShaders.end());
+//       DrawableItem* item = new DrawableItem(meshPtr, materialPtr, itShader->second);
+//       item->PrepareBuffer();
+//       m_drawableItems.push_back(item);
+//       m_materialPtrs.push_back(materialPtr);
+//     }
+//     else
+//     {
+//        rxLogError("No shader "<< materialPtr->GetShaderName()
+//          <<" found for material of mesh " << i);
+//        assert(false);
+//     }
+//   }
 }
 
 void SceneRenderer::AddTerrain()
@@ -451,7 +448,7 @@ void SceneRenderer::GenerateGBufferShader(rx::Mesh const& p_mesh, rx::MaterialPt
 {
   unsigned int gBufferFlags = 0;
 
-  rx::Material::StringMap const& uniforms = p_material->GetUniforms();
+  auto const& uniforms = p_material->GetMembers();
 
   if (uniforms.find("map_diffuse") != uniforms.cend())
   {

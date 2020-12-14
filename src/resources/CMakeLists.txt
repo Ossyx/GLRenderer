@@ -1,5 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/include/resources
 ${CMAKE_SOURCE_DIR}/include/common
+${CMAKE_SOURCE_DIR}/include/render
 ${MESHLIB_INCLUDE_DIR}
 ${JsonCpp_INCLUDE_DIR}
 ${GLM_INCLUDE_DIRS})

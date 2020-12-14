@@ -2,19 +2,22 @@
 #include "EventDispatcher.hxx"
 
 SimpleRenderer::SimpleRenderer():
-mCamera(glm::vec3(0.0f, 0.0f, 0.0f)),
-envMap(NULL),
-mTime(std::chrono::steady_clock::now())
+envMap(NULL)
 {
   EventDispatcher* dispatcher = EventDispatcher::Get();
   dispatcher->AddEventListener("MainCamera", &mCamera);
 }
 
 SimpleRenderer::~SimpleRenderer()
-{
-  for(unsigned i = 0; i < mRenderables.size(); ++i)
+{  
+  if( mSSFinalRender )
   {
-    delete mRenderables[i];
+    delete mSSFinalRender;
+  }
+  
+  if( mPostProcess )
+  {
+    delete mPostProcess;
   }
 }
 
@@ -38,30 +41,25 @@ void SimpleRenderer::InitFbo()
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void SimpleRenderer::InitS(rx::ResourcesHolderPtr pResourcesHolder)
+void SimpleRenderer::Initialize(rx::SceneGraphPtr pSceneGraph, rx::ResourcesHolderPtr pResourcesHolder)
 {
-  auto shader = pResourcesHolder->FindShader("screenspaceplane_shader");
-  (*shader)->LinkProgram();  
-  mSSFinalRender = new TextureDisplay(*shader);
-}
-
-void SimpleRenderer::InitPostprocess(rx::ResourcesHolderPtr pResourcesHolder)
-{
-  auto shader = pResourcesHolder->FindShader("tonemapping_shader");
-  (*shader)->LinkProgram();  
-  mPostProcess = new Postprocess(*shader, GL_UNSIGNED_BYTE, 1920, 1080);
-}
-
-void SimpleRenderer::Initialize(rx::SceneGraphPtr pSceneGraph,
-  rx::ResourcesHolderPtr pResourcesHolder)
-{
-  InitFbo();
-  InitS(pResourcesHolder);
-  InitPostprocess(pResourcesHolder);
-  
   mHolder = pResourcesHolder;
   mSceneGraph = pSceneGraph;
+  InitFbo();
+  auto ssShader = mHolder->FindShader("screenspaceplane_shader");
+  (*ssShader)->LinkProgram();  
+  mSSFinalRender = new TextureDisplay(*ssShader);
   
+  auto tmShader = mHolder->FindShader("tonemapping_shader");
+  (*tmShader)->LinkProgram();  
+  mPostProcess = new Postprocess(*tmShader, GL_UNSIGNED_BYTE, 1920, 1080);
+  
+  BuildRenderables();
+  BuildEnvMap();
+}
+
+void SimpleRenderer::BuildEnvMap()
+{
   //SceneGraphTraversal
   std::list<rx::NodePtr> nodeToVisit;
   nodeToVisit.push_front(mSceneGraph->GetRoot());
@@ -71,37 +69,11 @@ void SimpleRenderer::Initialize(rx::SceneGraphPtr pSceneGraph,
     rx::NodePtr cNode = nodeToVisit.front();
     nodeToVisit.pop_front();
     
-    //Do something with cNode
-    if( cNode->Type().get() == rx::NodeType::Object )
-    {
-      auto objectNode = std::static_pointer_cast<rx::ObjectNode>(cNode);
-      rxLogInfo("Visit object node with model " << objectNode->ModelRef()->GetName()
-      << " and shader " <<  objectNode->ShaderRef()->GetName());
-    
-      auto model = objectNode->ModelRef();
-      mCustomShader = objectNode->ShaderRef();
-      mCustomShader->LinkProgram();
-      for (unsigned int i = 0; i < model->GetMeshCount(); ++i)
-      {        
-        
-        auto meshPtr = model->GetMesh(i);
-        rx::MaterialPtr materialPtr = model->GetMaterialForMesh(i);
-        assert(meshPtr != NULL && materialPtr != NULL);
-        auto geoHandle = std::make_shared<GeometryHandle>(meshPtr);
-        mGeoHandles[meshPtr->GetName()] = geoHandle;
-        
-        auto matTexHandle = std::make_shared<MaterialTextureHandle>(materialPtr);
-        mMatTextureHandles[materialPtr->GetName()] = matTexHandle;
-        
-        Renderable* iRenderable = new Renderable(geoHandle, matTexHandle, mCustomShader, materialPtr);
-        mRenderables.push_back(iRenderable);
-      }
-    }
-    
+    //Do something with cNode    
     if( cNode->Type().get() == rx::NodeType::EnvironmentMap )
     {
       auto envMapNode = std::static_pointer_cast<rx::EnvironmentMapNode>(cNode);
-      if( auto shader = pResourcesHolder->FindShader("cubemap_shader") )
+      if( auto shader = mHolder->FindShader("cubemap_shader") )
       {
         (*shader)->LinkProgram();
         rx::MeshPtr baseCube = std::make_shared<rx::Cube>();

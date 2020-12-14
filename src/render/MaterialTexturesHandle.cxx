@@ -28,25 +28,19 @@ MaterialTextureHandle::MaterialTextureHandle()
 
 MaterialTextureHandle::MaterialTextureHandle(rx::MaterialPtr pMaterial)
 {
-  for(auto uniformD : pMaterial->GetUniforms())
-  {
-    std::string uniform = uniformD.first;
-    std::string matAttribute = uniformD.second;
-    
-    if (pMaterial->HasTextureData<unsigned char>(matAttribute))
+  for(auto attribute : pMaterial->GetMembers())
+  {    
+    if (pMaterial->HasTextureData<unsigned char>(attribute))
     {
-      rxLogInfo("Uniform "<< uniform <<" is attribute " <<matAttribute<<" of type UByte");
-      GenerateTexture(pMaterial->GetTextureData<unsigned char>(matAttribute), GL_UNSIGNED_BYTE, uniform);
+      GenerateTexture(pMaterial->GetTextureData<unsigned char>(attribute), GL_UNSIGNED_BYTE, attribute);
     }
-    else if(pMaterial->HasTextureData<unsigned short>(matAttribute))
+    else if(pMaterial->HasTextureData<unsigned short>(attribute))
     {
-      rxLogInfo("Uniform "<< uniform <<" is attribute " <<matAttribute<<" of type Texture UShort");
-      GenerateTexture(pMaterial->GetTextureData<unsigned short>(matAttribute), GL_UNSIGNED_SHORT, uniform);
+      GenerateTexture(pMaterial->GetTextureData<unsigned short>(attribute), GL_UNSIGNED_SHORT, attribute);
     }
-    else if(pMaterial->HasTextureData<float>(matAttribute))
+    else if(pMaterial->HasTextureData<float>(attribute))
     {
-      rxLogInfo("Uniform "<< uniform <<" is attribute " <<matAttribute<<" of type Texture Float");
-      GenerateTexture(pMaterial->GetTextureData<float>(matAttribute), GL_FLOAT, uniform);
+      GenerateTexture(pMaterial->GetTextureData<float>(attribute), GL_FLOAT, attribute);
     }
   }
 }
@@ -56,7 +50,7 @@ MaterialTextureHandle::~MaterialTextureHandle()
 }
 
 template <typename T>
-void MaterialTextureHandle::GenerateTexture(T pTex, GLenum pType, std::string const& pUniform)
+void MaterialTextureHandle::GenerateTexture(T pTex, GLenum pType, std::string const& pAttribute)
 {
   GLTexture t;
   t.Build();
@@ -72,7 +66,7 @@ void MaterialTextureHandle::GenerateTexture(T pTex, GLenum pType, std::string co
   
   t.GenerateMipMap();
   
-  mTexturedIds[pUniform] = t.mId;
+  mTexturedIds[pAttribute] = t.mId;
   mTextures[t.mId] = t;
 }
 

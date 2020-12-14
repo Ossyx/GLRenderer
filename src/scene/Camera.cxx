@@ -230,7 +230,7 @@ void Camera::HandleKeyEvent(GLFWwindow* window, int key, int scancode, int actio
 
 void Camera::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, double p_deltaY)
 {
-  m_azimuth += (p_deltaX / 360.0) * 2.0 * M_PI;
+  m_azimuth -= (p_deltaX / 360.0) * 2.0 * M_PI;
   if (m_azimuth >= M_PI)
   {
     m_azimuth = -M_PI + (m_azimuth - M_PI);
@@ -240,7 +240,7 @@ void Camera::HandleCursorEvent(double p_xpos, double p_ypos, double p_deltaX, do
     m_azimuth = M_PI + (m_azimuth + M_PI);
   }
 
-  m_elevation += (p_deltaY / 360.0) * 2.0 * M_PI;
+  m_elevation -= (p_deltaY / 360.0) * 2.0 * M_PI;
   float epsilon = M_PI/180.0;
   if (m_elevation > (M_PI/2.0 - epsilon))
   {

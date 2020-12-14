@@ -242,6 +242,12 @@ void Shader::SetUniform(std::string const& pName, glm::vec3 const& pValue)
   glUniform3fv(loc, 1,  glm::value_ptr(pValue));
 }
 
+void Shader::SetUniform(std::string const& pName, glm::vec4 const& pValue)
+{
+  unsigned int loc = GetUniformLocation(pName);
+  glUniform4fv(loc, 1,  glm::value_ptr(pValue));
+}
+
 void Shader::SetUniform(std::string const& pName, glm::mat4 const& pValue)
 {
   unsigned int loc = GetUniformLocation(pName);

@@ -98,4 +98,10 @@ void FramebufferObject::AddRenderTarget(std::string const& pName, GLenum pAttach
   mColorAttachments.push_back(pAttachment);
 }
 
+bool FramebufferObject::CheckCompletion()
+{
+  return glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+}
+
+
 

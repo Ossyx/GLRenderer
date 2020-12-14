@@ -128,6 +128,16 @@ SceneGraph::ObjectNodePtr SceneGraphLoader::LoadObjectNode(Json::Value& pDescrip
   {
     rxLogError( "No shader named " << shaderRefName );
   }
+  
+  std::string materialShaderRefName = pDescription["material_shader"].asString();
+  if( auto s = pHolder.FindMaterialShader( materialShaderRefName ) )
+  {
+    node->SetMaterialShaderRef( *s );
+  }
+  else
+  {
+    rxLogError( "No material shader named " << materialShaderRefName );
+  }
   return node;
 }
 

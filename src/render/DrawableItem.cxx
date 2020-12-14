@@ -107,27 +107,27 @@ void DrawableItem::PrepareTextureFromMaterial()
     rxLogInfo("Linking uniform "<< it->first <<" to material.");
     std::string uniformName = it->first;
     Shader::UniformInfo info = it->second;
-    std::string attributeKey;
-    bool exists = mMaterial->GetUniformData(it->first, attributeKey);
+    //std::string attributeKey;
+    //bool exists = mMaterial->GetUniformData(it->first, attributeKey);
 
-    if (exists == true)
+    //if (exists == true)
     {
       //Handle various uniform types
       GLenum type = info.first;
       if (type == GL_FLOAT)
       {
         rxLogInfo("Uniform "<< uniformName <<" is attribute "
-          << attributeKey <<" of type GL_FLOAT");
+          << uniformName <<" of type GL_FLOAT");
       }
       else if (type == GL_FLOAT_VEC3)
       {
         rxLogInfo("Uniform "<< uniformName <<" is attribute "
-          << attributeKey <<" of type GL_FLOAT_VEC3");
+          << uniformName <<" of type GL_FLOAT_VEC3");
       }
       else if (type == GL_SAMPLER_2D && loadtex)
       {
         rxLogInfo("Uniform "<< uniformName <<" is attribute "
-          <<attributeKey<<" of type GL_SAMPLER_2D");
+          <<uniformName<<" of type GL_SAMPLER_2D");
         //Setup the textures
 
         unsigned int textureId;
@@ -138,9 +138,9 @@ void DrawableItem::PrepareTextureFromMaterial()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-        if (mMaterial->HasTextureData<unsigned char>(attributeKey))
+        if (mMaterial->HasTextureData<unsigned char>(uniformName))
         {
-          auto const& tex = mMaterial->GetTextureData<unsigned char>(attributeKey);
+          auto const& tex = mMaterial->GetTextureData<unsigned char>(uniformName);
           if (tex->m_channelCount == 1)
           {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex->m_width,
@@ -153,7 +153,7 @@ void DrawableItem::PrepareTextureFromMaterial()
           }
           else if (tex->m_channelCount == 4)
           {
-            rxLogWarning("Loading RGBA Texture " << attributeKey)
+            rxLogWarning("Loading RGBA Texture " << uniformName)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->m_width,
               tex->m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex->m_data);
           }
@@ -163,9 +163,9 @@ void DrawableItem::PrepareTextureFromMaterial()
             assert(false);
           }
         }
-        else if(mMaterial->HasTextureData<unsigned short>(attributeKey))
+        else if(mMaterial->HasTextureData<unsigned short>(uniformName))
         {
-          rx::Material::UShortTexture const& tex = mMaterial->GetTextureData<unsigned short>(attributeKey);
+          rx::Material::UShortTexture const& tex = mMaterial->GetTextureData<unsigned short>(uniformName);
           if (tex->m_channelCount == 1)
           {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R16, tex->m_width,
@@ -189,7 +189,7 @@ void DrawableItem::PrepareTextureFromMaterial()
         }
         else
         {
-          rxLogError("No attribute " << attributeKey <<" found in material "
+          rxLogError("No attribute " << uniformName <<" found in material "
             << mMaterial->GetName());
         }
 
@@ -239,26 +239,26 @@ void DrawableItem::SetupUniformAndTextures(glm::mat4 const& p_view,
   {
     std::string uniformName = itUniformMat->first;
     Shader::UniformInfo info = itUniformMat->second;
-    std::string attributeKey;
-    bool exists = mMaterial->GetUniformData(itUniformMat->first, attributeKey);
-    if (exists == true)
+    //std::string attributeKey;
+    //bool exists = mMaterial->GetUniformData(itUniformMat->first, attributeKey);
+    //if (exists == true)
     {
       //Handle various uniform types
       GLenum type = info.first;
       if (type == GL_FLOAT)
       {
-        if( mMaterial->Has<float>(attributeKey) )
+        if( mMaterial->Has<float>(uniformName) )
         {
-          float unif = mMaterial->Get<float>(attributeKey);
+          float unif = mMaterial->Get<float>(uniformName);
           unsigned int loc = mShader->GetUniformLocation(uniformName);
           glUniform1f(loc, unif);
         }
       }
       else if (type == GL_FLOAT_VEC3)
       {
-        if( mMaterial->Has<glm::vec3>(attributeKey) )
+        if( mMaterial->Has<glm::vec3>(uniformName) )
         {
-          glm::vec3 univec3f = mMaterial->Get<glm::vec3>(attributeKey);
+          glm::vec3 univec3f = mMaterial->Get<glm::vec3>(uniformName);
           unsigned int loc = mShader->GetUniformLocation(uniformName);
           glUniform3fv(loc, 1,  glm::value_ptr(univec3f));
         }

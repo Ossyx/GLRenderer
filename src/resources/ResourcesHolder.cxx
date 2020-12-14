@@ -32,9 +32,15 @@ void ResourcesHolder::RegisterMaterial(MaterialPtr pMaterial, KeyType const& pId
 }
 
 void ResourcesHolder::RegisterShader(
-  ResourcesHolder::ShaderPtr pShader, KeyType const& pId)
+  ShaderPtr pShader, KeyType const& pId)
 {
   mShaders[pId] = pShader;
+}
+
+void ResourcesHolder::RegisterMaterialShader(
+  MaterialShaderPtr pMatShader, KeyType const& pId)
+{
+  mMaterialShaders[pId] = pMatShader;
 }
 
 std::optional<ModelPtr> ResourcesHolder::FindModel(KeyType const& pId)
@@ -63,12 +69,25 @@ std::optional<MaterialPtr> ResourcesHolder::FindMaterial(KeyType const& pId)
   }
 }
 
-std::optional<ResourcesHolder::ShaderPtr> ResourcesHolder::FindShader(KeyType const& pId)
+std::optional<ShaderPtr> ResourcesHolder::FindShader(KeyType const& pId)
 {
   auto shaderPtrIt = mShaders.find(pId);
   if( shaderPtrIt != mShaders.end() )
   {
     return shaderPtrIt->second;
+  }
+  else
+  {
+    return {};
+  }
+}
+
+std::optional<MaterialShaderPtr> ResourcesHolder::FindMaterialShader(KeyType const& pId)
+{
+  auto matShaderPtrIt = mMaterialShaders.find(pId);
+  if( matShaderPtrIt != mMaterialShaders.end() )
+  {
+    return matShaderPtrIt->second;
   }
   else
   {

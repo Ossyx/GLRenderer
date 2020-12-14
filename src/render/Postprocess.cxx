@@ -4,7 +4,7 @@
 
 Postprocess::Postprocess(ShaderPtr pShader, GLenum pOutputType,
   unsigned int pWidth, unsigned int pHeight):
-Renderable(std::make_shared<SSPlaneData>(), nullptr, pShader, nullptr),
+Renderable(std::make_shared<SSPlaneData>(), nullptr, pShader, nullptr, nullptr),
 mOutputType(pOutputType),
 mWidth(pWidth),
 mHeight(pHeight)
