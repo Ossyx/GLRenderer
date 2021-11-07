@@ -108,9 +108,9 @@ void Camera::MoveCamera(float p_deltaT, float p_speed)
 
   //to optimise
   glm::mat4 view = glm::mat4(1.0f);
-  view = glm::rotate(view, m_elevation, glm::vec3(1.0f, 0.0f, 0.0f));
   view = glm::rotate(view, m_azimuth, glm::vec3(0.0f, 1.0f, 0.0f));
-  view = glm::inverse(view);
+  view = glm::rotate(view, m_elevation, glm::vec3(1.0f, 0.0f, 0.0f));  
+  //view = glm::inverse(view);
 
   glm::vec4 dirH;
   dirH.x = m_direction.x;
@@ -129,7 +129,7 @@ void Camera::MoveCamera(float p_deltaT, float p_speed)
   factor = std::max(0.1f, factor);
   factor = std::min(1.0f, factor);
 
-  m_position = m_position + (m_translationSpeed * factor * dir);
+  m_position = m_position + (m_translationSpeed * factor * -dir);
   ComputeViewMatrix();
 }
 

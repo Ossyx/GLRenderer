@@ -176,8 +176,8 @@ void SimpleRenderer::Render(GLFWwindow* pWindow)
   glfwGetFramebufferSize(pWindow, &width, &height);
   glViewport(0, 0, width, height);
   
-   Postprocess::TextureParameter texParam;
-   texParam["input_one"] = mFBO.mRenderTargets["rt1"].mId;
+   Renderable::TextureParameter texParam;
+   texParam["input_one"] = std::pair(GL_TEXTURE_2D, mFBO.mRenderTargets["rt1"].mId);
    rx::GLSLTypeStore param;
 //   mPostProcess->Execute(texParam, param);
   mSSFinalRender->Draw(param, texParam);

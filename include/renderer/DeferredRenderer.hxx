@@ -5,6 +5,7 @@
 #include "GLAbstraction.hxx"
 #include "TextureDisplay.hxx"
 #include "Postprocess.hxx"
+#include "EnvironmentMap.hxx"
 
 class DeferredRenderer : public Renderer
 {
@@ -22,7 +23,12 @@ private:
   FramebufferObject mGBuffer;
   FramebufferObject mLighting;
   TextureDisplay* mGBufferDebug;
+  TextureDisplay* mLightingPP;
   TextureDisplay* mFinalRender;
+  unsigned int renderStencil;
+
+  EnvironmentMapBasePtr mEnvMap;
+  
   glm::mat4 mInvProjection;
   glm::mat4 mNormalMatrix;
   glm::mat4 mInvView;

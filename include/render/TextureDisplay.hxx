@@ -9,7 +9,6 @@
 class TextureDisplay : public Renderable
 {
 public:
-  using TextureParameter = std::unordered_map<std::string, unsigned int>;
   
   TextureDisplay(ShaderPtr pShader);
   ~TextureDisplay();

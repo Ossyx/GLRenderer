@@ -91,4 +91,56 @@ void EnvironmentMap::Draw(glm::mat4 const& p_view,
   DrawElements();
 }
 
+EnvironmentMapBase::EnvironmentMapBase(rx::MaterialPtr pMaterial):
+mMaterial(pMaterial)
+{
+  Load();
+}
+
+EnvironmentMapBase::~EnvironmentMapBase()
+{
+}
+
+void EnvironmentMapBase::Load()
+{
+  std::string uniformName[6] = 
+  {
+    "map_px",
+    "map_nx",
+    "map_py",
+    "map_ny",
+    "map_pz",
+    "map_nz"
+  };
+  
+  glGenTextures(1, &mCubeMapTex);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, mCubeMapTex);
+  
+  for (unsigned int i = 0; i < 6; i++)
+  {
+    if (mMaterial->HasTextureData<float>(uniformName[i]))
+    {
+      rxLogWarning("Loading CubeMap channel " << i );
+      rx::Material::FloatTexture const& tex = mMaterial->GetTextureData<float>(uniformName[i]);
+      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F, tex->m_width, tex->m_height, 0, GL_RGB, GL_FLOAT, tex->m_data);
+    }
+    else
+    {
+      rxLogError("No attribute " << uniformName[i] <<" found in material " << mMaterial->GetName());
+    }
+  }
+  
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+}
+
+unsigned int EnvironmentMapBase::GetTextureIndex()
+{
+  return mCubeMapTex;
+}
+
 

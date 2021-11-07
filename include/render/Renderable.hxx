@@ -12,7 +12,7 @@
 class Renderable
 {
 public:
-  using TextureParameter = std::unordered_map<std::string, unsigned int>;
+  using TextureParameter = std::unordered_map<std::string, std::pair<GLenum, unsigned int>>;
   
   Renderable(GeometryHandlePtr pGeoHandle, MaterialTextureHandlePtr pMatTexHandle,
              ShaderPtr pShader, rx::MaterialPtr pMaterial, MaterialShaderPtr pMaterialShader);

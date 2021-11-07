@@ -98,7 +98,7 @@ void Renderable::SetTextureUniforms(TextureParameter const& pTexParameters)
   for (auto texInfo : pTexParameters )
   {    
     glActiveTexture(GL_TEXTURE0 + mCurrentIdTexture);
-    glBindTexture(GL_TEXTURE_2D, texInfo.second);
+    glBindTexture(texInfo.second.first, texInfo.second.second);
     mShader->SetUniform(texInfo.first, mCurrentIdTexture);
     ++mCurrentIdTexture;
   }
@@ -142,7 +142,7 @@ void Renderable::Draw(rx::GLSLTypeStore const& pParameters, TextureParameter con
   for ( auto& texInfo : pTexParameters)
   {
     glActiveTexture(GL_TEXTURE0 + mCurrentIdTexture);
-    glBindTexture(GL_TEXTURE_2D, texInfo.second);
+    glBindTexture(texInfo.second.first, texInfo.second.second);
     mShader->SetUniform(texInfo.first, mCurrentIdTexture);
     ++mCurrentIdTexture;
     uniforms.erase(texInfo.first);

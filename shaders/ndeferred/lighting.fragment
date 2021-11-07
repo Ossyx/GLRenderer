@@ -1,5 +1,7 @@
+#define PI 3.14159265
+
 in vec3 ipos;
-out vec4 frag_colour;
+layout(location = 0) out vec4 frag_colour;
 
 uniform sampler2D rt_0;
 uniform sampler2D rt_1;
@@ -7,35 +9,210 @@ uniform sampler2D rt_2;
 uniform sampler2D rt_depth;
 
 uniform mat4 invProjection;
-uniform vec3 lightDirection;
+uniform mat4 VToW;
+uniform vec3 lDir;
+
+uniform samplerCube cubemap;
+
+const float eta1[32] = float[32](0.2,0.25,0.46,0.32,0.1,0.5,0.23,0.29,0.53,0.39,0.14,0.99,0.15,0.75,0.82,0.91,0.67,0.38,0.57,0.86,0.72,0.88,0.37,0.69,0.85,0.7,0.53,0.39,0.63,0.58,0.16,0.93);
+const float eta2[32] = float[32](0.53,0.29,0.87,0.29,0.75,0.22,0.07,0.28,0.6,0.44,0.38,0.69,0.56,0.63,0.02,0.68,0.49,0.34,0.57,0.36,0.56,0.79,0.15,0.88,0.62,0.87,0.33,0.41,0.71,0.38,0.34,0.35);
 
 vec3 unpackNormal(vec3 p_mapped)
 {
   return vec3(p_mapped.x * 2.0 - 1.0, p_mapped.y * 2.0 - 1.0, p_mapped.z * 2.0 - 1.0);
 }
 
+float chiGGX(float v)
+{
+    return v > 0 ? 1 : 0;
+}
+
+float GGX_Distribution(vec3 n, vec3 h, float alpha)
+{
+    float NoH = dot(n,h);
+    float alpha2 = alpha * alpha;
+    float NoH2 = NoH * NoH;
+    float den = NoH2 * alpha2 + (1 - NoH2);
+    return (chiGGX(NoH) * alpha2) / ( PI * den * den );
+}
+
+float GGX_PartialGeometryTerm(vec3 v, vec3 n, vec3 h, float alpha)
+{
+    float VoH2 = clamp(dot(v,h), 0.0, 1.0);
+    float chi = chiGGX( VoH2 / clamp(dot(v,n), 0.0, 1.0) );
+    VoH2 = VoH2 * VoH2;
+    float tan2 = ( 1 - VoH2 ) / VoH2;
+    return (chi * 2) / ( 1 + sqrt( 1 + alpha * alpha * tan2 ) );
+}
+
+float GeometrySchlickGGX(float NdotV, float k)
+{
+    float nom   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+    return nom / denom;
+}
+  
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float k)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx1 = GeometrySchlickGGX(NdotV, k);
+    float ggx2 = GeometrySchlickGGX(NdotL, k);  
+    return ggx1 * ggx2;
+}
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}
+
+float orenNayarDiffuse(
+  vec3 lightDirection,
+  vec3 viewDirection,
+  vec3 surfaceNormal,
+  float roughness,
+  float albedo) {
+  
+  float LdotV = dot(lightDirection, viewDirection);
+  float NdotL = dot(lightDirection, surfaceNormal);
+  float NdotV = dot(surfaceNormal, viewDirection);
+
+  float s = LdotV - NdotL * NdotV;
+  float t = mix(1.0, max(NdotL, NdotV), step(0.0, s));
+
+  float sigma2 = roughness * roughness;
+  float A = 1.0 + sigma2 * (albedo / (sigma2 + 0.13) + 0.5 / (sigma2 + 0.33));
+  float B = 0.45 * sigma2 / (sigma2 + 0.09);
+
+  return albedo * max(0.0, NdotL) * (A + B * s / t) / PI;
+}
+
 vec3 VSPositionFromDepth(vec2 vTexCoord, float depth)
 {
-    // Get x/w and y/w from the viewport position
-    float x = vTexCoord.x * 2 - 1;
-    float y = (1 - vTexCoord.y) * 2 - 1;
-    vec4 vProjectedPos = vec4(x, y, depth, 1.0f);
-    // Transform by the inverse projection matrix
-    vec4 vPositionVS = invProjection * vProjectedPos;  
-    // Divide by w to get the view-space position
-    return vPositionVS.xyz / vPositionVS.w;  
+    vec4 clip_space_position = vec4(vTexCoord * 2.0 - vec2(1.0), 2.0 * depth - 1.0, 1.0);
+    vec4 position = invProjection * clip_space_position;
+    return(position.xyz / position.w);
+}
+
+vec3 Tonemap_ACES(vec3 x) {
+    // Narkowicz 2015, "ACES Filmic Tone Mapping Curve"
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return (x * (a * x + b)) / (x * (c * x + d) + e);
+}
+
+mat3 buildFrame(vec3 n)
+{
+  vec3 tangent;
+  vec3 c1 = cross(n, vec3(1.0, 0.0, 0.0));
+  vec3 c2 = cross(n, vec3(0.0, 1.0, 0.0));
+  if( length(c1) > length(c2) )
+  {
+    tangent = c1;
+  }
+  else
+  {
+    tangent = c2;
+  }
+  tangent = normalize(c1);
+  vec3 bitangent = cross(tangent, n);
+  return mat3(tangent, bitangent, n);
+}
+
+float hash13(vec3 p3)
+{
+  p3  = fract(p3 * .1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+vec2 hash23(vec3 p3)
+{
+  p3 = fract(p3 * vec3(.1031, .1030, .0973));
+  p3 += dot(p3, p3.yzx+33.33);
+  return fract((p3.xx+p3.yz)*p3.zy);
+}
+
+vec3 generateSampleVector(float roughness, vec3 refl, int i)
+{
+  vec2 rand = hash23(refl * i);
+  float teta = atan(roughness * sqrt(rand.x) / sqrt( 1.0 - rand.x));
+  float phi = 2.0 * PI * rand.y;  
+  return vec3(sin(teta) * cos(phi), sin(teta) * sin(phi), cos(teta));
+
+}
+
+vec3 CubemapRadiance(vec3 n, vec3 viewVector, float roughness)
+{
+
+  vec3 refl = reflect(-viewVector, n);
+  mat3 frame = buildFrame(refl);
+  vec3 radiance = vec3(0.0);
+  
+  for(int i = 0; i < 32; ++i)
+  {
+    vec3 sampleRefl = frame * generateSampleVector(roughness, refl, i);
+    vec4 sampleReflWorld = VToW * vec4(sampleRefl, 0.0);
+    vec4 cubemapS = texture(cubemap, sampleReflWorld.xyz);
+    radiance += cubemapS.xyz / 30000.0;  
+  }  
+  return radiance / 32.0;   
 }
 
 void main()
 {
     vec2 uvcoord = (ipos.xy + vec2(1.0, 1.0)) / 2.0;
     vec3 albedo = texture(rt_0, uvcoord).xyz;
-    vec3 normal = unpackNormal(texture(rt_1, uvcoord).xyz);
-    vec4 specular = texture(rt_2, uvcoord);
-    float depth = texture2D(rt_depth, uvcoord).x;
+    vec4 rt1Value = texture(rt_1, uvcoord);
+    vec3 normal = unpackNormal(rt1Value.xyz);
+    vec4 specularRT = texture(rt_2, uvcoord);
+    float ao = specularRT.x;
+    float metallic = specularRT.y;
+    float roughness = specularRT.z;
     
-    vec3 n = normalize(normal);
-    float p = max(dot(lightDirection, n), 0.0);
+    float near = 0.1;
+    float far = 10000.0;
+    float depth = rt1Value.w;    
     vec3 pos = VSPositionFromDepth(uvcoord, depth);
-    frag_colour = vec4(albedo * p, 1.0);
+    vec3 n = normalize(normal);
+    vec3 viewVector = -normalize(pos);
+    float vOren = orenNayarDiffuse(lDir, viewVector, n, roughness, 0.96);    
+    
+    float p = max(dot(lDir, n), 0.0);
+    
+    vec3 radiance = vec3(23.47, 21.31, 20.79);
+    
+    vec3 halfVector = normalize(lDir + viewVector);
+    float GGXdist = GGX_Distribution(n, halfVector, roughness);
+    float GGXgeo =  GeometrySmith(n, viewVector, lDir, roughness);
+    
+    vec3 F0 =  vec3(0.04); 
+    F0 = mix(F0, albedo, metallic);
+    vec3 F  = fresnelSchlick(max(dot(halfVector, viewVector), 0.0), F0);
+    
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallic;	  
+    
+    vec3 numerator = GGXdist * GGXgeo * F;
+    float denominator = 4.0 * max(dot(n, viewVector), 0.0) * max(dot(n, lDir), 0.0);
+    vec3 specular = numerator / max(denominator, 0.001);  
+        
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(n, lDir), 0.0);                
+    vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
+    
+    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 color = ambient + Lo;
+
+    
+    //color = CubemapRadiance(n, viewVector, roughness);
+    
+    color = color / (color + vec3(1.0));
+    //color = Tonemap_ACES(color);
+    //color = pow(color, vec3(1.0/2.2));
+    //frag_colour = vec4(vOren * albedo * ao, 1.0);
+    frag_colour = vec4(color, 1.0);
 }

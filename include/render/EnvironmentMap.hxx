@@ -5,6 +5,22 @@
 #include "Material.hxx"
 #include "Primitives.hxx"
 
+class EnvironmentMapBase
+{
+public:
+  EnvironmentMapBase(rx::MaterialPtr pMaterial);
+  virtual ~EnvironmentMapBase();  
+  unsigned int GetTextureIndex();
+  
+private:
+  
+  void Load();
+  unsigned int mCubeMapTex;
+  rx::MaterialPtr mMaterial;
+};
+
+using EnvironmentMapBasePtr = std::shared_ptr<EnvironmentMapBase>;
+
 class EnvironmentMap : public DrawableItem
 {
 public:

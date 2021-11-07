@@ -88,8 +88,8 @@ void FramebufferObject::AddRenderTarget(std::string const& pName, GLenum pAttach
   GLTexture t;
   t.Build();
   t.Bind();
-  t.SetParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  t.SetParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  t.SetParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  t.SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   t.SetParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   t.SetParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   t.SetData(pInternalFormat, pFormat, pType, pWidth, pHeight, 0);

@@ -59,6 +59,7 @@ void MaterialTextureHandle::GenerateTexture(T pTex, GLenum pType, std::string co
   t.SetParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
   t.SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   t.SetParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16.0f);
   
   auto texConf = smGLTextureConfig[pType][pTex->m_channelCount];
   t.SetData(texConf.internalFormat, texConf.format, pType,

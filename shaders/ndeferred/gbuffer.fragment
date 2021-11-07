@@ -7,13 +7,14 @@ in vec3 inormal;
 in vec3 itangent;
 in vec3 ibitangent;
 in vec2 iuvcoords;
-in vec3 ipos;
 
 uniform sampler2D map_diffuse;
-uniform sampler2D map_specular;
+uniform sampler2D map_metallic;
 uniform sampler2D map_ao;
 uniform sampler2D map_roughness;
 uniform sampler2D map_normal;
+uniform float roughnessIN;
+uniform float metallicIN;
 
 vec3 unpackNormal(vec3 p_mapped)
 {
@@ -31,13 +32,13 @@ void main()
   vec3 normal = tbnMat * unpackNormal(texture2D(map_normal, iuvcoords).xyz);
   vec3 finalNormal = packNormal(normal);
   vec4 albedo = texture2D(map_diffuse, iuvcoords);
-  float specular = texture2D(map_specular, iuvcoords).x;
+  float metallic = texture2D(map_metallic, iuvcoords).x * metallicIN;
   float ao = texture2D(map_ao, iuvcoords).x;
-  float roughness = texture2D(map_roughness, iuvcoords).x;
+  float roughness = texture2D(map_roughness, iuvcoords).x * roughnessIN;
 
 
   outAlbedo = albedo;
-  outNormal = vec4(finalNormal, 1.0);
-  outSpecular = vec4(ao, specular, roughness, 1.0);
+  outNormal = vec4(finalNormal, gl_FragCoord.z);
+  outSpecular = vec4(ao, metallic, roughness, 1.0);
   outDepth = gl_FragCoord.z;
 }
