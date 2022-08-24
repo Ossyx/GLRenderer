@@ -2,12 +2,13 @@
 #define RESOURCEDESCRIPTION_HXX
 
 #include <string>
-#include <jsoncpp/json/value.h>
+#include <json/value.h>
+#include "GLRendererExport.hxx"
 
 namespace rx
 {
   
-class ResourceType
+class GLRenderer_EXPORT ResourceType
 {
 public:
   enum RType
@@ -33,7 +34,7 @@ public:
 };
 
 
-class ResourceDescription
+class GLRenderer_EXPORT ResourceDescription
 {
 public:
   

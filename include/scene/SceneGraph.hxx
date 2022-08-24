@@ -8,10 +8,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <list>
 
+#include "GLRendererExport.hxx"
+
 namespace rx
 {
   
-class NodeType
+class GLRenderer_EXPORT NodeType
 {
 public:
   enum NType
@@ -34,7 +36,7 @@ public:
   NType mType;
 };
 
-class SgNode
+class GLRenderer_EXPORT SgNode
 {
 public:
   using NodePtr = std::shared_ptr<SgNode>;
@@ -56,7 +58,7 @@ protected:
 
 using NodePtr = std::shared_ptr<SgNode>;
 
-class MatrixTransform : public SgNode
+class GLRenderer_EXPORT MatrixTransform : public SgNode
 {
 public:
   MatrixTransform();
@@ -70,7 +72,7 @@ private:
   glm::mat4 mTransform;
 };
 
-class PositionAttitudeTransform : public SgNode
+class GLRenderer_EXPORT PositionAttitudeTransform : public SgNode
 {
 public:
   PositionAttitudeTransform();
@@ -91,7 +93,7 @@ private:
   glm::quat mAttitude;
 };
 
-class ObjectNode : public SgNode
+class GLRenderer_EXPORT ObjectNode : public SgNode
 {
 public:
   ObjectNode();
@@ -111,7 +113,7 @@ private:
   MaterialShaderPtr mMaterialShaderRef;
 };
 
-class EnvironmentMapNode : public SgNode
+class GLRenderer_EXPORT EnvironmentMapNode : public SgNode
 {
 public:
   EnvironmentMapNode();
@@ -126,7 +128,7 @@ private:
 };
 
 
-class SceneGraph
+class GLRenderer_EXPORT SceneGraph
 {
     
 public:

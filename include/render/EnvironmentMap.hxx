@@ -4,8 +4,9 @@
 #include "DrawableItem.hxx"
 #include "Material.hxx"
 #include "Primitives.hxx"
+#include "GLRendererExport.hxx"
 
-class EnvironmentMapBase
+class GLRenderer_EXPORT EnvironmentMapBase
 {
 public:
   EnvironmentMapBase(rx::MaterialPtr pMaterial);
@@ -21,7 +22,7 @@ private:
 
 using EnvironmentMapBasePtr = std::shared_ptr<EnvironmentMapBase>;
 
-class EnvironmentMap : public DrawableItem
+class GLRenderer_EXPORT EnvironmentMap : public DrawableItem
 {
 public:
 

@@ -10,8 +10,9 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "GLRendererExport.hxx"
 
-class Renderer
+class GLRenderer_EXPORT Renderer
 {
 public:
   Renderer();

@@ -15,7 +15,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-enum GBufferShaderFlag
+enum GLRenderer_EXPORT GBufferShaderFlag
 {
     albedoColor = 0x1,
     albedoTexture = 0x2,
@@ -29,7 +29,7 @@ enum GBufferShaderFlag
     displacementTexture = 0x200
 };
 
-class SceneRenderer : public EventInterface
+class GLRenderer_EXPORT SceneRenderer : public EventInterface
 {
 public:
 

@@ -7,8 +7,9 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "GLRendererExport.hxx"
 
-class MaterialTextureHandle
+class GLRenderer_EXPORT MaterialTextureHandle
 {
 public:
   MaterialTextureHandle();

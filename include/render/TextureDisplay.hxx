@@ -5,8 +5,9 @@
 #include "GLAbstraction.hxx"
 #include "GeometryHandle.hxx"
 #include "Renderable.hxx"
+#include "GLRendererExport.hxx"
 
-class TextureDisplay : public Renderable
+class GLRenderer_EXPORT TextureDisplay : public Renderable
 {
 public:
   

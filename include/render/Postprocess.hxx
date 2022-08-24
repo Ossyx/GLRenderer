@@ -5,8 +5,9 @@
 #include "GLAbstraction.hxx"
 #include "GeometryHandle.hxx"
 #include "Renderable.hxx"
+#include "GLRendererExport.hxx"
 
-class Postprocess : public Renderable
+class GLRenderer_EXPORT Postprocess : public Renderable
 {
 public:
   using TextureParameter = std::unordered_map<std::string, unsigned int>;

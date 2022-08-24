@@ -60,7 +60,7 @@ int main(int argc, char** argv)
   //Load resources
   rx::ResourcesHolderPtr holder = std::make_shared<rx::ResourcesHolder>();
   rx::ResourcesLoader loader;
-  loader.LoadDescription(resourcePath, *holder);
+  loader.LoadDescription(resourcePath.string(), *holder);
   loader.LoadResources(*holder);
   
   while(loader.GetStatus() != rx::ResourcesLoader::Loaded);

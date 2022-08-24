@@ -1,6 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/include/common
 ${GLM_INCLUDE_DIRS}
-${MESHLIB_INCLUDE_DIR})
+${MESHLIB_INCLUDE_DIR}
+${GLAD_INCLUDE_DIR})
 
 #Libraries
 add_library(Common SHARED

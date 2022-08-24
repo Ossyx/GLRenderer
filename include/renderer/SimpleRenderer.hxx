@@ -14,7 +14,7 @@
 
 #include <chrono>
 
-class SimpleRenderer : public Renderer
+class GLRenderer_EXPORT SimpleRenderer : public Renderer
 {
 public:
   

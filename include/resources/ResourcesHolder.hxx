@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <memory>
+#include <optional>
 
 #include "ResourceDescription.hxx"
 
@@ -11,11 +12,12 @@
 #include "Model.hxx"
 #include "Shader.hxx"
 #include "MaterialShader.hxx"
+#include "GLRendererExport.hxx"
 
 namespace rx
 {
  
-class ResourcesHolder
+class GLRenderer_EXPORT ResourcesHolder
 {
 public:  
   

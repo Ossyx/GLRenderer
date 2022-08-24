@@ -6,10 +6,11 @@
 #include "Shader.hxx"
 #include "MaterialShader.hxx"
 #include "GLAbstraction.hxx"
+#include "GLRendererExport.hxx"
 
 #include <glm/mat4x4.hpp>
 
-class Renderable
+class GLRenderer_EXPORT Renderable
 {
 public:
   using TextureParameter = std::unordered_map<std::string, std::pair<GLenum, unsigned int>>;

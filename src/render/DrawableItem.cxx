@@ -317,5 +317,6 @@ int DrawableItem::DrawSimple(Shader const& p_shader, glm::mat4 const& p_vpMat,
   mVertexArray.Bind();
   mIndex.Bind();
   glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
+  return 0;
 }
 

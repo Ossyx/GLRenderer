@@ -5,8 +5,10 @@
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include "GLRendererExport.hxx"
+#define M_PI 3.14
 
-glm::quat EulerAngleToQuaternion(float pRoll, float pPitch, float pYaw);
-glm::vec3 QuaternionToEulerAngler(glm::quat const& pQuat);
+GLRenderer_EXPORT glm::quat EulerAngleToQuaternion(float pRoll, float pPitch, float pYaw);
+GLRenderer_EXPORT glm::vec3 QuaternionToEulerAngler(glm::quat const& pQuat);
 
 #endif

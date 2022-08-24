@@ -49,6 +49,7 @@ Renderable::~Renderable()
 
 bool Renderable::Validate()
 {
+  return true;
 }
 
 void Renderable::SetMaterialUniforms(Shader::UniformMap& pUniforms)

@@ -7,8 +7,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "EventInterface.hxx"
+#include "GLRendererExport.hxx"
 
-class Camera : public EventInterface
+class GLRenderer_EXPORT Camera : public EventInterface
 {
 public:
 

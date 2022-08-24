@@ -6,8 +6,9 @@
 #include "Shader.hxx"
 #include <unordered_map>
 #include <memory>
+#include "GLRendererExport.hxx"
 
-class MaterialShader
+class GLRenderer_EXPORT MaterialShader
 {
 public:
   MaterialShader();

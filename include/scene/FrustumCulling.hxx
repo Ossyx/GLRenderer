@@ -5,13 +5,15 @@
 #include <glm/vec4.hpp> // glm::vec4
 #include <glm/mat4x4.hpp> // glm::mat4
 
-struct Frustum
+#include "GLRendererExport.hxx"
+
+struct GLRenderer_EXPORT Frustum
 {
   glm::vec4 planes[6];
   void InitFromMatrix(glm::mat4 const& p_vpMatrix);
 };
 
-struct AABB
+struct GLRenderer_EXPORT AABB
 {
   glm::vec3 min;
   glm::vec3 max;

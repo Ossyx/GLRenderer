@@ -4,7 +4,7 @@
 #include <memory>
 #include "Renderer.hxx"
 
-class RendererFactory
+class GLRenderer_EXPORT RendererFactory
 {
 public:
   using RendererPtr = std::shared_ptr<Renderer>;  

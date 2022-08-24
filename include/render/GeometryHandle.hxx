@@ -3,8 +3,9 @@
 
 #include "Mesh.hxx"
 #include "GLAbstraction.hxx"
+#include "GLRendererExport.hxx"
 
-class GeometryHandle
+class GLRenderer_EXPORT GeometryHandle
 {
 public:
   
@@ -33,7 +34,7 @@ public:
 
 using GeometryHandlePtr = std::shared_ptr<GeometryHandle>;
 
-class SSPlaneData : public GeometryHandle
+class GLRenderer_EXPORT SSPlaneData : public GeometryHandle
 {
 public:
   SSPlaneData();

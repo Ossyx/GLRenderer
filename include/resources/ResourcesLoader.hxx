@@ -5,14 +5,15 @@
 #include "ResourcesHolder.hxx"
 #include "ModelLoader.hxx"
 #include "Shader.hxx"
+#include "GLRendererExport.hxx"
 
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
+#include <json/value.h>
+#include <json/reader.h>
 
 namespace rx
 {
   
-class ResourcesLoader
+class GLRenderer_EXPORT ResourcesLoader
 {
 public:  
   enum LoadingStatus

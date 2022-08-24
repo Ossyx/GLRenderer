@@ -1,6 +1,15 @@
 #include "MaterialShaderLoader.hxx"
 #include <fstream>
 
+MaterialShaderLoader::MaterialShaderLoader()
+{
+
+}
+MaterialShaderLoader::~MaterialShaderLoader()
+{
+
+}  
+
 MaterialShaderPtr MaterialShaderLoader::Load(std::filesystem::path const& pFilepath)
 {
   std::ifstream inputStreamJsonMap;

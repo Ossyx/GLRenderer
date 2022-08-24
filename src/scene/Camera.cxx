@@ -2,7 +2,12 @@
 #include "Common.hxx"
 
 #include <iostream>
-#include <math.h>
+#include <algorithm>
+#if defined (WIN32)
+  #define M_PI 3.1415926
+#else
+  #include <math.h>
+#endif
 
 Camera::Camera(glm::vec3 p_position):
 m_position(p_position),

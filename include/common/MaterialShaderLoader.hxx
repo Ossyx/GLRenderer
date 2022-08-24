@@ -2,12 +2,13 @@
 #define MATERIALSHADERLOADER_HXX
 
 #include "MaterialShader.hxx"
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
+#include <json/value.h>
+#include <json/reader.h>
 
 #include <filesystem>
+#include "GLRendererExport.hxx"
 
-class MaterialShaderLoader
+class GLRenderer_EXPORT MaterialShaderLoader
 {
 public:
   MaterialShaderLoader();

@@ -8,8 +8,10 @@
 
 #include <unordered_map>
 #include <glm/mat4x4.hpp> // glm::mat4
+#include "GLRendererExport.hxx"
 
-class DrawableItem
+
+class GLRenderer_EXPORT DrawableItem
 {
 public:
 

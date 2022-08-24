@@ -2,16 +2,17 @@
 #define SCENEGRAPH_LOADER
 
 #include <filesystem>
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
-#include <jsoncpp/json/writer.h>
+#include <json/value.h>
+#include <json/reader.h>
+#include <json/writer.h>
 
 #include "SceneGraph.hxx"
+#include "GLRendererExport.hxx"
 
 namespace rx
 {
   
-class SceneGraphLoader
+class GLRenderer_EXPORT SceneGraphLoader
 {
 public:
   SceneGraphLoader();

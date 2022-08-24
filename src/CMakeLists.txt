@@ -20,7 +20,6 @@ ${MESHLIB_INCLUDE_DIR}
 ${GLM_INCLUDE_DIRS}
 ${IMGUI_INCLUDE_DIR})
 
-
 add_executable(main
   ${CMAKE_SOURCE_DIR}/src/main.cxx)
 target_link_libraries(main

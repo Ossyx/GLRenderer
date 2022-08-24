@@ -9,8 +9,9 @@
 #include <GLFW/glfw3.h>
 
 #include "GLSLTypeStore.hxx"
+#include "GLRendererExport.hxx"
 
-class Shader
+class GLRenderer_EXPORT Shader
 {
 public:
 

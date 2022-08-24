@@ -33,12 +33,15 @@ add_executable(TestFrustumCulling
 target_link_libraries(TestFrustumCulling
 ${MESHLIB_LIBRARY})
 
-add_executable(generateHeightmap
-  ${CMAKE_SOURCE_DIR}/src/tests/generateHeightmap.cxx
-  ${CMAKE_SOURCE_DIR}/src/terrain/HeightmapGenerator.cxx)
-target_link_libraries(generateHeightmap
-${CImg_LIBRARIES}
-${LIBNOISE_LIBRARIES})
+#Exclude libnoise from windows build for now
+if(NOT WIN32)
+  add_executable(generateHeightmap
+    ${CMAKE_SOURCE_DIR}/src/tests/generateHeightmap.cxx
+    ${CMAKE_SOURCE_DIR}/src/terrain/HeightmapGenerator.cxx)
+  target_link_libraries(generateHeightmap
+  ${CImg_LIBRARIES}
+  ${LIBNOISE_LIBRARIES})
+endif()
   
 add_executable(testSimpleRenderer
   ${CMAKE_SOURCE_DIR}/src/tests/simpleRendererTest.cxx)
@@ -64,8 +67,8 @@ add_executable(GLRenderer
   ${CMAKE_SOURCE_DIR}/imgui/imgui_draw.cpp
   ${CMAKE_SOURCE_DIR}/imgui/imgui_widgets.cpp
   ${CMAKE_SOURCE_DIR}/imgui/imgui_demo.cpp
-  ${CMAKE_SOURCE_DIR}/imgui/imgui_impl_glfw.cpp
-  ${CMAKE_SOURCE_DIR}/imgui/imgui_impl_opengl3.cpp)
+  ${CMAKE_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.cpp
+  ${CMAKE_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp)
   
 #CMAKE_DL_LIBS is needed by glad
 target_link_libraries(GLRenderer

@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
-class EventDispatcher
+class __declspec(dllexport) EventDispatcher
 {
 public:
   static void HandleKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -20,7 +20,7 @@ public:
 
   void AddEventListener(std::string p_key, EventInterface* p_listener);
 
-  EventInterface* RemoveEventListener(std::string p_key);
+  void RemoveEventListener(std::string p_key);
 private:
 
   EventDispatcher();

@@ -6,8 +6,9 @@
 #include "TextureDisplay.hxx"
 #include "Postprocess.hxx"
 #include "EnvironmentMap.hxx"
+#include "GLRendererExport.hxx"
 
-class DeferredRenderer : public Renderer
+class GLRenderer_EXPORT DeferredRenderer : public Renderer
 {
 public:
   DeferredRenderer();

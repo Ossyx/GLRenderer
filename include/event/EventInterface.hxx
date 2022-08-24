@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-enum KeyFlag
+enum __declspec(dllexport) KeyFlag
 {
   eKeyA = 0x1,
   eKeyZ = 0x2,
@@ -16,7 +16,7 @@ enum KeyFlag
   eKeyC = 0x100
 };
 
-class EventInterface
+class __declspec(dllexport) EventInterface
 {
 public:
   EventInterface();

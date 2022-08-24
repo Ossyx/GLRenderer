@@ -58,7 +58,7 @@ void EventDispatcher::AddEventListener(std::string p_key, EventInterface* p_list
   m_registeredInterface[p_key] = p_listener;
 }
 
-EventInterface* EventDispatcher::RemoveEventListener(std::string p_key)
+void EventDispatcher::RemoveEventListener(std::string p_key)
 {
   EventInterfaceMap::iterator it = m_registeredInterface.find(p_key);
   if (it != m_registeredInterface.end())

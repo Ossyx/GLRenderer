@@ -5,8 +5,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "GLRendererExport.hxx"
 
-struct ArrayBuffer
+struct GLRenderer_EXPORT ArrayBuffer
 {
   void Build(GLenum pType, GLuint pSize, const void *pData);
   void Bind();
@@ -16,7 +17,7 @@ struct ArrayBuffer
   unsigned int mSize;
 };
 
-struct VertexArray
+struct GLRenderer_EXPORT VertexArray
 {
   void Build();
   void Bind();
@@ -27,7 +28,7 @@ struct VertexArray
   unsigned int mId;
 };
 
-struct GLTexture
+struct GLRenderer_EXPORT GLTexture
 {
   void Build();
   void Bind();
@@ -46,7 +47,7 @@ struct GLTexture
   
 };
 
-struct GBufferData
+struct GLRenderer_EXPORT GBufferData
 {
   //Frame buffer object
   unsigned int mFBO;
@@ -58,7 +59,7 @@ struct GBufferData
   unsigned int mRT4;
 };
 
-struct FramebufferObject
+struct GLRenderer_EXPORT FramebufferObject
 {
   void Build();
   void Bind();

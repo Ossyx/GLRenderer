@@ -329,6 +329,7 @@ int TerrainLOD::DrawTerrain(Camera const& p_cam, glm::mat4 const& p_model, glm::
   glPatchParameteri(GL_PATCH_VERTICES, 4);
   mVertexArray.Bind();
   glDrawArrays(GL_PATCHES, 0, 4*m_leafCount);
+  return 0;
 }
 
 int TerrainLOD::DrawWater(Camera const& p_cam, glm::mat4 const& p_model,
@@ -380,6 +381,7 @@ int TerrainLOD::DrawWater(Camera const& p_cam, glm::mat4 const& p_model,
   glPatchParameteri(GL_PATCH_VERTICES, 4);
   mVertexArray.Bind();
   glDrawArrays(GL_PATCHES, 0, 4*m_leafCount);
+  return 0;
 }
 
 void TerrainLOD::SetOuterTessellationLvl(std::vector<QuadTreeNode*>& p_leafs)
